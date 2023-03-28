@@ -1,44 +1,55 @@
 import numpy as np
-from scipy import signal
 
 def sin(A, frequency, phi, t):
+    '''
+    returns a sine wave with specified parameters
+
+    Parameters
+    ----------
+    A: float
+        the amplitude of the sine wave
+    frequency: float
+        the frequency of the sine wave
+    phi: float
+        the phase angle of the sine wave
+    t: arraylike
+        
+    Returns
+    -------
+    sin_wave: array
+        a sine wave represented as an array of amplitudes
+    '''
     omega = 2*np.pi*frequency
     sin_wave = A*np.sin(omega*t-phi)
     return sin_wave
 
 def sound_wave(A, frequencies, duration, sampling_rate,  delay = 0, end = 0):
     ''' 
-    Returns a randomly generated sound wave made up of "n" 
-    sine waves. The frequencies present in the wave is tracked 
-    with the variable "frequencies" This will be plotted in a 
-    histogram. Creates a single sine wave by default.
+    Returns a sound wave with made up of sine waves with frequencies given as a 
+    list. delay and end can be specified to start the wave early and cut it of 
+    before the specified duration.
 
     Parameters
     ----------
     A_max: float
         the maximum amplitude of each sin wave.
-    bandwidth: float
-        the maximum frequency of each sin wave.
+    frequencies: list or float
+        a list of frequencies to include in the sound wave or a single frequency
     duration: float
         the time duration of the signal.
     sampling_rate: float
         sampling_rate of the sensor in hz
-    n: int
-        number of sine waves to be added to the signal
-    band_range: float
-        the frequency is selected from the last "band_range"
-        (e.g. 1/4) of the selected bandwidth
     delay: float
         a time delay for the signal.
     end: float
         time that the signal ends at.
-    rand: boolean
-        choose whether to randomise the frequency, phase, 
-        and amplitude of the sin wives. Set to False to 
-        suppress randomness.
-    fundamental_frequency: float
-        if this is passed, n harmonics will be added together 
-        to form the wave
+
+    Returns
+    -------
+    wave: array
+        tuple containing an array of cthe sound wave 
+    t: array
+        the array of time to plot the wave against
     '''
 
     t = np.arange(0,duration,1/sampling_rate)
@@ -46,6 +57,9 @@ def sound_wave(A, frequencies, duration, sampling_rate,  delay = 0, end = 0):
 
     # initialise parameters
     phi = 0
+
+    if isinstance(frequencies,int) or isinstance(frequencies,float): 
+        frequencies = [frequency] # compatibility with a single frequency
 
     for frequency in frequencies:
         # generate sine wave
@@ -64,6 +78,7 @@ def sound_wave(A, frequencies, duration, sampling_rate,  delay = 0, end = 0):
     return wave, t
 
 def noise(standard_deviation, duration, sampling_rate):
+    'creates and array of noise with the same dimensions as the synthetic data'
     t = np.arange(0,duration,1/sampling_rate)
     noise = np.random.normal(0,standard_deviation,len(t))
     return noise
@@ -83,8 +98,16 @@ def find_end_index(t,end):
         end_index -= 1
 
 def window(data,mode = 'hanning'):
+    '''
+    applies a window to the data
+
+    Parameters
+    ----------
+    data: array
+        the data to be windowed
+    mode: string
+        the type of window to be used
+    '''
     if mode == 'hanning':
         data *= np.hanning(len(data))
-    elif mode == 'gaussian':
-        data *= signal.windows.gaussian(len(data),1)
-    return data*np.hanning(len(data))
+    return data
