@@ -23,11 +23,13 @@ class Transform():
         self.wavelet = wavelet
         self.mode = mode
         self.data = data
-        self.base_node = BaseNode(data)
-        self.levels = {0:[self.base_node]}
+        self.base_node = BaseNode(data) # initialise base node
+        self.levels = {0:[self.base_node]} # initialise list of all nodes
 
-    def get_level(self,level):
-        'returns a list of nodes for the chosen level'
+    def get_level(self,level=None):
+        'returns a list of nodes for the chosen level. returns max level by default'
+        if level is None:
+            level = self.max_level()
         return self.levels[level]
 
     def add_node(self,node):
@@ -47,8 +49,10 @@ class Transform():
         node = Node(parent,a_d,self)
         self.add_node(node)
 
-    def calc_frequencies(self,sampling_rate):
+    def calc_frequencies(self,sampling_rate=None):
         'set the sampling rate to give information about nyquist frequency'
+        if sampling_rate is None:
+            return
         self.sampling_rate = sampling_rate
         for level in self.levels:
             for node in self.levels[level]:
@@ -68,8 +72,19 @@ class Transform():
                     lf = sci_form(node.norm_frequency_range[0])
                     uf = sci_form(node.norm_frequency_range[1])
                     print(f'node: {node.path} [({lf}-{uf})*nyquist frequency Hz]\nenergy: {energy}')
-
                 print()
+
+    def list_energy(self,level=None):
+        'creates a list of all energies at a specified level, max level by default'
+        nodes = self.get_level(level)
+        energies = []
+        for node in nodes:
+            energies.append(node.energy)
+        return energies
+
+    def max_level(self):
+        'returns the last level of transform'
+        return list(self.levels.keys())[-1]
     
     def get_node(self,id,nodes):
         'finds a node for a given path or frequency from a list of nodes'
@@ -113,13 +128,13 @@ class Transform():
                     node_list.append(node)
         return node_list
     
-    def packet_nodes_for_rec(self,level,*,keep=None,leave=None,min_energy=0):
+    def packet_nodes_for_rec(self,level=None,*,keep=None,leave=None,min_energy=0):
         '''
         gather nodes for reconstruction with more than min_energy.
         if ids is specified, only uses nodes specified in ids, regardless of energy.
         keep, leave, and min_energy cannot be used in tandem
 
-        parameters
+        Parameters
         ----------
         level: int
             the level of transform to start reconstruct from
@@ -128,7 +143,17 @@ class Transform():
         leave: list
             list of ids (path of frequency content) to leave out of reconstruction
         min_energy: float
-            
+            only add nodes with specified minimum energy
+        
+        Returns
+        -------
+        node_list: list
+            list of nodes meeting requirements
+
+        Raises
+        ------
+        SyntaxError:
+            when specifying more than one of keep, leave, and min_energy
         '''
         # only one of keep, leave, and min_energy can be defined
         counter = 0
@@ -136,19 +161,19 @@ class Transform():
             if arg:
                 counter += 1
         if counter > 1:
-            print('only specify one of leave, keep, and min_energy')
-            return None
+            raise SyntaxError('only specify 1 of keep, leave, min_energy')
         
-        node_list = []
-        nodes = self.get_level(level)
+        node_list = [] 
+        nodes = self.get_level(level) # max level by default
         if keep:
             for node in nodes:
                 for id in keep:
+                    # print('testing id',id)
                     if node.match_id(id):
                         node_list.append(node)
                         break
                 else:
-                    node_list.append(None)
+                    node_list.append(None) # append None if node does not meet requirements
         elif leave:
             for node in nodes:
                 for id in leave:

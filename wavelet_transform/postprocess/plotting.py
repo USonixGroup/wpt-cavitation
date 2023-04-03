@@ -1,4 +1,4 @@
-from ..utils import extensions as ext
+from ..utils.extensions import *
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -94,12 +94,12 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
             lower_frequency = node.norm_frequency_range[0]*nyquist_frequency
             upper_frequency = node.norm_frequency_range[1]*nyquist_frequency
 
-            lf = ext.sci_form(lower_frequency)
-            uf = ext.sci_form(upper_frequency)
+            lf = sci_form(lower_frequency)
+            uf = sci_form(upper_frequency)
 
             title = f'''
             Coefficients, {lf}-{uf} Hz
-            energy: {ext.sci_form(node.energy)} [section {section_counter} of {len(nodes)}]
+            energy: {sci_form(node.energy)} [section {section_counter} of {len(nodes)}]
             '''
             axis.set_title(title)
             section_counter += 1

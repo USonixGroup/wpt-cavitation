@@ -1,5 +1,3 @@
-from numpy import hanning
-
 def sci_form(number,dp = 3):
     'returns a string of the scientific form of a number'
     e_power = 0
