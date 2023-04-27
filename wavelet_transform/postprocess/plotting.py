@@ -2,6 +2,8 @@ from ..utils.extensions import *
 import matplotlib.pyplot as plt
 import numpy as np
 
+fs = 15 # fontsize
+
 def full_plot(
     nodes, data, t_plot, sampling_rate, 
     title='', frequencies=None 
@@ -87,8 +89,8 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
             axis.plot(node.data)
             
             # set labels
-            axis.set_xlabel('coefficient number')
-            axis.set_ylabel('magnitude')
+            axis.set_xlabel('coefficient number',fontsize=fs)
+            axis.set_ylabel('magnitude',fontsize=fs)
             axis.grid(True)
 
             lower_frequency = node.norm_frequency_range[0]*nyquist_frequency
@@ -101,7 +103,7 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
             Coefficients, {lf}-{uf} Hz
             energy: {sci_form(node.energy)} [section {section_counter} of {len(nodes)}]
             '''
-            axis.set_title(title)
+            axis.set_title(title,fontsize=fs)
             section_counter += 1
 
 def plot_all_final_nodes(nodes, ax, title = ''):
@@ -110,24 +112,44 @@ def plot_all_final_nodes(nodes, ax, title = ''):
     for node in nodes:
         output = np.concatenate((output,node.data))
     ax.plot(output)
-    ax.set_title(f"Coefficients {title}")
-    ax.set_xlabel("Coefficient Number")
-    ax.set_ylabel("Coefficient")
+    ax.set_title(f"Coefficients {title}",fontsize=fs)
+    ax.set_xlabel("Coefficient Number",fontsize=fs)
+    ax.set_ylabel("Coefficient",fontsize=fs)
     ax.grid(True)
 
 def plot_wave(data, t_plot, ax, title = ''):
     'plots the data'
     ax.plot(t_plot,data)
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Amplitude [m]")
-    ax.set_title(f"Data {title}")
+    ax.set_xlabel("Time [s]",fontsize=fs)
+    ax.set_ylabel("Amplitude [mV]",fontsize=fs)
+    ax.set_title(f"Data {title}",fontsize=fs)
     ax.grid(True)
 
 def plot_frequencies(frequencies, ax, title =''):
     'creates a histogram of the frequencies present in the synthetic data'
     if frequencies:
         ax.hist(frequencies)
-        ax.set_title(f"Frequency Distribution {title}")
-        ax.set_xlabel("Frequency [Hz]")
-        ax.set_ylabel("Frequency of frequency")
+        ax.set_title(f"Frequency Distribution {title}",fontsize=fs)
+        ax.set_xlabel("Frequency [Hz]",fontsize=fs)
+        ax.set_ylabel("Frequency of frequency",fontsize=fs)
         ax.grid(True)
+
+def plot_energy_vs_frequency(transform_object,sampling_rate=None,ax=None,title=''):
+    'plot the energy of each packet against its frequency for the last level of transform'
+    if sampling_rate:
+        transform_object.calc_frequencies(sampling_rate)
+    nodes = transform_object.get_level()
+    energy = transform_object.list_energy()
+    frequencies = []
+    for node in nodes:
+        frequencies.append(1/2*(node.frequency_range[0]+node.frequency_range[1]))
+    if ax:
+        ax.plot(frequencies,energy)
+        ax.set_title(f'Energy vs Subband Frequency {title}',fontsize=fs)
+        ax.set_xlabel('Frequencies [Hz]',fontsize=fs)
+        ax.set_ylabel('Energy (arbitrary)',fontsize=fs)
+    else:
+        plt.plot(frequencies,energy)
+        plt.title(f'Energy vs Subband Frequency {title}',fontsize=fs)
+        plt.xlabel('Frequencies [Hz]',fontsize=fs)
+        plt.ylabel('Energy (arbitrary)',fontsize=fs)

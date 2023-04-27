@@ -16,7 +16,7 @@ class Transform():
     wavelet: string
         the chosen wavelet for the transform
     mode: string
-        the chosen type of padding
+        the chosen type of padding, see pywt.pad for options
 
     '''
     def __init__(self, data, wavelet, mode):
@@ -25,12 +25,21 @@ class Transform():
         self.data = data
         self.base_node = BaseNode(data) # initialise base node
         self.levels = {0:[self.base_node]} # initialise list of all nodes
+        self.filter_bank = self.pywt_filter_bank(self.wavelet)
 
     def get_level(self,level=None):
         'returns a list of nodes for the chosen level. returns max level by default'
         if level is None:
             level = self.max_level()
         return self.levels[level]
+
+    def add_level(self):
+        'increments the number of levels by 1'
+        self.levels[len(self.levels)] = []
+
+    def max_level(self):
+        'returns the last level of transform'
+        return list(self.levels.keys())[-1]
 
     def add_node(self,node):
         'appends a node to node list'
@@ -39,15 +48,16 @@ class Transform():
             self.add_level()
         self.levels[node.level].append(node)
 
-    def add_level(self):
-        'increments the number of levels by 1'
-        self.levels[len(self.levels)] = []
-
     def create_node(self, parent, a_d):
         'creates a node object, adds it to list of nodes'
         # initialise node object
         node = Node(parent,a_d,self)
         self.add_node(node)
+
+    def pywt_filter_bank(self, wavelet = 'haar'):
+        'obtains the filter coefficients from the pywt filter bank function'
+        w = pywtWavelet(wavelet)
+        return w.filter_bank
 
     def calc_frequencies(self,sampling_rate=None):
         'set the sampling rate to give information about nyquist frequency'
@@ -56,8 +66,15 @@ class Transform():
         self.sampling_rate = sampling_rate
         for level in self.levels:
             for node in self.levels[level]:
-                node.frequency_range = node.freq_calc(self.sampling_rate)
+                node.frequency_range = node.calc_freq(self.sampling_rate)
     
+    def calc_total_energy(self,level=None):
+        'calculates the total energy of the transform at a given level'
+        total_energy = 0
+        for node in self.get_level(level):
+            total_energy += np.sum(node.data**2)
+        return total_energy
+
     def show_all_energy(self):
         'prints the energy for each node'
         for level in self.levels:
@@ -81,10 +98,6 @@ class Transform():
         for node in nodes:
             energies.append(node.energy)
         return energies
-
-    def max_level(self):
-        'returns the last level of transform'
-        return list(self.levels.keys())[-1]
     
     def get_node(self,id,nodes):
         'finds a node for a given path or frequency from a list of nodes'
@@ -128,7 +141,7 @@ class Transform():
                     node_list.append(node)
         return node_list
     
-    def packet_nodes_for_rec(self,level=None,*,keep=None,leave=None,min_energy=0):
+    def packet_nodes_for_rec(self,level=None,*,keep=None,leave=None,min_energy=0,max_energy=None):
         '''
         gather nodes for reconstruction with more than min_energy.
         if ids is specified, only uses nodes specified in ids, regardless of energy.
@@ -144,6 +157,8 @@ class Transform():
             list of ids (path of frequency content) to leave out of reconstruction
         min_energy: float
             only add nodes with specified minimum energy
+        max_energy: float
+            only append nodes with specified maximum energy            
         
         Returns
         -------
@@ -157,11 +172,11 @@ class Transform():
         '''
         # only one of keep, leave, and min_energy can be defined
         counter = 0
-        for arg in [keep,leave,min_energy]:
+        for arg in [keep,leave,min_energy,max_energy]:
             if arg:
                 counter += 1
         if counter > 1:
-            raise SyntaxError('only specify 1 of keep, leave, min_energy')
+            raise SyntaxError('only specify one of keep, leave, min_energy')
         
         node_list = [] 
         nodes = self.get_level(level) # max level by default
@@ -182,10 +197,16 @@ class Transform():
                         break
                 else:
                     node_list.append(node)
-        else:
+        elif min_energy:
             for node in nodes:
                 if node.energy > min_energy:
                     node_list.append(node)  
+                else:
+                    node_list.append(None)
+        elif max_energy:
+            for node in nodes:
+                if node.energy < max_energy:
+                    node_list.append(node)
                 else:
                     node_list.append(None)
         return node_list
@@ -242,10 +263,6 @@ class Transform():
                     output.append(node.data)
         return output
     
-    def pywt_filter_bank(self, wavelet = 'haar'):
-        'obtains the filter coefficients from the pywt filter bank function'
-        w = pywtWavelet(wavelet)
-        return w.filter_bank
 
     
 class Node():
@@ -273,7 +290,7 @@ class Node():
         self.a_d = a_d
         self.level = parent.level+1
         # calculate coefficients
-        filter_bank = self.transform_object.pywt_filter_bank(self.transform_object.wavelet)
+        filter_bank = self.transform_object.filter_bank
         if a_d == 'a':
             filter_coeffs = filter_bank[0]
         else:
@@ -281,9 +298,9 @@ class Node():
         self.data = self.filter(filter_coeffs, self.transform_object.mode)
 
         # calculate energy, frequency, and kurtosis
-        self.energy = self.energy_calc()
+        self.energy = self.calc_energy()
         self.kurtosis = self.calc_kurtosis()
-        self.norm_frequency_range = self.norm_freq_calc()
+        self.norm_frequency_range = self.calc_norm_freq()
         self.frequency_range = None
 
     def filter(self, filter_coeffs, mode):
@@ -293,7 +310,7 @@ class Node():
         # calculate signal extension length
         length = len(filter_coeffs) - 2
         l2 = length
-        if len(parent_data) % 2:
+        if len(parent_data) % 2: # for odd length data, add an extra entry on the right
                 l2 += 1
         # signal extension
         data = pywtpad(parent_data,(length,l2),mode)
@@ -303,11 +320,12 @@ class Node():
         data = data[::2]
         return data
     
-    def energy_calc(self):
+    def calc_energy(self):
         'calculates the energy in the node'
-        return np.var(self.data)
+        data = self.data
+        return 1/len(data)*np.sum(data**2)
     
-    def norm_freq_calc(self):
+    def calc_norm_freq(self):
         '''
         calculates the frequency range of the node as an upper and lower bound between 0-1.
         for example, node 'aa' would have a normalised frequency range of 0-0.25
@@ -337,7 +355,7 @@ class Node():
         'caclulates the kurtosis of the data in the node'
         return kurtosis(self.data)    
     
-    def freq_calc(self,sampling_rate):
+    def calc_freq(self,sampling_rate):
         'converts the normalised frequency range to an actual freuqency range'
         nyquist_frequency = sampling_rate/2
         lower_bound = self.norm_frequency_range[0]*nyquist_frequency
@@ -367,8 +385,8 @@ class Node():
         if isinstance(id,str):
             return id == self.path
         else:
-            if not self.frequency_range:
-                error = 'call transform_object.calc_frequencies() before finding node by frequency'
+            if self.frequency_range is None:
+                error = 'call transform_object.calc_frequencies() or svd_object.calc_frequencies() before finding node by frequency'
                 raise AttributeError(error)
             freq_range = self.frequency_range
             return (id >= freq_range[0]) & (id <= freq_range[1])
@@ -388,5 +406,5 @@ class BaseNode(Node):
         self.path = ''
         self.level = 0
         self.norm_frequency_range = (0,1)
-        self.energy = self.energy_calc()
+        self.energy = self.calc_energy()
     

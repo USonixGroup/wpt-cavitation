@@ -23,7 +23,7 @@ def sin(A, frequency, phi, t):
     sin_wave = A*np.sin(omega*t-phi)
     return sin_wave
 
-def sound_wave(A, frequencies, duration, sampling_rate,  delay = 0, end = 0):
+def sound_wave(A, frequencies, duration, sampling_rate,  delay = None, end = None):
     ''' 
     Returns a sound wave with made up of sine waves with frequencies given as a 
     list. delay and end can be specified to start the wave early and cut it of 
@@ -69,6 +69,10 @@ def sound_wave(A, frequencies, duration, sampling_rate,  delay = 0, end = 0):
         # track the frequency of the sine wave added
 
     # add delay and end
+    if end is None:
+        end = duration
+    if delay is None:
+        delay = 0
     delay_index = find_delay_index(t,delay)
     end_index = find_end_index(t,end)
 
@@ -77,11 +81,53 @@ def sound_wave(A, frequencies, duration, sampling_rate,  delay = 0, end = 0):
     
     return wave, t
 
-def noise(standard_deviation, duration, sampling_rate):
-    'creates and array of noise with the same dimensions as the synthetic data'
-    t = np.arange(0,duration,1/sampling_rate)
+def noise(standard_deviation, duration=None, sampling_rate=None, time=None):
+    '''
+    creates and array of noise with the same dimensions as the synthetic data
+    can be specified using either an array of time to fit noise into or can 
+    '''
+    if duration is not None and sampling_rate is not None:
+        t = np.arange(0,duration,1/sampling_rate)
+    elif time:
+        t = time
+    else:
+        raise ValueError('provide the sampling rate and duration of the signal or an array of time')
     noise = np.random.normal(0,standard_deviation,len(t))
     return noise
+
+def transients(probability, amplitude, duration = None, sampling_rate = None, time = None):
+    '''
+    Creates sharp transient signals
+
+    Parameters
+    ----------
+    probability: float
+        between 0-1, this is the probability that an entry in the transient array is non zero
+    amplitude: float
+        the amplitude of the transients
+    duration: float
+        the time duration of the signal
+    sampling_rate: float
+        sampling rate of the transducer used the create the signal
+    time: array
+        array of time, can be used instead of duration and sampling rate
+    
+    Returns
+    -------
+    transient_array: array
+        array of transient features to be added to the sound wave
+    '''
+    if duration is not None and sampling_rate is not None:
+        t = np.arange(0,duration,1/sampling_rate)
+    elif time:
+        t = time
+    else:
+        raise ValueError('provide the sampling rate and duration of the signal or an array of time')
+    transient_array = []
+    for i in range(len(t)):
+        if np.random.rand() < probability:
+            transient_array[i] = amplitude
+    return transient_array
 
 def find_delay_index(t,delay):
     'finds the index of the start of the delayed signal'

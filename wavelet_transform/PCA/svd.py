@@ -1,6 +1,7 @@
 import numpy as np
 from ..wpt import transform as wpt
 from scipy import stats
+from scipy.signal import blackmanharris
 
 class SVD():
     '''
@@ -14,12 +15,21 @@ class SVD():
         the number of windows to create
     levels: int
         the number of levels of transform
-    wavelet: string
-        the wavelet used for the transform
     overlap: float
         the overlap between the windows on a range of 0-1
+    wavelet: string
+        the wavelet used for the transform
+    sampling_rate: float
+        the sampling rate used to calculate the frequencies ranges of each subband.
+        Not necessary for most functions of the SVD class to be carried out.
+    mode: string
+        the mode for padding used in the wavelet transforms. See pywt library for options.
+    norm: string
+        the method for normalising the energy matrix before SVD
     '''
-    def __init__(self,data,windows,levels,overlap = 0,wavelet = 'haar',sampling_rate = None):
+    def __init__(self,data,windows,levels,overlap = 0,
+                 wavelet = 'haar', sampling_rate = None, mode='symmetric',
+                 norm = 'kernel_peak'):
         # track input parameters
         self.data = data
         self.windows = windows
@@ -27,6 +37,8 @@ class SVD():
         self.input_overlap = overlap
         self.wavelet = wavelet
         self.sampling_rate = sampling_rate
+        self.mode = mode
+        self.norm = norm
         self.win_parameter_check()
 
         # generate results
@@ -37,7 +49,7 @@ class SVD():
 
     def multi_window(self):
         '''
-        create overlapping blackman windows on the data
+        create overlapping blackman harris windows on the data
 
         Parameters
         ----------
@@ -59,7 +71,7 @@ class SVD():
 
         # create window
         window_size,offset = self.calc_win_size()
-        window = np.blackman(window_size)
+        window = blackmanharris(window_size)
 
         # calculate actual overlap
         actual_overlap = 1-offset/window_size
@@ -93,7 +105,7 @@ class SVD():
         win_size: int
             the length of the window array
         offest: int
-            the distance between the start of neighbouring windows
+            the distance between neighbouring windows
         '''
         # input parameters
         data_len = len(self.data)
@@ -103,8 +115,6 @@ class SVD():
         # calculate window size
         win_size = int(data_len/((windows-1)*(1-overlap)+1)) # calculate window size, round down
         offset = int((1-overlap)*win_size) # calculate and round offset
-        if offset == 0:
-            offset = 1 # offset must be at least 1
         return win_size,offset
 
     def win_parameter_check(self):
@@ -112,7 +122,12 @@ class SVD():
         if self.input_overlap >= 1 or self.input_overlap < 0:
             raise ValueError('overlap must be in range 0-1')
         if len(self.data) < self.windows:
-            raise ValueError('too many windows')
+            error = 'too many windows, reduce level of transform, provide more data, or decrease number of windows'
+            raise ValueError(error)
+        if not isinstance(self.windows,int):
+            raise ValueError('number of windows must be an integer')
+        elif self.windows < 2:
+            raise ValueError('use at least 2 windows')
         
     def form_energy_matrix(self):
         '''
@@ -144,18 +159,18 @@ class SVD():
 
         # initialise arrays
         transform_objects = [] # initialise list of transforms
-        energy_matrix = np.zeros((2**levels,windowed_data.shape[0])) # initialise energy matrix
+        energy_matrix = np.zeros((windowed_data.shape[0],2**levels)) # initialise energy matrix
         for i in range(windowed_data.shape[0]):
             # transform
             window = windowed_data[i,:]
-            transform_object = wpt.dwpt(window,levels,wavelet)
+            transform_object = wpt.dwpt(window,levels,wavelet,self.mode)
             transform_object.calc_frequencies(sampling_rate)
 
             # add data to each matrix
             transform_objects.append(transform_object)
 
             energies = transform_object.list_energy() # create list of energies
-            energy_matrix[:,i] = energies # store energies for each window in columns
+            energy_matrix[i,:] = energies # store energies for each window in columns
 
         return energy_matrix,transform_objects
     
@@ -169,29 +184,34 @@ class SVD():
         energy_matrix = self.energy_matrix
         norm_energy_matrix = np.zeros(energy_matrix.shape)
         # normalise energy matrix
-        for row in range(energy_matrix.shape[0]):
-            energy_row = energy_matrix[row,:]
-
-            data = np.array(energy_row) # equivalent of ksdensity in matlab
-            kde = stats.gaussian_kde(data)
-            x = np.linspace(data.min(), data.max(), 100)
-            p = kde(x)
-            kernel_peak = x[p.argmax()]
-            norm_array = []
-            for i in energy_row:
-                norm_array.append(i/kernel_peak)
-            norm_energy_matrix[row,:] = norm_array
-        return np.linalg.svd(self.energy_matrix),norm_energy_matrix
+        for column in range(energy_matrix.shape[1]): # for each subband
+            energy_col = energy_matrix[:,column] # extract list of energy in one subband
+            data = np.array(energy_col) 
+            if self.norm == 'kernel_peak': # method for normalisation
+                kde = stats.gaussian_kde(data) # equivalent of ksdensity in matlab
+                x = np.linspace(data.min(), data.max(), 100)
+                p = kde(x) # probability density estmate evaluated at 100 points (given by x)
+                kernel_peak = x[p.argmax()]
+                norm_array = energy_col/kernel_peak
+            elif self.norm == 'mean_centre':
+                mean = np.average(data)
+                norm_array = energy_col/mean
+            elif self.norm == 'mean':
+                mean = np.average(data)
+                norm_array = energy_col-mean
+            elif (self.norm is None) or (self.norm=='none'):
+                norm_energy_matrix = energy_matrix.copy()
+                break
+            norm_energy_matrix[:,column] = norm_array
+        return np.linalg.svd(norm_energy_matrix),norm_energy_matrix
     
     def calc_stability_marker(self):
         '''
-        Computes the stability marker using the first eigenvector in the  first
+        Computes the stability marker using the first eigenvector in the first
         SVD matrix.
         '''
-        eigenvector = self.svd_matrices[0][:,0] # first column of first matrix
-        stability_markers = [] # initialise stability markers
-        for i in eigenvector:
-            stability_markers.append(np.sqrt(1/abs(i)))
-        print('eigenvector',eigenvector)
-        print('stability markers',stability_markers)
+        eigenvector = self.svd_matrices[2][0,:] # first row of last matrix
+        stability_markers = np.sqrt(1/abs(eigenvector)) # initialise stability markers
+        # stability_markers = -abs(eigenvector)
+
         return stability_markers
