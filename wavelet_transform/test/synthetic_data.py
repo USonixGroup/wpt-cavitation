@@ -1,6 +1,6 @@
 import numpy as np
 
-def sin(A, frequency, phi, t):
+def sin(A,frequency,phi,t):
     '''
     returns a sine wave with specified parameters
 
@@ -58,7 +58,7 @@ def sound_wave(A, frequencies, duration, sampling_rate,  delay = None, end = Non
     # initialise parameters
     phi = 0
 
-    if isinstance(frequencies,int) or isinstance(frequencies,float): 
+    if isinstance(frequencies,(int,float)): 
         frequencies = [frequency] # compatibility with a single frequency
 
     for frequency in frequencies:
@@ -66,7 +66,6 @@ def sound_wave(A, frequencies, duration, sampling_rate,  delay = None, end = Non
         sin_wave = sin(A,frequency,phi,t)
         # add sine wave to total wave
         wave = wave + sin_wave     
-        # track the frequency of the sine wave added
 
     # add delay and end
     if end is None:
@@ -95,40 +94,6 @@ def noise(standard_deviation, duration=None, sampling_rate=None, time=None):
     noise = np.random.normal(0,standard_deviation,len(t))
     return noise
 
-def transients(probability, amplitude, duration = None, sampling_rate = None, time = None):
-    '''
-    Creates sharp transient signals
-
-    Parameters
-    ----------
-    probability: float
-        between 0-1, this is the probability that an entry in the transient array is non zero
-    amplitude: float
-        the amplitude of the transients
-    duration: float
-        the time duration of the signal
-    sampling_rate: float
-        sampling rate of the transducer used the create the signal
-    time: array
-        array of time, can be used instead of duration and sampling rate
-    
-    Returns
-    -------
-    transient_array: array
-        array of transient features to be added to the sound wave
-    '''
-    if duration is not None and sampling_rate is not None:
-        t = np.arange(0,duration,1/sampling_rate)
-    elif time:
-        t = time
-    else:
-        raise ValueError('provide the sampling rate and duration of the signal or an array of time')
-    transient_array = []
-    for i in range(len(t)):
-        if np.random.rand() < probability:
-            transient_array[i] = amplitude
-    return transient_array
-
 def find_delay_index(t,delay):
     'finds the index of the start of the delayed signal'
     for delay_index in range(len(t)):
@@ -142,18 +107,3 @@ def find_end_index(t,end):
         if t[end_index] < end:
             return end_index
         end_index -= 1
-
-def window(data,mode = 'hanning'):
-    '''
-    applies a window to the data
-
-    Parameters
-    ----------
-    data: array
-        the data to be windowed
-    mode: string
-        the type of window to be used
-    '''
-    if mode == 'hanning':
-        data *= np.hanning(len(data))
-    return data

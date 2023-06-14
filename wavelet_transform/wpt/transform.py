@@ -1,6 +1,6 @@
 from .transform_object import *
 
-def dwpt(data, levels, wavelet, mode = 'symmetric'):
+def dwpt(data, levels, wavelet='haar', mode = 'symmetric'):
     '''
     Packet transform. Returns a transform object containing node objects 
     which returns the coefficients at every level.
@@ -36,7 +36,7 @@ def dwpt(data, levels, wavelet, mode = 'symmetric'):
 
     return transform_object
 
-def dwt(data, levels, wavelet, mode = 'symmetric'):
+def dwt(data, levels, wavelet='haar', mode = 'symmetric'):
     '''
     discrete wavelet transform
 

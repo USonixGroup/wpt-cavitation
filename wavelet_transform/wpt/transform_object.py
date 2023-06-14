@@ -1,6 +1,7 @@
 from pywt import Wavelet as pywtWavelet
 from pywt import pad as pywtpad
 import numpy as np
+import scipy.signal as sp
 from ..utils.extensions import sci_form
 
 from scipy.stats import kurtosis
@@ -106,12 +107,11 @@ class Transform():
                 return node
         # error message of node is not found
         if isinstance(id,str): # search for node with path
-            print(f'could not find node with specified path {id}')
-            return None
+            raise ValueError(f'could not find node with specified path {id}')
         else: # search for node with frequency content
-            print(f'could not find node containing specified frequency: {sci_form(id)} Hz')
+            raise ValueError(f'could not find node containing specified frequency: {sci_form(id)} Hz')
 
-    def find_nodes(self,nodes,ids=None,min_energy=0):
+    def find_nodes(self,nodes,ids=None,min_energy=0,max_energy=np.inf):
         '''
         list nodes with specified frequency and/or path
 
@@ -123,6 +123,8 @@ class Transform():
             list of frequecies or paths to match with nodes
         min_energy: float
             specify a minimum energy for the nodes 
+        max_energy: float
+            specify a maximum energy for the nodes
 
         Returns
         -------
@@ -133,19 +135,24 @@ class Transform():
         if ids: # if the ids are specified
             for id in ids:
                 node = self.get_node(id,nodes)
-                if node.energy > min_energy:
+                if (node.energy > min_energy) & (node.energy < max_energy):
                     node_list.append(node)
         else:
             for node in nodes:
-                if node.energy > min_energy:
+                if (node.energy > min_energy) & (node.energy < max_energy):
                     node_list.append(node)
         return node_list
     
-    def packet_nodes_for_rec(self,level=None,*,keep=None,leave=None,min_energy=0,max_energy=None):
+    def packet_nodes_for_rec(self,level=None,*,keep=None,leave=None,min_energy=0,max_energy=np.inf):
         '''
-        gather nodes for reconstruction with more than min_energy.
-        if ids is specified, only uses nodes specified in ids, regardless of energy.
-        keep, leave, and min_energy cannot be used in tandem
+        gather nodes for reconstruction with more than min_energy. Must be called before inverse
+        transform. keep and leave cannot be used in tandem. min_energy and max_energy will filter 
+        out kept nodes that do not meet requirements. If you want to keep all nodes, instead use
+        nodes_for_rec = transform_object.get_level().
+
+        e.g.
+        transform_object.packet_nodes_for_rec(keep=['aa','dd'],min_energy=0.1)
+        will reconstruct nodes 'aa' and 'dd' as long as they have minimum energy of 0.1.
 
         Parameters
         ----------
@@ -168,48 +175,83 @@ class Transform():
         Raises
         ------
         SyntaxError:
-            when specifying more than one of keep, leave, and min_energy
+            when specifying more than one of keep and leave.
         '''
-        # only one of keep, leave, and min_energy can be defined
-        counter = 0
-        for arg in [keep,leave,min_energy,max_energy]:
-            if arg:
-                counter += 1
-        if counter > 1:
-            raise SyntaxError('only specify one of keep, leave, min_energy')
+        # only one of keep, leave
+        if keep and leave:
+            raise SyntaxError('only specify one of keep, leave, min_energy, and max_energy')
+        
+        if (not isinstance(keep,list)) & (keep is not None):
+            raise ValueError('keep must be a list')
+        if (not isinstance(leave,list)) & (leave is not None):
+            raise ValueError('leave must be a list')
         
         node_list = [] 
         nodes = self.get_level(level) # max level by default
         if keep:
             for node in nodes:
-                for id in keep:
-                    # print('testing id',id)
-                    if node.match_id(id):
-                        node_list.append(node)
-                        break
+                # print('testing id',id)
+                if node.match_ids(keep):
+                    node_list.append(node)
                 else:
                     node_list.append(None) # append None if node does not meet requirements
         elif leave:
             for node in nodes:
-                for id in leave:
-                    if node.match_id(id):
-                        node_list.append(None)
-                        break
+                if node.match_ids(id):
+                    node_list.append(None)
                 else:
                     node_list.append(node)
-        elif min_energy:
-            for node in nodes:
-                if node.energy > min_energy:
-                    node_list.append(node)  
-                else:
-                    node_list.append(None)
-        elif max_energy:
-            for node in nodes:
-                if node.energy < max_energy:
-                    node_list.append(node)
-                else:
-                    node_list.append(None)
+        else:
+            node_list = self.get_level(level)
+
+        for node in node_list: # filter node list by energy range
+            if node is None:
+                continue
+            if node.energy is None:
+                if min_energy > 0 and max_energy:
+                    print('could not sort by energy, call function transform_object.calc_frequencies()')
+                break
+            if not ((node.energy >= min_energy) & (node.energy <= max_energy)):
+                node_list[node_list.index(node)] = None
+        for node in node_list:
+            if node is not None:
+                break
+        else:
+            print('could not find any nodes matching input arguments')
         return node_list
+    
+    def nodes2data(self,nodes = None,*,synth_data=False):
+        '''
+        converts a list of nodes to a list of arrays containing their data. 
+        use before inverse transform to convert output from packet_nodes_for_rec() or get_level()
+
+        Parameters
+        ----------
+        nodes: list
+            list of node objects
+        synth_data: bool
+            replaces all node data with synthetic data
+        
+        Returns
+        -------
+        output: list
+            list of arrays, replacing the respective node in the input list with its data
+        '''
+        output = []
+        if nodes:
+            for node in nodes:
+                if node:
+                    if not synth_data:
+                        output.append(node.data)
+                    else:
+                        output.append(synth_data)
+                else:
+                    output.append(None)
+        else:
+            for level in self.levels:
+                for node in self.levels[level]:
+                    output.append(node.data)
+        return output
 
     def dwt_results(self):
         '''
@@ -233,36 +275,7 @@ class Transform():
         # append final approx node
         approx_node = nodes[0]
         results.insert(0,approx_node)
-        return results
-    
-    def nodes2data(self,nodes = None):
-        '''
-        converts a list of nodes to a list of arrays containing their data. 
-        use before inverse transform
-
-        Parameters
-        ----------
-        nodes: list
-            list of node objects
-        
-        Returns
-        -------
-        output: list
-            list of arrays, replacing the respective node in the input list with its data
-        '''
-        output = []
-        if nodes:
-            for node in nodes:
-                if node:
-                    output.append(node.data)
-                else:
-                    output.append(None)
-        else:
-            for level in self.levels:
-                for node in self.levels[level]:
-                    output.append(node.data)
-        return output
-    
+        return results    
 
     
 class Node():
@@ -315,7 +328,7 @@ class Node():
         # signal extension
         data = pywtpad(parent_data,(length,l2),mode)
         # perform convolution
-        data = np.convolve(data, filter_coeffs, 'valid')
+        data = sp.fftconvolve(data, filter_coeffs, 'valid')
         # downsample
         data = data[::2]
         return data
@@ -362,34 +375,56 @@ class Node():
         upper_bound = self.norm_frequency_range[1]*nyquist_frequency
         return lower_bound,upper_bound 
     
-    def match_id(self,id):
+    def match_ids(self,id):
         '''
         determines whether the node contains the specified frequency in its frequency range
         or has the specified path
 
         Paremeters
         ----------
-        id: float or string
-            can be a frequency or path e.g. 'aa'
+        id: float or string or list of floats or strings
+            can be a frequency or path e.g. 'aa'. can also be a list of ids to match
 
         Returns
         -------
         match: boolean
-            whether the matches the id
+            whether the node matches the id
 
         Raises
         ------
         AttributeError: error
             raised when trying to match by frequencies and the sampling rate has not been supplied
         '''
+        if isinstance(id,list):
+            for i in id:
+                if self.match_id(i):
+                    return True
+            else:
+                return False
+        else:
+            return self.match_id(id)
+
+    def match_id(self,id):
+        'determines whether the node matches a given id'
         if isinstance(id,str):
             return id == self.path
-        else:
+        elif isinstance(id,(float,int)):
             if self.frequency_range is None:
                 error = 'call transform_object.calc_frequencies() or svd_object.calc_frequencies() before finding node by frequency'
                 raise AttributeError(error)
             freq_range = self.frequency_range
             return (id >= freq_range[0]) & (id <= freq_range[1])
+        
+    def node_number(self):
+        'converts path into node number to compare with matlab'
+        path = self.path
+        node_no = 0
+        bit = 1
+        for i in reversed(path):
+            if i == 'd':
+                node_no += bit
+            bit *= 2
+        return node_no
 
 class BaseNode(Node):
     '''

@@ -1,11 +1,14 @@
 from pywt import waverec,idwt
 from numpy import log2
 
-def inv_dwt(coeffs,wavelet):
-    'calls the waverec() function from the pywavelet library'
-    return waverec(coeffs,wavelet)
+def inv_dwt(coeffs,wavelet='haar',mode='symmetric'):
+    '''
+    calls the waverec() function from the pywavelet library
+    coeffs are from transform_object.nodes2data(transform_object.dwt_results())
+    '''
+    return waverec(coeffs,wavelet,mode)
 
-def inv_dwpt(coeffs, wavelet):
+def inv_dwpt(coeffs, wavelet='haar', mode='symmetric'):
     '''
     calls the single level idwt function from the pywt library recursively
     to find the inverse transform from a list of packet nodes at a given level.
@@ -17,16 +20,20 @@ def inv_dwpt(coeffs, wavelet):
         of the packet transform. these nodes must be given in order of 
         frequency range lowest to highest. Examples are found in the docs
         folder under inverse testing.
-    wavelet: string
+    wavelet: str
         the type of wavelet used in the transform
+    mode: str
+        the padding used in the transform
 
     Returns
     -------
     output: array
-        the signal reconstructed from the provided nodes
+        the signal reconstructed from the provided nodes. This might be longer 
+        than the original data, in which case the coefficients at the right end 
+        can be cut.
     '''
     input = coeffs
-    levels = round(log2(len(coeffs)))
+    levels = int((log2(len(coeffs))))
     for _ in range(levels):
         output = []
         for i in range(int(len(input)/2)):
@@ -35,8 +42,7 @@ def inv_dwpt(coeffs, wavelet):
             if (approx is None) and (detail is None): # if neither node is used, move on
                 output.append(None)
                 continue
-            upcoef = idwt(approx,detail,wavelet,mode='symmetric')
-            output.append(upcoef)
+            c = idwt(approx,detail,wavelet,mode)
+            output.append(c)
         input = output.copy()
-        output = output[0]
-    return output
+    return output[0]
