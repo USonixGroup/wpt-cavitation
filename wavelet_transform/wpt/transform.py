@@ -28,8 +28,8 @@ def dwpt(data, levels, wavelet='haar', mode = 'symmetric'):
     transform_object = Transform(data, wavelet, mode) # create wavelet object
 
     # create approximamtion and detail nodes for each node in the last level
-    for level in range(1,levels+1):
-        for node in transform_object.get_level(level-1):
+    for level in range(0,levels):
+        for node in transform_object.get_level(level):
             # create nodes
             transform_object.create_node(node,'a')
             transform_object.create_node(node,'d')        

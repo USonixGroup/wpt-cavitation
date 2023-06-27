@@ -28,11 +28,31 @@ class Transform():
         self.levels = {0:[self.base_node]} # initialise list of all nodes
         self.filter_bank = self.pywt_filter_bank(self.wavelet)
 
-    def get_level(self,level=None):
-        'returns a list of nodes for the chosen level. returns max level by default'
+    def get_level(self,level=None,order='natural'):
+        '''
+        returns a list of nodes for the chosen level. returns max level by default
+        
+        Parameters
+        ----------
+        level: int
+            the level of transform to extract nodes from
+        order: str
+            the order in which to list the nodes. see get_level in pywt.
+
+        Returns
+        -------
+        nodes: list
+            list of nodes in selected level
+        '''
         if level is None:
             level = self.max_level()
-        return self.levels[level]
+        if order == 'natural':
+            return self.levels[level]
+        elif order == 'freq':
+            nodes = self.levels[level].copy()
+            nodes.sort(key=lambda x:x.norm_frequency_range[0])
+            return nodes
+
 
     def add_level(self):
         'increments the number of levels by 1'
@@ -357,10 +377,18 @@ class Node():
         lower_bound = parent.norm_frequency_range[0]
         upper_bound = parent.norm_frequency_range[1]
 
+        hi_or_lo = 0 # even if the node takes the lower half of frequecy range, odd otherwise
+
+        if self.path[:-1].count('d') % 2: # if there is an odd number of d's
+            hi_or_lo += 1
+
+        if self.a_d == 'd':
+            hi_or_lo += 1
+
         diff = upper_bound - lower_bound
-        if self.a_d == 'a':
+        if not hi_or_lo%2:
             upper_bound -= diff/2
-        elif self.a_d == 'd':
+        else:
             lower_bound += diff/2
         return lower_bound,upper_bound
     
