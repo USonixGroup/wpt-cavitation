@@ -1,17 +1,16 @@
-from ..utils.extensions import *
+from ..utils.extensions import sci_form
 import matplotlib.pyplot as plt
 import numpy as np
 
-fs = 15 # fontsize
+FS = 15  # fontsize
 
-def full_plot(
-    nodes, data, t_plot, sampling_rate, 
-    title='', frequencies=None 
-    ):
-    '''
-    formatted charts for plotting the results from a dwt or dpwt. Combines relevant plots
-    including those for the sound wave, frequency content of the sonud wave (using synthetic data 
-    package), and plots of the data at each node. 
+
+def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
+    """
+    formatted charts for plotting the results from a dwt or dpwt. Combines
+    relevant plots including those for the sound wave, frequency content of
+    the sonud wave (using synthetic data package), and plots of the data at
+    each node.
 
     Parameters
     ----------
@@ -24,35 +23,36 @@ def full_plot(
     nyquist_frequency: float
         1/2*sampling rate
     frequencies: list
-        list of floats containing the frequencies of the synthetic sound wave for the historgram
-    '''
+        list of floats containing the frequencies of the synthetic sound wave
+        for the historgram
+    """
     # plot data
     fig_1, ax_1 = plt.subplots()
     plot_wave(data, t_plot, ax_1, title)
 
     # plot transform coefficients all at once
-    if frequencies: # plot a histogram of frequency content in data as well
+    if frequencies:  # plot a histogram of frequency content in data as well
         fig_2, ax_2 = plt.subplots(2)
         plot_all_final_nodes(nodes, ax_2[0], title)
-        plot_frequencies(frequencies, ax_2[1], title) 
+        plot_frequencies(frequencies, ax_2[1], title)
     else:
         fig_2, ax_2 = plt.subplots()
         plot_all_final_nodes(nodes, ax_2, title)
 
     # plot each node separately.
-    rows = round(len(nodes)/2)
-    fig_3, ax_3 = plt.subplots(rows,2)
-    fig_3.set_size_inches(12,3*rows)
+    rows = round(len(nodes) / 2)
+    fig_3, ax_3 = plt.subplots(rows, 2)
+    fig_3.set_size_inches(12, 3 * rows)
     plot_nodes(nodes, ax_3, sampling_rate, rows, columns=2)
 
     fig_1.tight_layout()
     fig_2.tight_layout()
     fig_3.tight_layout()
     plt.show()
-    
+
 
 def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
-    '''
+    """
     separately plots the data from a provided list of nodes.
 
     Parameters
@@ -67,89 +67,146 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
         the number of rows to create
     columns: int
         the number of columns to create
-    '''
-    if not rows: # default number of rows
+    """
+    if not rows:  # default number of rows
         rows = round(len(nodes))
     section_counter = 1
 
-    nyquist_frequency = sampling_rate/2
+    nyquist_frequency = sampling_rate / 2
     for row in range(rows):
         for column in range(columns):
             # plot coefficients
             try:
-                node = nodes[section_counter-1]
+                node = nodes[section_counter - 1]
             except IndexError:
                 break
-            if rows == 1 :
+            if rows == 1:
                 axis = ax[column]
             elif columns == 1:
                 axis = ax[row]
             else:
                 axis = ax[row, column]
             axis.plot(node.data)
-            
+
             # set labels
-            axis.set_xlabel('coefficient number',fontsize=fs)
-            axis.set_ylabel('magnitude',fontsize=fs)
+            axis.set_xlabel("coefficient number", fontsize=FS)
+            axis.set_ylabel("magnitude", fontsize=FS)
             axis.grid(True)
 
-            lower_frequency = node.norm_frequency_range[0]*nyquist_frequency
-            upper_frequency = node.norm_frequency_range[1]*nyquist_frequency
+            lower_frequency = node.norm_frequency_range[0] * nyquist_frequency
+            upper_frequency = node.norm_frequency_range[1] * nyquist_frequency
 
             lf = sci_form(lower_frequency)
             uf = sci_form(upper_frequency)
 
-            title = f'''
+            n = len(nodes)
+
+            title = f"""
             Coefficients, {lf}-{uf} Hz
-            energy: {sci_form(node.energy)} [section {section_counter} of {len(nodes)}]
-            '''
-            axis.set_title(title,fontsize=fs)
+            energy: {sci_form(node.energy)} [section {section_counter} of {n}]
+            """
+            axis.set_title(title, fontsize=FS)
             section_counter += 1
 
-def plot_all_final_nodes(nodes, ax, title = ''):
-    'concatenate the data from all of the nodes and plot'
+
+def plot_all_final_nodes(nodes, ax, title=""):
+    "concatenate the data from all of the nodes and plot"
     output = np.array([])
     for node in nodes:
-        output = np.concatenate((output,node.data))
+        output = np.concatenate((output, node.data))
     ax.plot(output)
-    ax.set_title(f"Coefficients {title}",fontsize=fs)
-    ax.set_xlabel("Coefficient Number",fontsize=fs)
-    ax.set_ylabel("Coefficient",fontsize=fs)
+    ax.set_title(f"Coefficients {title}", fontsize=FS)
+    ax.set_xlabel("Coefficient Number", fontsize=FS)
+    ax.set_ylabel("Coefficient", fontsize=FS)
     ax.grid(True)
 
-def plot_wave(data, t_plot, ax, title = ''):
-    'plots the data'
-    ax.plot(t_plot,data)
-    ax.set_xlabel("Time [s]",fontsize=fs)
-    ax.set_ylabel("Amplitude [mV]",fontsize=fs)
-    ax.set_title(f"Data {title}",fontsize=fs)
+
+def plot_wave(data, t_plot, ax, title=""):
+    "plots the data"
+    ax.plot(t_plot, data)
+    ax.set_xlabel("Time [s]", fontsize=FS)
+    ax.set_ylabel("Amplitude [mV]", fontsize=FS)
+    ax.set_title(f"Data {title}", fontsize=FS)
     ax.grid(True)
 
-def plot_frequencies(frequencies, ax, title =''):
-    'creates a histogram of the frequencies present in the synthetic data'
+
+def plot_frequencies(frequencies, ax, title=""):
+    "creates a histogram of the frequencies present in the synthetic data"
     if frequencies:
         ax.hist(frequencies)
-        ax.set_title(f"Frequency Distribution {title}",fontsize=fs)
-        ax.set_xlabel("Frequency [Hz]",fontsize=fs)
-        ax.set_ylabel("Frequency of frequency",fontsize=fs)
+        ax.set_title(f"Frequency Distribution {title}", fontsize=FS)
+        ax.set_xlabel("Frequency [Hz]", fontsize=FS)
+        ax.set_ylabel("Frequency of frequency", fontsize=FS)
         ax.grid(True)
 
-def plot_energy_vs_frequency(transform_object,sampling_rate=None,ax=None,title=''):
-    'plot the energy of each packet against its frequency for the last level of transform'
+
+def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
+    "plot the energy vs frequency for each packet in the last transform level"
     if sampling_rate:
-        transform_object.calc_frequencies(sampling_rate)
-    nodes = transform_object.get_level()
-    energy = transform_object.list_energy()
+        transform_obj.calc_frequencies(sampling_rate)
+    nodes = transform_obj.get_level(order="freq")
+    energy = transform_obj.list_energy(order="freq")
     frequencies = []
     for node in nodes:
-        frequencies.append(1/2*(node.frequency_range[0]+node.frequency_range[1]))
+        freq_range = node.frequency_range
+        frequencies.append(1 / 2 * (freq_range[0] + freq_range[1]))
     if ax:
-        ax.plot(frequencies,energy)
-        ax.set_title(f'Energy vs Subband Frequency {title}',fontsize=fs)
-        ax.set_xlabel('Frequencies [Hz]',fontsize=fs)
-        ax.set_ylabel('Energy (arbitrary)',fontsize=fs)
+        ax.plot(frequencies, energy)
+        ax.set_title(f"Energy vs Subband Frequency {title}", fontsize=FS)
+        ax.set_xlabel("Frequencies [Hz]", fontsize=FS)
+        ax.set_ylabel("Energy (arbitrary)", fontsize=FS)
     else:
-        plt.plot(frequencies,energy)
-        plt.title(f'Energy vs Subband Frequency {title}',fontsize=fs)
-        plt.xlabel('Frequencies [Hz]',fontsize=fs)
-        plt.ylabel('Energy (arbitrary)',fontsize=fs)
+        plt.plot(frequencies, energy)
+        plt.title(f"Energy vs Subband Frequency {title}", fontsize=FS)
+        plt.xlabel("Frequencies [Hz]", fontsize=FS)
+        plt.ylabel("Energy (arbitrary)", fontsize=FS)
+
+
+def heisenberg(transform_object, t_end, y_space=1):
+    """
+    calls imshow to create a heisenberg plot of the wavelet packet
+
+    Parameters
+    ----------
+    transform_object: object
+        contains data from the transform to be plotted
+    t_end: float
+        the time the signal ends at
+    x_tick_space: int
+        formats the x axis such that the ticks are more spread out
+    """
+    fig, ax = plt.subplots()
+    fig.set_size_inches(18, 9)
+
+    nodes = transform_object.get_level(order="freq")
+    data = np.zeros((len(nodes), len(nodes[0].data)))
+    for i in range(len(nodes)):  # maybe reverse
+        node = nodes[i]
+        data[i, :] = np.abs(node.data)
+
+    graph = ax.imshow(data, cmap="turbo", aspect="auto")
+    ax.set_ylabel("Centre Frequency of Subband [Hz]", fontsize=20)
+    ax.set_xlabel("Time [s]", fontsize=20)
+    ax.set_title("DWPT of Signal", fontsize=25)
+
+    mid_frequencies = [node.frequency_range[0] for node in nodes]
+    y_labels = [round(freq, 1) for freq in mid_frequencies]
+    sparse_y_labels = [
+        label if not id % y_space else "" for id, label in enumerate(y_labels)
+    ]
+    x_labels = np.linspace(0, t_end, len(node.data))
+    x_space = int(len(x_labels) / 10)
+    sparse_x_labels = [
+        round(label, 1) if id % x_space == 0 else ""
+        for id, label in enumerate(x_labels)
+    ]
+    all_x_ticks = [i for i in range(len(x_labels))]
+    all_y_ticks = [i for i in range(len(y_labels))]
+    ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=15)
+    ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=15)
+
+    fig.tight_layout()
+    cbar = fig.colorbar(graph)
+    cbar.set_label(label="Coefficient amplitude", size=20)
+
+    plt.show()

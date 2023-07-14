@@ -1,8 +1,10 @@
-from .transform_object import *
+from .transform_object import Transform
+import numpy as np
 
-def dwpt(data, levels, wavelet='haar', mode = 'symmetric'):
-    '''
-    Packet transform. Returns a transform object containing node objects 
+
+def dwpt(data, levels, wavelet="haar", mode="symmetric"):
+    """
+    Packet transform. Returns a transform object containing node objects
     which returns the coefficients at every level.
 
     Parameters
@@ -19,25 +21,26 @@ def dwpt(data, levels, wavelet='haar', mode = 'symmetric'):
     Returns
     -------
     transform_object: an object containing the results from the transform
-    '''
-    max_level_check(data,levels)
-    
-    if isinstance(data,list):
+    """
+    max_level_check(data, levels)
+
+    if isinstance(data, list):
         data = np.array(data)
 
-    transform_object = Transform(data, wavelet, mode) # create wavelet object
+    transform_object = Transform(data, wavelet, mode)  # create wavelet object
 
     # create approximamtion and detail nodes for each node in the last level
-    for level in range(0,levels):
+    for level in range(0, levels):
         for node in transform_object.get_level(level):
             # create nodes
-            transform_object.create_node(node,'a')
-            transform_object.create_node(node,'d')        
+            transform_object.create_node(node, "a")
+            transform_object.create_node(node, "d")
 
     return transform_object
 
-def dwt(data, levels, wavelet='haar', mode = 'symmetric'):
-    '''
+
+def dwt(data, levels, wavelet="haar", mode="symmetric"):
+    """
     discrete wavelet transform
 
     Parameters
@@ -54,25 +57,26 @@ def dwt(data, levels, wavelet='haar', mode = 'symmetric'):
     Returns
     -------
     transform_object: an object containing the results from the transform
-    '''
-    max_level_check(data,levels)
+    """
+    max_level_check(data, levels)
 
-    if isinstance(data,list):
+    if isinstance(data, list):
         data = np.array(data)
-    
-    transform_object = Transform(data,wavelet,mode)
 
-    for level in range(1,levels+1):
+    transform_object = Transform(data, wavelet, mode)
+
+    for level in range(1, levels + 1):
         # get approx node in the last level
-        node = transform_object.get_level(level-1)[0]
+        node = transform_object.get_level(level - 1)[0]
         # store in output array for next level
-        transform_object.create_node(node,'a')
-        transform_object.create_node(node,'d')
+        transform_object.create_node(node, "a")
+        transform_object.create_node(node, "d")
 
     return transform_object
 
+
 def max_level_check(data, levels):
-    '''
+    """
     checks if there are too many levels
 
     Parameters
@@ -81,21 +85,23 @@ def max_level_check(data, levels):
         an array of the data or just its length
     levels: int
         the number of levels of transform
-    
+
     Raises
     ------
     ValueError:
         when the number of levels is too high
-    '''
+    """
     max_level = calc_max_level(data)
-    error_message = f'''too many levels. length of data is length of data is: {len(data)}
+    error_message = f"""
+    too many levels. length of data is length of data is: {len(data)}
     the maximum level is: {max_level}
-    '''
+    """
     if levels > max_level:
         raise ValueError(error_message)
-    
+
+
 def calc_max_level(data):
-    'finds the maximum level a 1-dimensional array of data'
+    "finds the maximum level a 1-dimensional array of data"
     max_level = 0
     sections = 1
     while sections < len(data):

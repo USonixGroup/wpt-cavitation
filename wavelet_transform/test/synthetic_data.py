@@ -26,7 +26,7 @@ def sin(amplitude, frequency, phi, t):
 
 
 def sound_wave(
-    amplitudes, frequencies, phases, duration, sampling_rate, delay=None, end=None
+    amplitudes, frequencies, phases, duration, sampling_rate, delay=0, end=None
 ):
     """
     Returns a sound wave with made up of sine waves with frequencies given as a
@@ -77,8 +77,6 @@ def sound_wave(
     # add delay and end
     if end is None:
         end = duration
-    if delay is None:
-        delay = 0
     delay_index = find_delay_index(t, delay)
     end_index = find_end_index(t, end)
 
@@ -88,21 +86,83 @@ def sound_wave(
     return wave, t
 
 
-def noise(standard_deviation, duration=None, sampling_rate=None, time=None):
-    """
-    creates and array of noise with the same dimensions as the synthetic data
-    can be specified using either an array of time to fit noise into or can
-    """
+def time_array(duration=None, sampling_rate=None, time=None):
+    "creates an array with the same length as the synthetic data"
     if duration is not None and sampling_rate is not None:
         t = np.arange(0, duration, 1 / sampling_rate)
     elif time:
         t = time
     else:
         raise ValueError(
-            "provide the sampling rate and duration of the signal or an array of time"
+            """
+            provide the sampling rate and duration of the signal or an array\
+            of time
+            """
         )
+    return t
+
+
+def noise(standard_deviation, duration=None, sampling_rate=None, time=None):
+    """
+    creates and array of noise with the same dimensions as the synthetic data
+    can be specified using either an array of time to fit noise into or can
+    accept the sampling rate and duration used to generate the signal.
+    """
+    t = time_array(duration, sampling_rate, time)
     noise = np.random.normal(0, standard_deviation, len(t))
     return noise
+
+
+def transients(
+    amplitudes, times, durations, duration=None, sampling_rate=None, time=None
+):
+    """
+    create synthetic transients using narrow window functions. compiles them
+    into an array with the same length as the synthetic data
+
+    Parameters
+    ----------
+    amplitudes: list or float
+        a list of amplitudes for the transients
+    times: list or float
+        a list of times that the transients start at
+    durations:
+        a list of the durations of the transients
+    duration: float
+        duration of the transient, in seconds
+    sampling_rate: float
+        sampling rate of the signal. used alongside duration to defined the
+        length of the returned array
+    time: array
+        array of time to fit the transients to. can be called instead of
+        duration and sampling_rate
+
+    Returns
+    -------
+    transient_array: array
+        array containing synthetic transients
+    """
+
+    t = time_array(duration, sampling_rate, time)
+
+    if isinstance(amplitudes, (float, int)):
+        amplitudes = list(amplitudes)
+        times = list(times)
+        durations = list(durations)
+
+    transient_array = np.zeros(len(t))
+    for amp, time, dur in zip(amplitudes, times, durations):
+        i = find_delay_index(t, time)
+        j = find_delay_index(t, dur)
+        if j < 10:
+            print(
+                f"""
+                  Userwarning: duration of transient is {j} coefficients long
+                  """
+            )
+        transient_array[i : i + j] += amp * np.hanning(j)
+
+    return transient_array
 
 
 def find_delay_index(t, delay):
