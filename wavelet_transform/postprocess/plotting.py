@@ -162,7 +162,7 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
         plt.ylabel("Energy (arbitrary)", fontsize=FS)
 
 
-def heisenberg(transform_object, t_end, y_space=1):
+def heisenberg(transform_object, t_end):
     """
     calls imshow to create a heisenberg plot of the wavelet packet
 
@@ -185,12 +185,13 @@ def heisenberg(transform_object, t_end, y_space=1):
         data[i, :] = np.abs(node.data)
 
     graph = ax.imshow(data, cmap="turbo", aspect="auto")
-    ax.set_ylabel("Centre Frequency of Subband [Hz]", fontsize=20)
+    ax.set_ylabel("Lower Frequency of Subband [Hz]", fontsize=20)
     ax.set_xlabel("Time [s]", fontsize=20)
     ax.set_title("DWPT of Signal", fontsize=25)
 
-    mid_frequencies = [node.frequency_range[0] for node in nodes]
-    y_labels = [round(freq, 1) for freq in mid_frequencies]
+    frequencies = [node.frequency_range[0] for node in nodes]
+    y_labels = [round(freq, 1) for freq in frequencies]
+    y_space = len(frequencies) // 16
     sparse_y_labels = [
         label if not id % y_space else "" for id, label in enumerate(y_labels)
     ]
