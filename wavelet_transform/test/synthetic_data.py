@@ -151,15 +151,17 @@ def transients(
         durations = list(durations)
 
     transient_array = np.zeros(len(t))
+    warned = False
     for amp, time, dur in zip(amplitudes, times, durations):
         i = find_delay_index(t, time)
         j = find_delay_index(t, dur)
-        if j < 10:
+        if j < 10 and warned is True:
             print(
                 f"""
                   Userwarning: duration of transient is {j} coefficients long
                   """
             )
+            warned = True
         transient_array[i : i + j] += amp * np.hanning(j)
 
     return transient_array
