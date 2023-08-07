@@ -3,8 +3,7 @@ from pywt import pad as pywtpad
 import numpy as np
 import scipy.signal as sp
 from ..utils.extensions import sci_form
-
-from scipy.stats import kurtosis
+from ..utils.statistical_features import calc_energy, calc_kurtosis
 
 
 class Transform:
@@ -30,6 +29,8 @@ class Transform:
         self.base_node = BaseNode(data)  # initialise base node
         self.levels = {0: [self.base_node]}  # initialise list of all nodes
         self.filter_bank = self.pywt_filter_bank(self.wavelet)
+
+    # -------------------- Functions used for Transform ---------------
 
     def get_level(self, level=None, order="natural"):
         """
@@ -57,6 +58,12 @@ class Transform:
             nodes.sort(key=lambda x: x.norm_frequency_range[0])
             return nodes
 
+    def create_node(self, parent, a_d):
+        "creates a node object, adds it to list of nodes"
+        # initialise node object
+        node = Node(parent, a_d, self)
+        self.add_node(node)
+
     def add_level(self):
         "increments the number of levels by 1"
         self.levels[len(self.levels)] = []
@@ -72,16 +79,12 @@ class Transform:
             self.add_level()
         self.levels[node.level].append(node)
 
-    def create_node(self, parent, a_d):
-        "creates a node object, adds it to list of nodes"
-        # initialise node object
-        node = Node(parent, a_d, self)
-        self.add_node(node)
-
     def pywt_filter_bank(self, wavelet="haar"):
         "obtains the filter coefficients from the pywt filter bank function"
         w = pywtWavelet(wavelet)
         return w.filter_bank
+
+    # ------------------ Generate Additional Data ----------------
 
     def calc_frequencies(self, sampling_rate=None):
         "set the sampling rate to give information about nyquist frequency"
@@ -146,6 +149,8 @@ class Transform:
                  {sci_form(id)} Hz
                 """
             )
+
+    # ---------------- Functions Used for Inverse Transform -----------------
 
     def find_nodes(self, nodes, ids=None, min_energy=0, max_energy=np.inf):
         """
@@ -391,7 +396,7 @@ class Node:
     def calc_energy(self):
         "calculates the energy in the node"
         data = self.data
-        return 1 / len(data) * np.sum(data**2)
+        return calc_energy(data)
 
     def calc_norm_freq(self):
         """
@@ -431,7 +436,7 @@ class Node:
 
     def calc_kurtosis(self):
         "caclulates the kurtosis of the data in the node"
-        return kurtosis(self.data)
+        return calc_kurtosis(self.data)
 
     def calc_crest_factor(self):
         "calculates the crest factor of the node data in dB"

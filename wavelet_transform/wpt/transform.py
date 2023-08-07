@@ -30,7 +30,7 @@ def dwpt(data, levels, wavelet="haar", mode="symmetric"):
     transform_object = Transform(data, wavelet, mode)  # create wavelet object
 
     # create approximamtion and detail nodes for each node in the last level
-    for level in range(0, levels):
+    for level in range(levels):
         for node in transform_object.get_level(level):
             # create nodes
             transform_object.create_node(node, "a")
@@ -65,9 +65,9 @@ def dwt(data, levels, wavelet="haar", mode="symmetric"):
 
     transform_object = Transform(data, wavelet, mode)
 
-    for level in range(1, levels + 1):
+    for level in range(levels):
         # get approx node in the last level
-        node = transform_object.get_level(level - 1)[0]
+        node = transform_object.get_level(level)[0]
         # store in output array for next level
         transform_object.create_node(node, "a")
         transform_object.create_node(node, "d")
