@@ -175,23 +175,26 @@ def heisenberg(transform_object, t_end):
     x_tick_space: int
         formats the x axis such that the ticks are more spread out
     """
+
     fig, ax = plt.subplots()
     fig.set_size_inches(18, 9)
 
     nodes = transform_object.get_level(order="freq")
     data = np.zeros((len(nodes), len(nodes[0].data)))
-    for i in range(len(nodes)):  # maybe reverse
-        node = nodes[i]
+    for i, j in enumerate(range(len(nodes) - 1, -1, -1)):  # maybe reverse
+        node = nodes[j]
         data[i, :] = np.abs(node.data)
 
     graph = ax.imshow(data, cmap="turbo", aspect="auto")
-    ax.set_ylabel("Lower Frequency of Subband [Hz]", fontsize=20)
+    ax.set_ylabel("Frequency of Subband [Hz]", fontsize=20)
     ax.set_xlabel("Time [s]", fontsize=20)
     ax.set_title("DWPT of Signal", fontsize=25)
 
-    frequencies = [node.frequency_range[0] for node in nodes]
-    y_labels = [round(freq, 1) for freq in frequencies]
-    y_space = len(frequencies) // 16
+    frequencies = [node.frequency_range for node in nodes]
+    y_labels = [
+        (round(freq[0], 1), round(freq[1], 1)) for freq in reversed(frequencies)
+    ]
+    y_space = max(len(frequencies) // 16, 1)
     sparse_y_labels = [
         label if not id % y_space else "" for id, label in enumerate(y_labels)
     ]
