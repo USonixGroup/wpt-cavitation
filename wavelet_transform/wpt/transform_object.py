@@ -140,22 +140,22 @@ class Transform:
         order: str
             "natural" or "freq" (see self.get_level())
         """
-        if not hasattr(self, "_info"):
-            if level is None:
-                level = self.max_level()
-            columns = [
-                "energy",
-                "kurtosis",
-                "crest factor",
-                "skewness",
-                "frequency range",
-            ]
-            info = pd.DataFrame(columns=columns)
-            for i, node in enumerate(self.get_level(level, order=order)):
-                info.loc[i, "energy"] = node.energy
-                info.loc[i, "kurtosis"] = node.kurtosis
-                info.loc[i, "crest factor"] = node.crest_factor
-                info.loc[i, "frequency range"] = node.freq_range
+        if level is None:
+            level = self.max_level()
+        columns = [
+            "energy",
+            "kurtosis",
+            "crest factor",
+            "skewness",
+            "frequency range",
+        ]
+        info = pd.DataFrame(columns=columns)
+        for i, node in enumerate(self.get_level(level, order=order)):
+            info.loc[i, "energy"] = node.energy
+            info.loc[i, "kurtosis"] = node.kurtosis
+            info.loc[i, "crest factor"] = node.crest_factor
+            info.loc[i, "skewness"] = node.skewness
+            info.loc[i, "frequency range"] = node.freq_range
         return info
 
     # ---------------- Functions Used for Inverse Transform -----------------
@@ -510,13 +510,12 @@ class Node:
 
     @property
     def freq_range(self):
-        """returns the frequency range if possible, otherwise returns the
+        """
+        returns the frequency range if possible, otherwise returns the
         normalised frequency range
         """
-        if self.frequency_range is None:
-            return self.norm_frequency_range
-        else:
-            return self.frequency_range
+        range_to_use = self.frequency_range or self.norm_frequency_range
+        return tuple(sci_form(bound) for bound in range_to_use)
 
 
 class BaseNode(Node):
