@@ -26,7 +26,7 @@ def sin(amplitude, frequency, phi, t):
 
 
 def sound_wave(
-    amplitudes, frequencies, phases, duration, sampling_rate, delay=0, end=None
+    amplitudes, frequencies, phases, duration, sampling_rate, delay=None, end=None
 ):
     """
     Returns a sound wave with made up of sine waves with frequencies given as a
@@ -65,8 +65,10 @@ def sound_wave(
 
     if isinstance(frequencies, (int, float)):
         frequencies = list(frequencies)  # compatibility with a single frequency
-        phases = list(phases)  # compatibility with a single frequency
-        amplitudes = list(amplitudes)  # compatibility with a single frequency
+    if isinstance(phases, (int, float)):
+        phases = [phases for _ in range(len(frequencies))]
+    if isinstance(amplitudes, (int, float)):
+        amplitudes = [amplitudes for _ in range(len(frequencies))]
 
     for amplitude, frequency, phi in zip(amplitudes, frequencies, phases):
         # generate sine wave
@@ -75,6 +77,8 @@ def sound_wave(
         wave = wave + sin_wave
 
     # add delay and end
+    if delay is None:
+        delay = 0
     if end is None:
         end = duration
     delay_index = find_delay_index(t, delay)

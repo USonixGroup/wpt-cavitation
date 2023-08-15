@@ -145,7 +145,7 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
     if sampling_rate:
         transform_obj.calc_frequencies(sampling_rate)
     nodes = transform_obj.get_level(order="freq")
-    energy = transform_obj.list_energy(order="freq")
+    energy = transform_obj.info(order="freq")["energy"]
     frequencies = []
     for node in nodes:
         freq_range = node.frequency_range
@@ -192,17 +192,17 @@ def heisenberg(transform_object, t_end):
 
     frequencies = [node.frequency_range for node in nodes]
     y_labels = [
-        (round(freq[0], 1), round(freq[1], 1)) for freq in reversed(frequencies)
+        (sci_form(freq[0], 1), sci_form(freq[1], 1)) for freq in reversed(frequencies)
     ]
     y_space = max(len(frequencies) // 16, 1)
     sparse_y_labels = [
         label if not id % y_space else "" for id, label in enumerate(y_labels)
     ]
     x_labels = np.linspace(0, t_end, len(node.data))
+    x_labels = [sci_form(x, 1) for x in x_labels]
     x_space = int(len(x_labels) / 10)
     sparse_x_labels = [
-        round(label, 1) if id % x_space == 0 else ""
-        for id, label in enumerate(x_labels)
+        label if id % x_space == 0 else "" for id, label in enumerate(x_labels)
     ]
     all_x_ticks = [i for i in range(len(x_labels))]
     all_y_ticks = [i for i in range(len(y_labels))]
