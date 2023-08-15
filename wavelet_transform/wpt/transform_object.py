@@ -2,8 +2,15 @@ from pywt import Wavelet as pywtWavelet
 from pywt import pad as pywtpad
 import numpy as np
 import scipy.signal as sp
-from ..utils.extensions import sci_form
-from ..utils.statistical_features import calc_energy, calc_kurtosis
+import pandas as pd
+
+from ..utils.extensions import sci_form, to_list
+from ..utils.statistical_features import (
+    calc_energy,
+    calc_kurtosis,
+    calc_skewness,
+    calc_crest_factor,
+)
 
 
 class Transform:
@@ -29,6 +36,9 @@ class Transform:
         self.base_node = BaseNode(data)  # initialise base node
         self.levels = {0: [self.base_node]}  # initialise list of all nodes
         self.filter_bank = self.pywt_filter_bank(self.wavelet)
+        self.sampling_rate = (
+            None  # used for calculating the frequency range of each node
+        )
 
     # -------------------- Functions used for Transform ---------------
 
@@ -102,38 +112,6 @@ class Transform:
             total_energy += np.sum(node.data**2)
         return total_energy
 
-    def show_all_energy(self):
-        "prints the energy for each node"
-        for level in self.levels:
-            print(f"level {level} nodes:")
-            for node in self.levels[level]:
-                energy = sci_form(node.energy)
-                try:
-                    lf = sci_form(node.frequency_range[0])
-                    uf = sci_form(node.frequency_range[1])
-                    print(f"node: {node.path} [{lf}-{uf} Hz] energy: {energy}")
-                except AttributeError:  # if the frequency is not calculated
-                    lf = sci_form(node.norm_frequency_range[0])
-                    uf = sci_form(node.norm_frequency_range[1])
-                    print(
-                        f"""
-                        node: {node.path} [({lf}-{uf})*nyquist frequency Hz]
-                        \nenergy: {energy}
-                        """
-                    )
-                print()
-
-    def list_energy(self, level=None, order="natural"):
-        """
-        creates a list of all energies at a specified level, max level
-        by default
-        """
-        nodes = self.get_level(level, order)
-        energies = []
-        for node in nodes:
-            energies.append(node.energy)
-        return energies
-
     def get_node(self, id, nodes):
         "finds a node for a given path or frequency from a list of nodes"
         for node in nodes:
@@ -149,6 +127,25 @@ class Transform:
                  {sci_form(id)} Hz
                 """
             )
+
+    def info(self, level=None, order="natural"):
+        if not hasattr(self, "_info"):
+            if level is None:
+                level = self.max_level()
+            columns = [
+                "energy",
+                "kurtosis",
+                "crest factor",
+                "skewness",
+                "frequency range",
+            ]
+            info = pd.DataFrame(columns=columns)
+            for i, node in enumerate(self.get_level(level, order=order)):
+                info.loc[i, "energy"] = node.energy
+                info.loc[i, "kurtosis"] = node.kurtosis
+                info.loc[i, "crest factor"] = node.crest_factor
+                info.loc[i, "frequency range"] = node.freq_range
+        return info
 
     # ---------------- Functions Used for Inverse Transform -----------------
 
@@ -173,29 +170,25 @@ class Transform:
             list containing node objects with specified ids or minimum energy
         """
         node_list = []
-        if ids:  # if the ids are specified
+        if ids is not None:  # if the ids are specified
             for id in ids:
                 node = self.get_node(id, nodes)
-                if (node.energy > min_energy) & (node.energy < max_energy):
+                if min_energy < node.energy < max_energy:
                     node_list.append(node)
         else:
             for node in nodes:
-                if (node.energy > min_energy) & (node.energy < max_energy):
+                if min_energy < node.energy < max_energy:
                     node_list.append(node)
         return node_list
 
-    def packet_nodes_for_rec(
-        self, level=None, *, keep=None, leave=None, min_energy=0, max_energy=np.inf
-    ):
+    def packet_nodes_for_rec(self, level=None, **kwargs):
         """
-        gather nodes for reconstruction with more than min_energy. Must be
+        Gather nodes for reconstruction with more than min_energy. Must be
         called before inverse transform. keep and leave cannot be used in
-        tandem. min_energy and max_energy will filter out kept nodes that
-        do not meet requirements. If you want to keep all nodes, instead use
-        nodes_for_rec = transform_object.get_level().
+        tandem.
 
         e.g.
-        transform_object.packet_nodes_for_rec(keep=['aa','dd'],min_energy=0.1)
+        transform_object.packet_nodes_for_rec(keep=['aa','dd'], min_energy=0.1)
         will reconstruct nodes 'aa' and 'dd' as long as they have minimum
         energy of 0.1.
 
@@ -203,15 +196,18 @@ class Transform:
         ----------
         level: int
             the level of transform to start reconstruct from
+
+        Keyword Arguments
+        -----------------
         keep: list
-            list of ids (path or frequency content) to reconstruct
+            list of ids (path (str), frequency(float), node number(int)) to reconstruct
         leave: list
-            list of ids (path of frequency content) to leave out of
-            reconstruction
+            list of ids (see keep above) to leave out of reconstruction
         min_energy: float
             only add nodes with specified minimum energy
         max_energy: float
             only append nodes with specified maximum energy
+
 
         Returns
         -------
@@ -223,70 +219,79 @@ class Transform:
         SyntaxError:
             when specifying more than one of keep and leave.
         """
+
+        nodes = to_list(kwargs.get("nodes", None))
+        nodes_to_leave = to_list(kwargs.get("nodes_to_leave", None))
+        frequencies = to_list(kwargs.get("frequencies", None))
+        frequencies_to_leave = to_list(kwargs.get("frequencies_to_leave", None))
+        min_energy = kwargs.get("min_energy", None)
+        max_energy = kwargs.get("max_energy", None)
+
+        keep = []
+        for i in [nodes, frequencies]:
+            if i is not None:
+                keep += i
+
+        leave = []
+        for i in [nodes_to_leave, frequencies_to_leave]:
+            if i is not None:
+                leave += i
+
         # only one of keep, leave
         if keep and leave:
-            raise SyntaxError(
-                "only specify one of keep, leave, min_energy, and max_energy"
-            )
+            raise SyntaxError("Cannot specify nodes to keep and nodes to leave")
 
-        if (not isinstance(keep, list)) & (keep is not None):
-            raise ValueError("keep must be a list")
-        if (not isinstance(leave, list)) & (leave is not None):
-            raise ValueError("leave must be a list")
+        if min_energy is None:
+            min_energy = 0
+        if max_energy is None:
+            max_energy = np.inf
 
         node_list = []
         nodes = self.get_level(level)  # max level by default
-        if keep:
+        if keep:  # if keep is not empty
             for node in nodes:
-                # print('testing id',id)
-                if node.match_ids(keep):
-                    node_list.append(node)
+                if node is None or not node.match_ids(keep):
+                    node_list.append(None)
                 else:
-                    node_list.append(
-                        None
-                    )  # append None if node does not meet requirements
+                    node_list.append(node)
         elif leave:
             for node in nodes:
-                if node.match_ids(id):
+                if node is None or not node.match_ids(leave):
                     node_list.append(None)
                 else:
                     node_list.append(node)
         else:
             node_list = self.get_level(level)
 
-        for node in node_list:  # filter node list by energy range
+        # filter list by energy range
+        filtered_node_list = []
+        for node in node_list:
             if node is None:
-                continue
-            if node.energy is None:
+                filtered_node_list.append(None)
+            elif node.energy is None:
                 if min_energy > 0 and max_energy:
                     print(
-                        """
-                        could not sort by energy, call function\
-                         transform_object.calc_frequencies()
-                        """
+                        "Could not sort by energy, call function transform_object.calc_frequencies()"
                     )
                 break
-            if not ((node.energy >= min_energy) & (node.energy <= max_energy)):
-                node_list[node_list.index(node)] = None
-        for node in node_list:
-            if node is not None:
-                break
-        else:
-            print("could not find any nodes matching input arguments")
-        return node_list
+            elif min_energy <= node.energy <= max_energy:
+                filtered_node_list.append(node)
+            else:
+                filtered_node_list.append(None)
 
-    def nodes2data(self, nodes=None, *, synth_data=False):
+        # check if any nodes are remaining after filtering
+        if filtered_node_list.count(None) == len(node_list):
+            print("UserWarning: Could not find any nodes matching input arguments")
+        return filtered_node_list
+
+    def nodes2data(self, nodes=None):
         """
         converts a list of nodes to a list of arrays containing their data.
-        use before inverse transform to convert output from
-        packet_nodes_for_rec() or get_level()
 
         Parameters
         ----------
         nodes: list
             list of node objects
-        synth_data: bool
-            replaces all node data with synthetic data
 
         Returns
         -------
@@ -295,13 +300,10 @@ class Transform:
             with its data
         """
         output = []
-        if nodes:
+        if nodes is not None:
             for node in nodes:
-                if node:
-                    if not synth_data:
-                        output.append(node.data)
-                    else:
-                        output.append(synth_data)
+                if node is not None:
+                    output.append(node.data)
                 else:
                     output.append(None)
         else:
@@ -312,7 +314,7 @@ class Transform:
 
     def dwt_results(self):
         """
-        extracts the nodes containing dwt results from a dwt or dwpt transform
+        Extracts the nodes containing dwt results from a dwt or dwpt transform
         object
 
         Parameters
@@ -363,16 +365,14 @@ class Node:
         self.level = parent.level + 1
         # calculate coefficients
         filter_bank = self.transform_object.filter_bank
-        if a_d == "a":
-            filter_coeffs = filter_bank[0]
-        else:
-            filter_coeffs = filter_bank[1]
+        filter_coeffs = filter_bank[0] if a_d == "a" else filter_bank[1]
         self.data = self.filter(filter_coeffs, self.transform_object.mode)
 
         # calculate energy, frequency, and kurtosis
-        self.energy = self.calc_energy()
-        self.kurtosis = self.calc_kurtosis()
-        self.crest_factor = self.calc_crest_factor()
+        self.energy = calc_energy(self.data)
+        self.kurtosis = calc_kurtosis(self.data)
+        self.crest_factor = calc_crest_factor(self.data)
+        self.skewness = calc_skewness(self.data)
         self.norm_frequency_range = self.calc_norm_freq()
         self.frequency_range = None
 
@@ -392,11 +392,6 @@ class Node:
         # downsample
         data = data[::2]
         return data
-
-    def calc_energy(self):
-        "calculates the energy in the node"
-        data = self.data
-        return calc_energy(data)
 
     def calc_norm_freq(self):
         """
@@ -428,27 +423,20 @@ class Node:
             hi_or_lo += 1
 
         diff = upper_bound - lower_bound
-        if not hi_or_lo % 2:
+        if hi_or_lo % 2 == 0:
             upper_bound -= diff / 2
         else:
             lower_bound += diff / 2
         return lower_bound, upper_bound
 
-    def calc_kurtosis(self):
-        "caclulates the kurtosis of the data in the node"
-        return calc_kurtosis(self.data)
-
-    def calc_crest_factor(self):
-        "calculates the crest factor of the node data in dB"
-        rms = np.sqrt(1 / len(self.data) * sum(self.data**2))
-        return 10 * np.log10(max(self.data**2) / rms)
-
     def calc_freq(self, sampling_rate):
         "converts the normalised frequency range to an actual freuqency range"
         nyquist_frequency = sampling_rate / 2
-        lower_bound = self.norm_frequency_range[0] * nyquist_frequency
-        upper_bound = self.norm_frequency_range[1] * nyquist_frequency
-        return lower_bound, upper_bound
+        self.sampling_rate = sampling_rate
+        frequency_range = tuple(
+            [bound * nyquist_frequency for bound in self.norm_frequency_range]
+        )
+        return frequency_range
 
     def match_ids(self, id):
         """
@@ -459,7 +447,7 @@ class Node:
         ----------
         id: float or string or list of floats or strings
             can be a frequency or path e.g. 'aa'. can also be a list of ids to
-            match
+            match. Frequencies must be floats. integers are interpreted as node numbers.
 
         Returns
         -------
@@ -472,20 +460,20 @@ class Node:
             raised when trying to match by frequencies and the sampling rate
             has not been supplied
         """
-        if isinstance(id, list):
-            for i in id:
-                if self.match_id(i):
-                    return True
-            else:
-                return False
+        if not isinstance(id, list):
+            id = [id]
+
+        for i in id:
+            if self.match_id(i):
+                return True
         else:
-            return self.match_id(id)
+            return False
 
     def match_id(self, id):
         "determines whether the node matches a given id"
         if isinstance(id, str):
             return id == self.path
-        elif isinstance(id, (float, int)):
+        elif isinstance(id, (float)):
             if self.frequency_range is None:
                 error = """
                 call transform_object.calc_frequencies() or svd_object\
@@ -493,10 +481,13 @@ class Node:
                 """
                 raise AttributeError(error)
             freq_range = self.frequency_range
-            return (id >= freq_range[0]) & (id <= freq_range[1])
+            return freq_range[0] <= id <= freq_range[1]
+        elif isinstance(id, int):
+            return id == self.node_number
 
+    @property
     def node_number(self):
-        "converts path into node number to compare with matlab"
+        "converts path into node number"
         path = self.path
         node_no = 0
         bit = 1
@@ -505,6 +496,16 @@ class Node:
                 node_no += bit
             bit *= 2
         return node_no
+
+    @property
+    def freq_range(self):
+        """returns the frequency range if possible, otherwise returns the
+        normalised frequency range
+        """
+        if self.frequency_range is None:
+            return self.norm_frequency_range
+        else:
+            return self.frequency_range
 
 
 class BaseNode(Node):
@@ -523,4 +524,4 @@ class BaseNode(Node):
         self.path = ""
         self.level = 0
         self.norm_frequency_range = (0, 1)
-        self.energy = self.calc_energy()
+        self.energy = calc_energy(data)
