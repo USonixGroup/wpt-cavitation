@@ -129,6 +129,17 @@ class Transform:
             )
 
     def info(self, level=None, order="natural"):
+        """
+        Returns a dataframe with information about each node in a specified level
+        of the transform.
+
+        Parameters
+        ----------
+        level: int
+            the level of transform to display information for
+        order: str
+            "natural" or "freq" (see self.get_level())
+        """
         if not hasattr(self, "_info"):
             if level is None:
                 level = self.max_level()
