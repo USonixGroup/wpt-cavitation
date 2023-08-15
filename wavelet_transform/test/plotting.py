@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_pywp_test(wp_object,levels,plot=True):
-    '''
+
+def plot_pywp_test(wp_object, levels, plot=True):
+    """
     testing the transform from the python library
-    
+
     Parameters
     ----------
     wp_object: object
@@ -19,15 +20,15 @@ def plot_pywp_test(wp_object,levels,plot=True):
     coeffs: array
         the data that was plotted,a concatenation of each of data from all nodes
         in the specified level
-    '''
+    """
     nodes = [node.path for node in wp_object.get_level(levels)]
 
     # concatenante coefficients
     coeffs = []
     for node in nodes:
         node_data = wp_object[node].data
-        coeffs = np.concatenate((coeffs,node_data))
-    
+        coeffs = np.concatenate((coeffs, node_data))
+
     # plot coefficients
     if plot:
         plt.plot(coeffs)
@@ -36,8 +37,9 @@ def plot_pywp_test(wp_object,levels,plot=True):
 
     return coeffs
 
+
 def plot_test(nodes):
-    '''
+    """
     testing the wavelet transform in this library
 
     Parameters
@@ -50,13 +52,12 @@ def plot_test(nodes):
     output: array
         an array of the plotted data, a concatenation of the data from the
         provided nodes
-    '''
+    """
 
     # concatenate coefficients
     output = np.array([])
     for node in nodes:
-        output = np.concatenate((output,node.data))
-    print('length output: ', len(output))
+        output = np.concatenate((output, node.data))
     # plot coefficients
     plt.plot(output)
     plt.grid(True)
