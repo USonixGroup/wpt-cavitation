@@ -499,6 +499,8 @@ class Node:
             return freq_range[0] <= id <= freq_range[1]
         elif isinstance(id, int):
             return id == self.node_number
+        elif isinstance(id, Node):
+            return self == id
 
     @property
     def node_number(self):
