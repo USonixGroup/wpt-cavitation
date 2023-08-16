@@ -12,9 +12,13 @@ def sci_form(number, dp=3):
     return f"{round(number,dp)}e{e_power}"
 
 
-def to_list(x):
+def to_list(x, *, convert=None):
     "handling keyword arguments"
     if x is None:
         return None
     x = [x] if not isinstance(x, list) else x
+    if convert == "float":
+        x = [float(i) if isinstance(i, int) else i for i in x]
+    elif convert == "int":
+        x = [int(i) if isinstance(i, float) else i for i in x]
     return x

@@ -233,10 +233,12 @@ class Transform:
             when specifying more than one of keep and leave.
         """
 
-        nodes = to_list(kwargs.get("nodes", None))
-        nodes_to_leave = to_list(kwargs.get("nodes_to_leave", None))
-        frequencies = to_list(kwargs.get("frequencies", None))
-        frequencies_to_leave = to_list(kwargs.get("frequencies_to_leave", None))
+        nodes = to_list(kwargs.get("nodes", None), convert="int")
+        nodes_to_leave = to_list(kwargs.get("nodes_to_leave", None), convert="int")
+        frequencies = to_list(kwargs.get("frequencies", None), convert="float")
+        frequencies_to_leave = to_list(
+            kwargs.get("frequencies_to_leave", None), convert="float"
+        )
         min_energy = kwargs.get("min_energy", None)
         max_energy = kwargs.get("max_energy", None)
 
