@@ -142,22 +142,21 @@ class Transform:
         """
         if level is None:
             level = self.max_level()
-        columns = [
-            "node number",
-            "energy",
-            "kurtosis",
-            "crest factor",
-            "skewness",
-            "frequency range",
-        ]
-        info = pd.DataFrame(columns=columns)
-        for i, node in enumerate(self.get_level(level, order=order)):
-            info.loc[i, "node number"] = node.node_number
-            info.loc[i, "energy"] = node.energy
-            info.loc[i, "kurtosis"] = node.kurtosis
-            info.loc[i, "crest factor"] = node.crest_factor
-            info.loc[i, "skewness"] = node.skewness
-            info.loc[i, "frequency range"] = node.freq_range
+
+        info_data = []
+        for node in self.get_level(level, order=order):
+            info_data.append(
+                {
+                    "node number": node.node_number,
+                    "energy": node.energy,
+                    "kurtosis": node.kurtosis,
+                    "crest factor": node.crest_factor,
+                    "skewness": node.skewness,
+                    "frequency range": node.freq_range,
+                }
+            )
+
+        info = pd.DataFrame(info_data)
         return info
 
     # ---------------- Functions Used for Inverse Transform -----------------
