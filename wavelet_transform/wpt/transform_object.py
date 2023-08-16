@@ -143,6 +143,7 @@ class Transform:
         if level is None:
             level = self.max_level()
         columns = [
+            "node number",
             "energy",
             "kurtosis",
             "crest factor",
@@ -151,6 +152,7 @@ class Transform:
         ]
         info = pd.DataFrame(columns=columns)
         for i, node in enumerate(self.get_level(level, order=order)):
+            info.loc[i, "node number"] = node.node_number
             info.loc[i, "energy"] = node.energy
             info.loc[i, "kurtosis"] = node.kurtosis
             info.loc[i, "crest factor"] = node.crest_factor
@@ -498,15 +500,17 @@ class Node:
 
     @property
     def node_number(self):
-        "converts path into node number"
-        path = self.path
-        node_no = 0
-        bit = 1
-        for i in reversed(path):
-            if i == "d":
-                node_no += bit
-            bit *= 2
-        return node_no
+        """Converts path into node number then stores it for subsequent calls"""
+        if not hasattr(self, "_node_number"):
+            path = self.path
+            node_no = 0
+            bit = 1
+            for i in reversed(path):
+                if i == "d":
+                    node_no += bit
+                bit *= 2
+            self._node_number = node_no
+        return self._node_number
 
     @property
     def freq_range(self):
