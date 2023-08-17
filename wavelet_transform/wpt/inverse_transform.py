@@ -53,7 +53,8 @@ def inv_dwpt(transform_object, level=None, **kwargs):
 
     # generate list of coefficients
     nodes = transform_object.packet_nodes_for_rec(level, **kwargs)
-    coeffs = transform_object.nodes2data(nodes)
+    coeffs = transform_object.nodes2data(nodes=nodes)
+    assert all(item is None for item in coeffs) is False, "node not found"
     levels = int((log2(len(coeffs))))
 
     input = coeffs

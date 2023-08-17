@@ -294,9 +294,9 @@ class Transform:
                 filtered_node_list.append(None)
 
         # check if any nodes are remaining after filtering
-        if filtered_node_list.count(None) == len(node_list):
-            print("UserWarning: Could not find any nodes matching input arguments")
-        return filtered_node_list
+        if node_list.count(None) == len(node_list):
+            raise ValueError("could not found any nodes matching input arguments")
+        return node_list
 
     def nodes2data(self, nodes=None):
         """
@@ -320,7 +320,7 @@ class Transform:
                     output.append(node.data)
                 else:
                     output.append(None)
-        else:
+        else:  # compile the data for every node
             for level in self.levels:
                 for node in self.levels[level]:
                     output.append(node.data)

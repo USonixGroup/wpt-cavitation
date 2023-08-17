@@ -64,7 +64,7 @@ def sound_wave(
     # initialise parameters
 
     if isinstance(frequencies, (int, float)):
-        frequencies = list(frequencies)  # compatibility with a single frequency
+        frequencies = [frequencies]  # compatibility with a single frequency
     if isinstance(phases, (int, float)):
         phases = [phases for _ in range(len(frequencies))]
     if isinstance(amplitudes, (int, float)):
