@@ -1,5 +1,5 @@
 import numpy as np
-from ..wpt import transform as wpt
+from wavelet_transform.wpt import transform as wpt
 from scipy import stats
 from scipy.signal import blackmanharris
 
