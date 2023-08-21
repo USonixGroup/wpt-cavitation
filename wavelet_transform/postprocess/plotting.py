@@ -1,4 +1,4 @@
-from ..utils.extensions import sci_form
+from wavelet_transform.utils.extensions import sci_form
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -183,7 +183,7 @@ def heisenberg(transform_object, t_end):
     data = np.zeros((len(nodes), len(nodes[0].data)))
     for i, j in enumerate(range(len(nodes) - 1, -1, -1)):  # maybe reverse
         node = nodes[j]
-        data[i, :] = np.abs(node.data)
+        data[i, :] = np.abs(node.data)  # plot absolute values of wavelet coefficients
 
     graph = ax.imshow(data, cmap="turbo", aspect="auto")
     ax.set_ylabel("Frequency of Subband [Hz]", fontsize=20)
