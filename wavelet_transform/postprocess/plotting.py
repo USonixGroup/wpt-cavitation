@@ -1,4 +1,5 @@
 from wavelet_transform.utils.extensions import sci_form
+import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -191,6 +192,10 @@ def heisenberg(transform_object, t_end):
     ax.set_title("DWPT of Signal", fontsize=25)
 
     frequencies = [node.frequency_range for node in nodes]
+    if any((freq is None for freq in frequencies)):
+        raise ValueError(
+            "Check that the frequencies have been calculated -> transform_obj.calc_frequencies()"
+        )
     y_labels = [
         (sci_form(freq[0], 1), sci_form(freq[1], 1)) for freq in reversed(frequencies)
     ]
@@ -214,3 +219,45 @@ def heisenberg(transform_object, t_end):
     cbar.set_label(label="Coefficient amplitude", size=20)
 
     plt.show()
+
+
+def plot_reconstructions_by_group(transform_object, labels, no_clusters, order="freq"):
+    """
+    Reconstruct each node from the level of transform used to train the clustering algorithm
+    and plot the summation of those belonging to the same cluster.
+
+    Assumes that the labels are arranged in frequency order by default.
+
+    Parameters
+    ----------
+    transform_object: Transform
+        transform object from this library
+    labels: list
+        list of labels from training. Must be a power of 2
+    no_clusters:
+        the number of clusters used
+    """
+
+    data = transform_object.data
+    tr_ob = transform_object
+
+    # List reconstructions by group
+    reconstructions = [np.zeros(len(data)) for _ in range(no_clusters)]
+
+    if len(labels) % 2 != 0:
+        raise ValueError("there must be a label for each node in the level")
+    level = int(np.log2(len(labels)))
+
+    # Sum all reconstructions belonging to the same group
+    for node, assignment in zip(tr_ob.get_level(order=order), labels):
+        rec_signal = inv.inv_dwpt(tr_ob, level=level, nodes=node)
+        i = assignment
+        reconstructions[i] = reconstructions[i] + rec_signal
+
+    print("Reconstructed nodes by group:")
+    for i in range(no_clusters):
+        plt.plot(reconstructions[i])
+        plt.title(f"center {i}")
+        plt.xlabel("time")
+        plt.ylabel("amplitude")
+        plt.show()
