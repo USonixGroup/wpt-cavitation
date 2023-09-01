@@ -122,10 +122,10 @@ class InverseTransform:
             info_data.append(
                 {
                     "node number": node.node_number,
-                    "energy": stats.calc_energy(inverse),
-                    "kurtosis": stats.calc_kurtosis(inverse),
-                    "crest": stats.calc_crest_factor(inverse),
-                    "skewness": stats.calc_crest_factor(inverse),
+                    "energy": stats.energy(inverse),
+                    "kurtosis": stats.kurtosis(inverse),
+                    "crest": stats.crest_factor(inverse),
+                    "skewness": stats.crest_factor(inverse),
                     "frequency range": node.freq_range,
                 }
             )
