@@ -124,10 +124,13 @@ class Transform:
                 {
                     "node number": node.node_number,
                     "energy": node.energy,
+                    "log energy": node.log_energy,
                     "kurtosis": node.kurtosis,
                     "crest factor": node.crest_factor,
                     "skewness": node.skewness,
                     "frequency range": node.freq_range,
+                    "entropy": node.entropy,
+                    "spectral entropy": node.spectral_entropy,
                 }
             )
 

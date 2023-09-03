@@ -4,10 +4,12 @@ import scipy.signal as sp
 from wavelet_transform.utils.extensions import sci_form
 from wavelet_transform.utils.statistical_features import (
     energy,
+    log_energy,
     kurtosis,
     skewness,
     crest_factor,
     entropy,
+    spectral_entropy,
 )
 
 
@@ -175,6 +177,12 @@ class Node:
         return self._energy
 
     @property
+    def log_energy(self):
+        if not hasattr(self, "_log_energy"):
+            self._log_energy = log_energy(self.data)
+        return self._log_energy
+
+    @property
     def kurtosis(self):
         if not hasattr(self, "_kurtosis"):
             self._kurtosis = kurtosis(self.data)
@@ -197,6 +205,12 @@ class Node:
         if not hasattr(self, "_entropy"):
             self._entropy = entropy(self.data)
         return self._entropy
+
+    @property
+    def spectral_entropy(self):
+        if not hasattr(self, "_spectral_entropy"):
+            self._spectral_entropy = spectral_entropy(self.data)
+        return self._spectral_entropy
 
     @property
     def freq_range(self):
