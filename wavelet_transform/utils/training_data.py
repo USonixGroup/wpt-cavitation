@@ -1,4 +1,6 @@
+import numpy as np
 import pandas as pd
+
 
 import wavelet_transform.wpt.transform as wpt
 from wavelet_transform.utils.bubbledynamics import BubbleDynamics as BD
@@ -18,7 +20,7 @@ def generate_data(R_init, Rdot_init, frequency, pac, time, tstep, r_measure):
 
 
 def generate_training_data(
-    data, levels, wavelet, mode, min_energy=0, include_tr_ob=False
+    data, levels, wavelet, mode, *, min_energy=0, add_noise=0, include_tr_ob=False
 ):
     """
     Generate training data for clustering using the wavelet packet transform. Statistical
@@ -36,6 +38,8 @@ def generate_training_data(
         the type of padding used in the transform
     min_energy: float
         the ratio of the total energy that a node must have to be used as training data
+    add_noise: float
+        probability between 0-1. Randomly keep nodes with less than min_energy with probability.
     include_tr_ob: bool
         whether to return the transform object used for the transform containing
         info about the nodes.
@@ -50,31 +54,23 @@ def generate_training_data(
     # DWPT
     tr_ob = wpt.dwpt(data, levels, wavelet, mode)
 
-    # calculate energy, kurtosis, and crest factor of reconstructed signals
-    wpt_df = pd.DataFrame(
-        columns=[
-            "node",
-            "energy",
-            "kurtosis",
-            "crest",
-            "entropy",
-            "skewness",
-        ]
-    )
+    # Create new dataframe which is a subset of tr_ob.info()
+    rows_to_add = []
 
-    total_energy = sum(node.energy for node in tr_ob.get_level(level=levels))
-    for node in tr_ob.get_level(level=levels, order="freq"):
-        if node.energy / total_energy < min_energy:
+    # Filter out low energy nodes
+    # total_energy = sum(node.energy for node in tr_ob.get_level(level=levels))
+    for _, row in tr_ob.info(level=levels, order="freq").iterrows():
+        # Skip if the node does not meet energy requirements.
+        energy = row["energy"]
+        if energy < min_energy and np.random.random() > add_noise:
             continue
-        # Calculate statistical measures
-        counter = node.node_number
-        wpt_df.loc[counter, "node"] = node
-        wpt_df.loc[counter, "energy"] = node.energy
-        wpt_df.loc[counter, "kurtosis"] = node.kurtosis
-        wpt_df.loc[counter, "crest"] = node.crest_factor
-        wpt_df.loc[counter, "entropy"] = node.entropy
-        wpt_df.loc[counter, "skewness"] = node.skewness
 
+        # Add the entire row to the new DataFrame
+        rows_to_add.append(row)
+
+    wpt_df = pd.DataFrame(rows_to_add)
+
+    print(f"nodes kept: {len(wpt_df['energy'])}/{2**levels}")
     if include_tr_ob is True:
         return wpt_df, tr_ob
     else:

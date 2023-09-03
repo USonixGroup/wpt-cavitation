@@ -163,7 +163,7 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
         plt.ylabel("Energy (arbitrary)", fontsize=FS)
 
 
-def heisenberg(transform_object, t_end):
+def heisenberg(transform_object, t_end=1):
     """
     calls imshow to create a heisenberg plot of the wavelet packet
 
