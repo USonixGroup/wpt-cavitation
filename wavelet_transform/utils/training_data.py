@@ -20,7 +20,14 @@ def generate_data(R_init, Rdot_init, frequency, pac, time, tstep, r_measure):
 
 
 def generate_training_data(
-    data, levels, wavelet, mode, *, min_energy=0, add_noise=0, include_tr_ob=False
+    data,
+    levels,
+    wavelet,
+    mode,
+    *,
+    min_energy=0,
+    include_low_energy=0,
+    include_tr_ob=False,
 ):
     """
     Generate training data for clustering using the wavelet packet transform. Statistical
@@ -38,7 +45,7 @@ def generate_training_data(
         the type of padding used in the transform
     min_energy: float
         the ratio of the total energy that a node must have to be used as training data
-    add_noise: float
+    include_low_energy: float
         probability between 0-1. Randomly keep nodes with less than min_energy with probability.
     include_tr_ob: bool
         whether to return the transform object used for the transform containing
@@ -58,11 +65,14 @@ def generate_training_data(
     rows_to_add = []
 
     # Filter out low energy nodes
-    # total_energy = sum(node.energy for node in tr_ob.get_level(level=levels))
+    total_energy = sum(node.energy for node in tr_ob.get_level(level=levels))
     for _, row in tr_ob.info(level=levels, order="freq").iterrows():
         # Skip if the node does not meet energy requirements.
         energy = row["energy"]
-        if energy < min_energy and np.random.random() > add_noise:
+        if (
+            energy / total_energy < min_energy
+            and np.random.random() > include_low_energy
+        ):
             continue
 
         # Add the entire row to the new DataFrame
