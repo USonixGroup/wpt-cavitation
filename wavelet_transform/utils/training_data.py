@@ -28,6 +28,7 @@ def generate_training_data(
     min_energy=0,
     include_low_energy=0,
     include_tr_ob=False,
+    print_nodes_kept=False,
 ):
     """
     Generate training data for clustering using the wavelet packet transform. Statistical
@@ -80,7 +81,11 @@ def generate_training_data(
 
     wpt_df = pd.DataFrame(rows_to_add)
 
-    print(f"nodes kept: {len(wpt_df['energy'])}/{2**levels}")
+    # Print additional info about how many nodes were retained from the DWPT
+    if print_nodes_kept is True:
+        print(f"nodes kept: {len(wpt_df['energy'])}/{2**levels}")
+
+    # Return the transform object if specified
     if include_tr_ob is True:
         return wpt_df, tr_ob
     else:

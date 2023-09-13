@@ -6,17 +6,30 @@ from wavelet_transform.wpt.transform_object import Transform
 import wavelet_transform.utils.statistical_features as stats
 
 
-def inv_dwt(transform_object):
+def nodes2data(nodes):
+    """
+    Converts a list of nodes to a list of arrays containing their data.
+    """
+    return [node.data if node is not None else None for node in nodes]
+
+
+# ---------------- Inverse DWT -----------------
+
+
+def inv_dwt(transform_object: Transform):
     """
     calls the waverec() function from the pywavelet library
     """
     t = transform_object
     nodes = t.dwt_results()
-    coeffs = t.nodes2data(nodes)
+    coeffs = nodes2data(nodes)
     return waverec(coeffs, t.wavelet, t.mode)[: len(transform_object.data)]
 
 
-def inv_dwpt(transform_object, level=None, **kwargs):
+# --------------- Inverse DWPT -----------------
+
+
+def inv_dwpt(transform_object: Transform, level=None, **kwargs):
     """
     calls the single level idwt function from the pywt library recursively
     to find the inverse transform from a list of packet nodes at a given level.
@@ -56,8 +69,8 @@ def inv_dwpt(transform_object, level=None, **kwargs):
         raise ValueError("level must be an integer")
 
     # generate list of coefficients
-    nodes = transform_object.packet_nodes_for_rec(level, **kwargs)
-    coeffs = transform_object.nodes2data(nodes=nodes)
+    nodes = packet_nodes_for_rec(transform_object, level, **kwargs)
+    coeffs = nodes2data(nodes=nodes)
     assert all(item is None for item in coeffs) is False, "node not found"
     levels = int((np.log2(len(coeffs))))
 
@@ -76,6 +89,46 @@ def inv_dwpt(transform_object, level=None, **kwargs):
             output.append(c)
         input = output.copy()
     return output[0][: len(transform_object.data)]
+
+
+def packet_nodes_for_rec(transform_object: Transform, level, **kwargs):
+    """
+    Gather nodes for reconstruction with more than min_energy. Must be
+    called before inverse transform. keep and leave cannot be used in
+    tandem.
+
+    e.g.
+    transform_object.packet_nodes_for_rec(keep=['aa','dd'], min_energy=0.1)
+    will reconstruct nodes 'aa' and 'dd' as long as they have minimum
+    energy of 0.1.
+
+    Parameters
+    ----------
+    level: int
+        the level of transform to start reconstruct from
+
+    Keyword Arguments
+    -----------------
+    See self.find_nodes()
+
+
+    Returns
+    -------
+    node_list: list
+        list of nodes meeting requirements
+
+    """
+    tr_obj = transform_object
+    nodes = tr_obj.get_level(level)  # max level by default
+
+    nodes_to_keep = tr_obj.find_nodes(nodes, **kwargs)
+    node_list = []
+    node_list = [node if node in nodes_to_keep else None for node in nodes]
+
+    # check if any nodes are remaining after filtering
+    if node_list.count(None) == len(node_list):
+        raise ValueError("could not found any nodes matching input arguments")
+    return node_list
 
 
 class InverseTransform:
@@ -125,7 +178,7 @@ class InverseTransform:
                     "energy": stats.energy(inverse),
                     "kurtosis": stats.kurtosis(inverse),
                     "crest factor": stats.crest_factor(inverse),
-                    "skewness": stats.crest_factor(inverse),
+                    "skewness": stats.skewness(inverse),
                     "frequency range": node.freq_range,
                 }
             )
