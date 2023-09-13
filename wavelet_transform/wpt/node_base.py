@@ -54,7 +54,11 @@ class NodeBase:
         # signal extension
         data = pywtpad(parent_data, (length, l2), mode)
         # perform convolution
-        data = sp.fftconvolve(data, filter_coeffs, "valid")
+        data = sp.convolve(
+            data,
+            filter_coeffs,
+            "valid",
+        )
         # downsample
         data = data[::2]
         return data

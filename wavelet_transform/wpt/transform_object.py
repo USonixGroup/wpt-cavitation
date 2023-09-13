@@ -53,17 +53,37 @@ class Transform:
         """
         level = self.max_level() if level is None else level
         if order == "natural":
-            return self.levels[level]
+            return self.levels.get(level, [])
         elif order == "freq":
             nodes = self.levels[level].copy()
             nodes.sort(key=lambda x: x.norm_frequency_range[0])
             return nodes
 
-    def create_node(self, parent, a_d):
-        "creates a node object, adds it to list of nodes"
-        # initialise node object
+    def get_leaf_nodes(self):
+        "Get the leaf nodes in the tree."
+        leaf_nodes = [
+            node
+            for level in self.levels
+            for node in self.get_level(level)  # gather nodes with no children
+            if 2 * node.node_number not in self.node_numbers(level + 1)
+        ]
+        return leaf_nodes
+
+    def node_numbers(self, level=None):
+        "Generator for node numbers"
+        return (node.node_number for node in self.get_level(level))
+
+    def create_node(self, parent, a_d, add_node=True):
+        """
+        Creates a node object, adds it to list of nodes if add_node is true.
+        add_node allows for further logic to be implemented in the transform
+        for adding nodes (e.g. for choosing best basis).
+        """
+        # Initialise node object
         node = Node(parent, a_d, self)
-        self.add_node(node)
+        if add_node is True:
+            self.add_node(node)
+        return node
 
     def add_node(self, node: Node):
         "appends a node to node list"

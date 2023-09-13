@@ -2,39 +2,67 @@ from .transform_object import Transform
 import numpy as np
 
 
-def dwpt(data, levels, wavelet="haar", mode="symmetric"):
+def dwpt(data, levels="max", wavelet="haar", mode="symmetric", min_entropy=False):
     """
     Packet transform. Returns a transform object containing node objects
-    which returns the coefficients at every level.
+    which returns the coefficients at every level. Automatically performs a max-level
+    transform
 
     Parameters
     ----------
     data: array_like
         an array containing the data to be transformed
     levels: int
-        the number of levels of transform to perform
+        the number of levels of transform to perform. set to "max" to perform max level decomposition.
     wavelet: string
         the wavelet to use in the transform. see pywavelets docs for options
     mode: string
         the extension mode for the signal. see numpy for options
+    min_entropy: bool
+        set to True to perform the minimum entropy decomposition
+
 
     Returns
     -------
     transform_object: an object containing the results from the transform
     """
-    max_level_check(data, levels)
+    if levels == "max":
+        levels = calc_max_level(data)
+    else:
+        max_level_check(data, levels)
 
     if isinstance(data, list):
         data = np.array(data)
 
     transform_object = Transform(data, wavelet, mode)  # create wavelet object
 
-    # create approximamtion and detail nodes for each node in the last level
-    for level in range(levels):
-        for node in transform_object.get_level(level):
-            # create nodes
-            transform_object.create_node(node, "a")
-            transform_object.create_node(node, "d")
+    # Create approximamtion and detail nodes for each node in the last level
+    if min_entropy is False:
+        for level in range(levels):
+            for node in transform_object.get_level(level):
+                # Create nodes
+                transform_object.create_node(node, "a")
+                transform_object.create_node(node, "d")
+
+    # Minimum entropy decomposition
+    elif min_entropy is True:
+        for level in range(levels):
+            for node in transform_object.get_level(level):
+                # If a node has 0 entropy, it does not need to be further decomposed
+                if node.entropy == 0:
+                    continue
+                # Create nodes from parent node
+                node1 = transform_object.create_node(node, "a", add_node=False)
+                node2 = transform_object.create_node(node, "d", add_node=False)
+                # Check if the entropy has decreased
+                entropy = node1.entropy + node2.entropy
+                if node.entropy > entropy:
+                    # Add nodes if they have lower combined entropy than their parent
+                    transform_object.add_node(node1)
+                    transform_object.add_node(node2)
+
+    else:
+        raise ValueError("min_entropy: bool")
 
     return transform_object
 
