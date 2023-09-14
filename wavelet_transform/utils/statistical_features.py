@@ -37,7 +37,7 @@ def entropy(array, total_energy=None):
         if total_energy == 0:
             return 0
     norm_energy = energy / total_energy
-    entropy = -sum(0 if i == 0 else i * np.log10(i) for i in norm_energy)
+    entropy = -sum(0 if i == 0 else i * np.log(i) for i in norm_energy)
     return entropy
 
 

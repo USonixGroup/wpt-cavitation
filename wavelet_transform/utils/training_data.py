@@ -27,6 +27,7 @@ def generate_training_data(
     *,
     min_energy=0,
     include_low_energy=0,
+    min_entropy=False,
     include_tr_ob=False,
     print_nodes_kept=False,
 ):
@@ -44,13 +45,20 @@ def generate_training_data(
         the wavelet used in the wavelet transform (see pywt library)
     mode: str
         the type of padding used in the transform
+
+    Keyword Arguments
+    -----------------
     min_energy: float
         the ratio of the total energy that a node must have to be used as training data
     include_low_energy: float
         probability between 0-1. Randomly keep nodes with less than min_energy with probability.
+    min_entropy: bool
+        whether to use the minimum entropy decomposition
     include_tr_ob: bool
         whether to return the transform object used for the transform containing
         info about the nodes.
+    print_nodes_kept: bool
+        print how many of the nodes were retained after filtering out low energy nodes
 
     Returns
     -------
@@ -60,14 +68,22 @@ def generate_training_data(
 
     """
     # DWPT
-    tr_ob = wpt.dwpt(data, levels, wavelet, mode)
+    tr_ob = wpt.dwpt(data, levels, wavelet, mode, min_entropy=min_entropy)
 
     # Create new dataframe which is a subset of tr_ob.info()
     rows_to_add = []
 
     # Filter out low energy nodes
-    total_energy = sum(node.energy for node in tr_ob.get_level(level=levels))
-    for _, row in tr_ob.info(level=levels, order="freq").iterrows():
+
+    if min_entropy is False:
+        nodes = tr_ob.get_level()
+    elif min_entropy is True:
+        nodes = tr_ob.get_leaf_nodes()
+    total_energy = sum(node.energy for node in nodes)
+
+    for _, row in tr_ob.info(
+        level=levels, order="freq", leaf_nodes=min_entropy
+    ).iterrows():
         # Skip if the node does not meet energy requirements.
         energy = row["energy"]
         if (
@@ -83,7 +99,7 @@ def generate_training_data(
 
     # Print additional info about how many nodes were retained from the DWPT
     if print_nodes_kept is True:
-        print(f"nodes kept: {len(wpt_df['energy'])}/{2**levels}")
+        print(f"nodes kept: {len(wpt_df['energy'])}/{2 ** levels}")
 
     # Return the transform object if specified
     if include_tr_ob is True:

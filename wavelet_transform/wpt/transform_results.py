@@ -1,7 +1,9 @@
 from typing import TYPE_CHECKING
 import pandas as pd
+from numpy import average
 
 from wavelet_transform.utils.extensions import to_list
+from wavelet_transform.wpt.transform_node import Node
 
 if TYPE_CHECKING:
     from wavelet_transform.wpt.transform_object import Transform
@@ -43,7 +45,7 @@ class TransformResults:
         results.insert(0, approx_node)
         return results
 
-    def info(self, level=None, order="natural"):
+    def info(self, level=None, order="natural", leaf_nodes=False):
         """
         Returns a dataframe with information about each node in a specified level
         of the transform.
@@ -54,6 +56,8 @@ class TransformResults:
             the level of transform to display information for
         order: str
             "natural" or "freq" (see self.get_level())
+        use_leaf_nodes: bool
+            display info about the leaf nodes of the transform. overrides level keyword
 
         Returns
         -------
@@ -65,11 +69,19 @@ class TransformResults:
             level = self.tr_obj.max_level()
 
         info_data = []
-        for node in self.tr_obj.get_level(level, order=order):
+        if not isinstance(leaf_nodes, bool):
+            raise ValueError("leaf_nodes argument must be boolean")
+        if leaf_nodes is False:
+            nodes = self.tr_obj.get_level(level, order=order)
+        elif leaf_nodes is True:
+            nodes = self.tr_obj.get_leaf_nodes()
+        for node in nodes:
+            assert isinstance(node, Node)
             info_data.append(
                 {
                     "node number": node.node_number,
                     "frequency range": node.freq_range,
+                    "centre frequency": average(node.numeric_freq_range),
                     "energy": node.energy,
                     "log energy": node.log_energy,
                     "kurtosis": node.kurtosis,

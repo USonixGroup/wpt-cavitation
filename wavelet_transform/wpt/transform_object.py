@@ -60,13 +60,15 @@ class Transform:
             return nodes
 
     def get_leaf_nodes(self):
-        "Get the leaf nodes in the tree."
+        "Get the leaf nodes in the tree. Ordered by frequency."
         leaf_nodes = [
             node
             for level in self.levels
             for node in self.get_level(level)  # gather nodes with no children
             if 2 * node.node_number not in self.node_numbers(level + 1)
         ]
+        # Sort nodes in order of frequency.
+        leaf_nodes.sort(key=lambda x: x.norm_frequency_range[0])
         return leaf_nodes
 
     def node_numbers(self, level=None):
@@ -121,5 +123,5 @@ class Transform:
     def dwt_results(self):
         return self.results.dwt_results()
 
-    def info(self, level=None, order="natural"):
-        return self.results.info(level, order)
+    def info(self, level=None, order="natural", leaf_nodes=False):
+        return self.results.info(level, order, leaf_nodes)

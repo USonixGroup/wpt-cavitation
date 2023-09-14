@@ -180,7 +180,7 @@ def heisenberg(transform_object, t_end=1):
     fig, ax = plt.subplots()
     fig.set_size_inches(18, 9)
 
-    nodes = transform_object.get_level(order="freq")
+    nodes = transform_object.get_leaf_nodes()
     data = np.zeros((len(nodes), len(nodes[0].data)))
     for i, j in enumerate(range(len(nodes) - 1, -1, -1)):  # maybe reverse
         node = nodes[j]
