@@ -44,7 +44,6 @@ def entropy(array, total_energy=None):
 def spectral_entropy(array):
     # Calculate the power spectrum
     power_spectrum = np.abs(np.fft.fft(array)) ** 2
-    normalized_spectrum = power_spectrum / np.sum(power_spectrum)
-
-    spectral_entropy = -np.sum(normalized_spectrum * np.log2(normalized_spectrum))
+    norm_spectrum = power_spectrum / np.sum(power_spectrum)
+    spectral_entropy = -sum(0 if i == 0 else i * np.log2(i) for i in norm_spectrum)
     return spectral_entropy

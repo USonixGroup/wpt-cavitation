@@ -59,6 +59,19 @@ class Transform:
             nodes.sort(key=lambda x: x.norm_frequency_range[0])
             return nodes
 
+    def get_full_level(self, level=None):
+        """
+        Fill out missing nodes in the level with None. Used for the inverse transform
+        with a minimum entropy decomposition.
+        """
+        if level is None:
+            level = self.max_level()
+        nodes = self.get_level(level, order="natural")  # order must be natural
+        full_level_nodes = [None for _ in range(2**level)]
+        for node in nodes:
+            full_level_nodes[node.node_number] = node
+        return full_level_nodes
+
     def get_leaf_nodes(self):
         "Get the leaf nodes in the tree. Ordered by frequency."
         leaf_nodes = [

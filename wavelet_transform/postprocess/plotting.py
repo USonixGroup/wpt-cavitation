@@ -226,7 +226,7 @@ def plot_reconstructions_by_group(transform_object, labels, no_clusters, order="
     Reconstruct each node from the level of transform used to train the clustering algorithm
     and plot the summation of those belonging to the same cluster.
 
-    Assumes that the labels are arranged in frequency order by default.
+    Assumes that the labels are arranged in frequency order by default. Always uses leaf nodes.
 
     Parameters
     ----------
@@ -244,13 +244,9 @@ def plot_reconstructions_by_group(transform_object, labels, no_clusters, order="
     # List reconstructions by group
     reconstructions = [np.zeros(len(data)) for _ in range(no_clusters)]
 
-    if len(labels) % 2 != 0:
-        raise ValueError("there must be a label for each node in the level")
-    level = int(np.log2(len(labels)))
-
     # Sum all reconstructions belonging to the same group
-    for node, assignment in zip(tr_ob.get_level(order=order), labels):
-        rec_signal = inv.inv_dwpt(tr_ob, level=level, nodes=node)
+    for node, assignment in zip(tr_ob.get_leaf_nodes(), labels):
+        rec_signal = inv.inv_dwpt(tr_ob, level=node.level, nodes=node)
         i = assignment
         reconstructions[i] = reconstructions[i] + rec_signal
 

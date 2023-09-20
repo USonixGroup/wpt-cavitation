@@ -10,7 +10,7 @@ def nodes2data(nodes):
     """
     Converts a list of nodes to a list of arrays containing their data.
     """
-    return [node.data if node is not None else None for node in nodes]
+    return [None if node is None else node.data for node in nodes]
 
 
 # ---------------- Inverse DWT -----------------
@@ -119,10 +119,10 @@ def packet_nodes_for_rec(transform_object: Transform, level, **kwargs):
 
     """
     tr_obj = transform_object
-    nodes = tr_obj.get_level(level)  # max level by default
+    nodes = tr_obj.get_full_level(level)  # max level by default
 
     nodes_to_keep = tr_obj.find_nodes(nodes, **kwargs)
-    node_list = []
+
     node_list = [node if node in nodes_to_keep else None for node in nodes]
 
     # check if any nodes are remaining after filtering

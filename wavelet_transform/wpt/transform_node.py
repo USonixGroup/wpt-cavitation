@@ -69,6 +69,7 @@ class Node(NodeBase):
 
     @property
     def entropy(self):
+        "Calculate the entropy of the node (packet) normalised with its (packet) energy."
         if not hasattr(self, "_entropy"):
             self._entropy = entropy(self.data)
         return self._entropy
@@ -80,7 +81,7 @@ class Node(NodeBase):
         return self._spectral_entropy
 
     @property
-    def level_entropy(self):
+    def level_entropy(self):  # rename to total entropy?
         """
         Calculate the entropy of the node where each energy component is normalised with the
         total energy of the transform
@@ -93,7 +94,7 @@ class Node(NodeBase):
     @property
     def freq_range(self):
         """
-        returns the frequency range if possible, otherwise returns the
+        Returns the frequency range if possible, otherwise returns the
         normalised frequency range
         """
         range_to_use = self.frequency_range or self.norm_frequency_range
@@ -124,4 +125,5 @@ class BaseNode(Node):
         self.path = ""
         self.level = 0
         self.norm_frequency_range = (0, 1)
+        self.frequency_range = None
         self.transform_object = transform_object
