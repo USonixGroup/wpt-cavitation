@@ -12,7 +12,7 @@ def dwpt(data, max_level=None, wavelet="haar", mode="symmetric", *, min_entropy=
     ----------
     data: array_like
         an array containing the data to be transformed
-    levels: int
+    max_level: int
         the maximum number of levels of transform to perform.
         set to None to perform max level decomposition.
     wavelet: string
@@ -29,9 +29,9 @@ def dwpt(data, max_level=None, wavelet="haar", mode="symmetric", *, min_entropy=
     """
 
     if max_level is None:
-        levels = calc_max_level(data)
+        max_level = calc_max_level(data)
     else:
-        max_level_check(data, levels)
+        max_level_check(data, max_level)
 
     if isinstance(data, list):
         data = np.array(data)
@@ -82,7 +82,7 @@ def _min_entropy_dwpt(data, max_level, wavelet, mode):
     return transform_object
 
 
-def dwt(data, levels, wavelet="haar", mode="symmetric"):
+def dwt(data, max_level, wavelet="haar", mode="symmetric"):
     """
     discrete wavelet transform
 
@@ -90,7 +90,7 @@ def dwt(data, levels, wavelet="haar", mode="symmetric"):
     ----------
     data: array_like
         an array containing the data to be transformed
-    levels: int
+    max_level: int
         the number of levels of transform to perform
     wavelet: string
         the wavelet to use in the transform. see pywavelets docs for options
@@ -101,14 +101,14 @@ def dwt(data, levels, wavelet="haar", mode="symmetric"):
     -------
     transform_object: an object containing the results from the transform
     """
-    max_level_check(data, levels)
+    max_level_check(data, max_level)
 
     if isinstance(data, list):
         data = np.array(data)
 
     transform_object = Transform(data, wavelet, mode)
 
-    for level in range(levels):
+    for level in range(max_level):
         # get approx node in the last level
         node = transform_object.get_level(level)[0]
         # store in output array for next level
@@ -118,7 +118,7 @@ def dwt(data, levels, wavelet="haar", mode="symmetric"):
     return transform_object
 
 
-def max_level_check(data, levels):
+def max_level_check(data, level):
     """
     checks if there are too many levels
 
@@ -139,7 +139,7 @@ def max_level_check(data, levels):
     too many levels. length of data is length of data is: {len(data)}
     the maximum level is: {max_level}
     """
-    if levels > max_level:
+    if level > max_level:
         raise ValueError(error_message)
 
 
