@@ -23,6 +23,53 @@ R_MEASURE = 500e-6
 RDOT_INIT = 0
 
 
+def generate_training_data_with_wavelet(
+    wavelet,
+    sampling_rate,
+    levels,
+    mode,
+    std_noise,
+    data_len=None,
+    *,
+    min_entropy=False,
+    min_level=0,
+):
+    """
+    Generate training data from a range of signals.
+    min_level forces the minimum entropy decomposition to decompose the signal to a specified
+    number of samples.
+    """
+    wpt_df = None
+    for R_init in (i / 1e6 for i in range(4, 11, 2)):
+        for frequency in [i * 1e5 for i in range(7, 10, 2)]:
+            for pac in [-i * 1e4 for i in range(1, 20, 2)]:
+                data = get_data(R_init, frequency, pac, sampling_rate)
+                data = (data - np.mean(data)) / np.std(data)
+                data += np.random.normal(0, std_noise, size=len(data))
+
+                length = len(data) if data_len is None else data_len
+                data = data[:length]
+                data *= np.blackman(len(data))
+
+                # Generate traning data using the wavelet transform
+                training_data = generate_training_data(
+                    data,
+                    levels,
+                    wavelet,
+                    mode,
+                    print_nodes_kept=False,
+                    min_entropy=min_entropy,
+                    min_level=min_level,
+                )
+
+                if wpt_df is None:  # Init dataframe
+                    wpt_df = training_data
+                else:  # Add data to dataframe
+                    wpt_df = pd.concat([wpt_df, training_data], ignore_index=True)
+
+    return wpt_df
+
+
 def get_data(R_init, frequency, pac, sampling_rate, n_cycles=20, return_time=False):
     """
     Get data from bubble dynamics model or generate it if it doesn't exist.
@@ -98,6 +145,7 @@ def _generate_data_for_storage(R_init, frequency, pac, n_cycles=20):
         if not np.isnan(data).any():
             break
 
+        # Repeat and give up after a number of attempts.
         i += 1
         if i > 50:
             print(
@@ -136,6 +184,7 @@ def generate_training_data(
     min_energy=0,
     include_low_energy=0,
     min_entropy=False,
+    min_level=0,
     include_tr_ob=False,
     print_nodes_kept=False,
 ):
@@ -162,6 +211,8 @@ def generate_training_data(
         probability between 0-1. Randomly keep nodes with less than min_energy with probability.
     min_entropy: bool
         whether to use the minimum entropy decomposition
+    min_level: int
+        the minimum level of decomposition for the minimum entropy decomposition
     include_tr_ob: bool
         whether to return the transform object used for the transform containing
         info about the nodes.
@@ -176,7 +227,9 @@ def generate_training_data(
 
     """
     # DWPT
-    tr_ob = wpt.dwpt(data, levels, wavelet, mode, min_entropy=min_entropy)
+    tr_ob = wpt.dwpt(
+        data, levels, wavelet, mode, min_entropy=min_entropy, min_level=min_level
+    )
 
     # Create new dataframe which is a subset of tr_ob.info()
     rows_to_add = []

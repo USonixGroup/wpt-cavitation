@@ -3,8 +3,8 @@ import scipy.stats as sc
 
 
 def crest_factor(array):
-    rms = np.sqrt(1 / len(array) * sum(array**2))
-    return max(array) / rms
+    rms = np.sqrt(sum(array**2) / len(array))
+    return max(abs(array)) / rms
 
 
 def energy(array):
@@ -13,6 +13,14 @@ def energy(array):
 
 def log_energy(array):
     return np.log10(energy(array))
+
+
+def avg_energy(array):
+    return energy(array) / len(array)
+
+
+def log_avg_energy(array):
+    return np.log10(avg_energy(array))
 
 
 def kurtosis(array):

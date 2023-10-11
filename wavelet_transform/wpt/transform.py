@@ -2,7 +2,15 @@ from .transform_object import Transform
 import numpy as np
 
 
-def dwpt(data, max_level=None, wavelet="haar", mode="symmetric", *, min_entropy=False):
+def dwpt(
+    data,
+    max_level=None,
+    wavelet="haar",
+    mode="symmetric",
+    *,
+    min_entropy=False,
+    min_level=0,
+):
     """
     Packet transform. Returns a transform object containing node objects
     which returns the coefficients at every level. Automatically performs a max-level
@@ -21,7 +29,9 @@ def dwpt(data, max_level=None, wavelet="haar", mode="symmetric", *, min_entropy=
         the extension mode for the signal. see numpy for options
     min_entropy: bool
         set to True to perform the minimum entropy decomposition
-
+    min_level: int
+        force the minimum entropy decomposition to decompose the signal to a certain level.
+        this is 0 by default.
 
     Returns
     -------
@@ -42,12 +52,14 @@ def dwpt(data, max_level=None, wavelet="haar", mode="symmetric", *, min_entropy=
 
     # Minimum entropy decomposition
     elif min_entropy is True:
-        transform_object = _min_entropy_dwpt(data, max_level, wavelet, mode)
+        transform_object = _min_entropy_dwpt(data, max_level, wavelet, mode, min_level)
 
     else:
         raise ValueError("min_entropy: bool")
 
-    assert transform_object.get_level(1), "transform has no decompositions"
+    assert transform_object.get_level(
+        1
+    ), "transform has no decompositions, try setting a minimum level"
     return transform_object
 
 
@@ -62,7 +74,10 @@ def _dwpt(data, max_level, wavelet, mode):
     return transform_object
 
 
-def _min_entropy_dwpt(data, max_level, wavelet, mode):
+def _min_entropy_dwpt(data, max_level, wavelet, mode, min_level):
+    if not isinstance(min_level, int):
+        raise ValueError("min_level must be an integer")
+
     transform_object = Transform(data, wavelet, mode)
     for level in range(max_level):
         for node in transform_object.get_level(level):
@@ -74,7 +89,9 @@ def _min_entropy_dwpt(data, max_level, wavelet, mode):
             node2 = transform_object.create_node(node, "d", add_node=False)
             # Check if the entropy has decreased
             entropy = node1.level_entropy + node2.level_entropy
-            if node.level_entropy > entropy or level == 0:  # must have at least 1 level
+
+            # Perform decomposition with a given minimum level.
+            if (node.level_entropy > entropy) or (level in range(min_level)):
                 # Add nodes if they have lower combined entropy than their parent
                 transform_object.add_node(node1)
                 transform_object.add_node(node2)

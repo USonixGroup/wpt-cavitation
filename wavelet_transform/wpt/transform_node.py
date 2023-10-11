@@ -4,6 +4,8 @@ from wavelet_transform.utils.extensions import sci_form
 from wavelet_transform.utils.statistical_features import (
     energy,
     log_energy,
+    avg_energy,
+    log_avg_energy,
     kurtosis,
     skewness,
     abs_skewness,
@@ -42,6 +44,18 @@ class Node(NodeBase):
         if not hasattr(self, "_log_energy"):
             self._log_energy = log_energy(self.data)
         return self._log_energy
+
+    @property
+    def average_energy(self):
+        if not hasattr(self, "_average_energy"):
+            self._average_energy = avg_energy(self.data)
+        return self._average_energy
+
+    @property
+    def log_average_energy(self):
+        if not hasattr(self, "_log_average_energy"):
+            self._log_average_energy = log_avg_energy(self.data)
+        return self._log_average_energy
 
     @property
     def kurtosis(self):

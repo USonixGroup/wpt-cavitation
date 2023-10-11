@@ -87,6 +87,8 @@ class TransformResults:
                     "centre frequency": average(node.numeric_freq_range),
                     "energy": node.energy,
                     "log energy": node.log_energy,
+                    "average energy": node.average_energy,
+                    "log average energy": node.log_average_energy,
                     "kurtosis": node.kurtosis,
                     "crest factor": node.crest_factor,
                     "skewness": node.skewness,

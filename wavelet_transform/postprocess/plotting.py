@@ -221,7 +221,7 @@ def heisenberg(transform_object, t_end=1):
     plt.show()
 
 
-def plot_reconstructions_by_group(transform_object, labels, no_clusters, order="freq"):
+def plot_reconstructions_by_group(transform_object, labels, no_clusters):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
     and plot the summation of those belonging to the same cluster.
@@ -235,8 +235,11 @@ def plot_reconstructions_by_group(transform_object, labels, no_clusters, order="
     labels: list
         list of labels from training. Must be a power of 2
     no_clusters:
-        the number of clusters used
+        the number of clusters used. If set to None, the number of clusters will be
+        derived from the number of unique elements in the list of labels.
     """
+    if no_clusters is None:
+        no_clusters = len(set(labels))
 
     data = transform_object.data
     tr_ob = transform_object
