@@ -344,54 +344,43 @@ The proposed algorithm is outlined in \figg{\ref{fig:adaptive_method_flowchart}}
 
 \subsection{Gilmore-Akulichev model}
 \label{sec:GA_model}
-Gilmore's model describes the dynamics of a spherical bubble undergoing symmetric oscillations due to acoustic excitation in a compressible liquid. The predicted results agree well with the most of experimental data.\cite{lauterborn2010} The Gilmore equation is expressed as follows \cite{gilmore1952}
+Gilmore's model describes the dynamics of a spherical bubble undergoing symmetric oscillations due to acoustic excitation in a compressible liquid. It has been shown that predicted results by the Gilmore's model agree well with the most of experimental data.\cite{lauterborn2010} The Gilmore equation is expressed as follows \cite{gilmore1952}
 
 \begin{align}
-  \left(1~-~\dfrac{\dot{R}}{C}\right) R \ddot{R} ~+~ \dfrac{3}{2}\left(1~-~\dfrac{\dot{R}}{3C}\right){\dot{R}}^2 ~=~ \nonumber \\
-  \left(1~+~\dfrac{\dot{R}}{C}\right) H ~+~ \dfrac{\dot{R}}{C}\left(1~-~\dfrac{\dot{R}}{C}\right) R \dfrac{d H}{d R}
+  \label{eq:gilmore}
+  & \left(1~-~\dfrac{\dot{R}}{C}\right) R \ddot{R} ~+~ \dfrac{3}{2}\left(1~-~\dfrac{\dot{R}}{3C}\right){\dot{R}}^2 ~=~ \nonumber \\
+  & \left(1~+~\dfrac{\dot{R}}{C}\right) H ~+~ \dfrac{\dot{R}}{C}\left(1~-~\dfrac{\dot{R}}{C}\right) R \dfrac{d H}{d R}
 \end{align}
 
-\noindent where $C$ is the wave speed at the bubble's wall and $H$ is the enthalpy difference in the fluid at pressure $P$ and $P_\infty$. They are calculated using the following equations
+\noindent where $C$ is the wave speed at the bubble's wall and $H$ is the enthalpy difference in the fluid at pressure $P(R)$ at the bubble wall and $P_\infty$ in far-field. They are calculated using the following equations
 
 \begin{align}
-\label{eq:Enthalpy}
-H~=~\int_{P_\infty}^{P(R)} \dfrac{dP(\rho_L)}{\rho_L}
+  \label{eq:wavespeed}
+	C ~=~ \sqrt{c_\infty^2~+~(n-1)H}
 \end{align}
-\begin{align}
-	C ~=~ \sqrt{c^2~+~(n-1)H}
-\end{align}
-
-\noindent where $c$ is the wave speed at far-field. Gilmore used the Tait's equation of state which reads
 
 \begin{align}
-	\label{eq:State}
-	P_L(\rho)~=~ A\left(\dfrac{\rho_L}{\rho_{L0}}\right)^n ~-~ B
+  \label{eq:enthalpy}
+  H ~=~ \dfrac{n A^{1/n}}{(n-1)\rho_L}  &\left[ \left(P(R) ~+~ B\right)^{\left(1~-~1/n\right)} ~ - \right. \nonumber \\
+  & \left. \left(P_\infty ~+~ B\right)^{\left(1~-~1/n\right)} \right]
 \end{align}
 
-\noindent substituting \eq{\ref{eq:State}} into \eq{\ref{eq:Enthalpy}}, enthalpy can be calculated as a function of the pressure as follows
+\noindent where $c_\infty$ is the speed of sound in far-field, and $\rho_L$ is the density of the liquid at the bubble wall, $A, B,~\mathrm{and}~n$ are constants in the Tait's equation of state which are obtained experimentally. $P(R)$ is obtained using a modified Laplace equation as follows
 
 \begin{align}
-  H ~=~ \dfrac{n A^{1/n}}{(n-1)\rho_L}  \left[ \left(P(R) ~+~ B\right)^{\left(1~-~1/n\right)} ~-~ \left(P_\infty ~+~ B\right)^{\left(1~-~1/n\right)} \right]
+  \label{eq:pressure_at_R}
+  P(R)~=~ \left(P_\infty~+~\frac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\kappa}~-~\dfrac{2\sigma}{R}~-~\dfrac{4\mu \dot{R}}{R}
 \end{align}
 
-\noindent where $A, B,~\mathrm{and}~n$ are constants in the Tait's equation which are obtained experimentally. In order to determine the enthalpy and the wave speed at the bubble's wall, it is required to calculate the value of pressure in the medium at the surface of the bubble, i.e., $P(R)$. This can be obtained using a modified Laplace equation as follows
-
-\begin{align}
-  P(R)~=~ \left(P_0~+~\frac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\kappa}~-~\dfrac{2\sigma}{R}~-~\dfrac{4\mu \dot{R}}{R}
-\end{align}
-
-\noindent Having solved the bubble dynamics, we can determine the pressure radiated from the bubble as an outward traveling spherical wave, i.e., acoustic emission, using the Akulichev formulation
+\noindent where $R_0$ and $P_0$ are the initial bubble radius and internal pressure, respectively, $\kappa$, $\mu$ and $\sigma$ are the heat capacity ratio, dynamic viscosity, and $\sigma$ surface tension, respectively. Using Eqs. \ref{eq:wavespeed}, \ref{eq:enthalpy}, \ref{eq:pressure_at_R}, we can numerically solve the Gilmore's model \eq{\ref{eq:gilmore}} and determine the pressure radiated from the bubble at a distance $r$ using the Akulichev formulation
 
 \begin{align}
 \label{eq:akulichev}
-  P_{rad }(r)= A \left(\dfrac{2.0}{n+1}  + \dfrac{n-1}{n+1} \left( 1 + \dfrac{n+1}{r c^2 } G \right)^{1/2} \right)^{2n/(n-1)} ~ -  B
+  P_{rad }(r)= & A \left(\dfrac{2}{n+1} ~ + ~\dfrac{n-1}{n+1} \left( 1 + \dfrac{n+1}{r c_\infty^2 } G \right)^{1/2} \right)^{2n/(n-1)} \nonumber \\
+  & ~ - ~ B
 \end{align}
 
-\noindent where $G=R(H + 0.5 * \dot{R}^2)$.
-
-
-
-The Gilmore-Akulichev model was solved numerically for different sonication conditions. The implementation and numerical results were verified against published results for identical parameters.
+\noindent where $R$ is the instantaneous bubble radius, and $G~=~R~(~H~ +~ 0.5\dot{R}^2)$. This equation assumes that acoustic emissions from an oscillating bubble propagate as outward traveling spherical waves. The Gilmore-Akulichev model was solved numerically using a stiff ODE solver for different sonication conditions. The implementation is included in the library on the GitHub repository. The implementation and numerical results were verified against published results for identical parameters.
 
 \section{Results and discussion}
 This section will present results generated using the proposed method and discuss its performance. These studies aim to test the algorithm's ability to separate the signal into components representing stable and inertial cavitation.
@@ -474,5 +463,48 @@ Suggestions for future work:
 
 
 %=======================================================
+
+% \subsection{Gilmore-Akulichev model}
+% \label{sec:GA_model}
+% Gilmore's model describes the dynamics of a spherical bubble undergoing symmetric oscillations due to acoustic excitation in a compressible liquid. It has been shown that predicted results by the Gilmore's model agree well with the most of experimental data.\cite{lauterborn2010} The Gilmore equation is expressed as follows \cite{gilmore1952}
+
+% \begin{align}
+%   \left(1~-~\dfrac{\dot{R}}{C}\right) R \ddot{R} ~+~ \dfrac{3}{2}\left(1~-~\dfrac{\dot{R}}{3C}\right){\dot{R}}^2 ~=~ \nonumber \\
+%   \left(1~+~\dfrac{\dot{R}}{C}\right) H ~+~ \dfrac{\dot{R}}{C}\left(1~-~\dfrac{\dot{R}}{C}\right) R \dfrac{d H}{d R}
+% \end{align}
+
+% \noindent where $C$ is the wave speed at the bubble's wall and $H$ is the enthalpy difference in the fluid at pressure $P$ and $P_\infty$. They are calculated using the following equations
+
+% \begin{align}
+% \label{eq:enthalpy_generic}
+% H~=~\int_{P_\infty}^{P(R)} \dfrac{dP(\rho_L)}{\rho_L}
+% \end{align}
+% \begin{align}
+% 	C ~=~ \sqrt{c_\infty^2~+~(n-1)H}
+% \end{align}
+
+% \noindent where $c_\infty$ and $P_\infty$ are the speed of sound and pressure at far-field, respectively, and $\rho_L$ is the density of the liquid in the vicinity of the bubble. To account for the compressibility of the liquid, Gilmore used the Tait's equation of state which reads
+
+% \begin{align}
+% 	\label{eq:state}
+% 	P_L(\rho)~=~ A\left(\dfrac{\rho_L}{\rho_{L,\infty}}\right)^n ~-~ B
+% \end{align}
+
+% \noindent substituting \eq{\ref{eq:state}} into \eq{\ref{eq:enthalpy_generic}}, enthalpy can be calculated as a function of the pressure as follows
+
+% \begin{align}
+%   \label{eq:enthalpy}
+%   H ~=~ \dfrac{n A^{1/n}}{(n-1)\rho_L}  \left[ \left(P(R) ~+~ B\right)^{\left(1~-~1/n\right)} \nonumber \\
+%   ~-~ \left(P_\infty ~+~ B\right)^{\left(1~-~1/n\right)} \right]
+% \end{align}
+
+% \noindent where $A, B,~\mathrm{and}~n$ are constants in the Tait's equation which are obtained experimentally. In order to determine the enthalpy and the wave speed at the bubble's wall, it is required to calculate the value of pressure in the medium at the surface of the bubble, i.e., $P(R)$. This can be obtained using a modified Laplace equation as follows
+
+% \begin{align}
+%   \label{eq:pressure_at_R}
+%   P(R)~=~ \left(P_0~+~\frac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\kappa}~-~\dfrac{2\sigma}{R}~-~\dfrac{4\mu \dot{R}}{R}
+% \end{align}
+
+
 
 \end{document}
