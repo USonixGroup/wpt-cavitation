@@ -221,7 +221,7 @@ def heisenberg(transform_object, t_end=1):
     plt.show()
 
 
-def plot_reconstructions_by_group(transform_object, labels, no_clusters):
+def plot_reconstructions_by_group(transform_object, labels, no_clusters, t_plot=None):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
     and plot the summation of those belonging to the same cluster.
@@ -254,9 +254,17 @@ def plot_reconstructions_by_group(transform_object, labels, no_clusters):
         reconstructions[i] = reconstructions[i] + rec_signal
 
     print("Reconstructed nodes by group:")
+    fig, axes = plt.subplots(nrows=no_clusters, ncols=1, figsize=(8, 10))
+
+    # Iterate through clusters
     for i in range(no_clusters):
-        plt.plot(reconstructions[i])
-        plt.title(f"center {i}")
-        plt.xlabel("time")
-        plt.ylabel("amplitude")
-        plt.show()
+        if t_plot is None:
+            axes[i].plot(reconstructions[i])
+        else:
+            axes[i].plot(t_plot, reconstructions[i])
+        axes[i].set_title(f"Cluster {i}")
+        axes[i].set_xlabel("Time [s]")
+        axes[i].set_ylabel("Amplitude")
+
+    plt.tight_layout()
+    plt.show()
