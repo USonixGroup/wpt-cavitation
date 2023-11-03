@@ -65,7 +65,7 @@ class TreeGraph:
                     getattr(node_attributes[i], node_size.replace(" ", "_")) for i in G
                 )
             )
-            node_size = (node_size - np.mean(node_size)) / np.std(node_size) + 2
+            node_size = (node_size - np.mean(node_size)) / np.std(node_size) + 1.5
             node_size *= 1e4 / np.max(node_size)
 
         # Plot figure
