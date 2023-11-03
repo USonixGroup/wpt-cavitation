@@ -41,7 +41,7 @@ def generate_training_data_with_wavelet(
     """
     wpt_df = None
     for R_init in (i / 1e6 for i in range(4, 11, 2)):
-        for frequency in [i * 1e5 for i in range(7, 10, 2)]:
+        for frequency in [i * 1e5 for i in range(5, 20, 2)]:
             for pac in [-i * 1e4 for i in range(1, 20, 2)]:
                 data = get_data(R_init, frequency, pac, sampling_rate)
                 data = (data - np.mean(data)) / np.std(data)
@@ -181,12 +181,9 @@ def generate_training_data(
     wavelet="haar",
     mode="symmetric",
     *,
-    min_energy=0,
-    include_low_energy=0,
     min_entropy=False,
     min_level=0,
     include_tr_ob=False,
-    print_nodes_kept=False,
 ):
     """
     Generate training data for clustering using the wavelet packet transform. Statistical
@@ -205,10 +202,6 @@ def generate_training_data(
 
     Keyword Arguments
     -----------------
-    min_energy: float
-        the ratio of the total energy that a node must have to be used as training data
-    include_low_energy: float
-        probability between 0-1. Randomly keep nodes with less than min_energy with probability.
     min_entropy: bool
         whether to use the minimum entropy decomposition
     min_level: int
@@ -216,8 +209,6 @@ def generate_training_data(
     include_tr_ob: bool
         whether to return the transform object used for the transform containing
         info about the nodes.
-    print_nodes_kept: bool
-        print how many of the nodes were retained after filtering out low energy nodes
 
     Returns
     -------
@@ -231,34 +222,7 @@ def generate_training_data(
         data, levels, wavelet, mode, min_entropy=min_entropy, min_level=min_level
     )
 
-    # Create new dataframe which is a subset of tr_ob.info()
-    rows_to_add = []
-
-    # Filter out low energy nodes
-
-    if min_entropy is False:
-        nodes = tr_ob.get_level()
-    elif min_entropy is True:
-        nodes = tr_ob.get_leaf_nodes()
-    total_energy = sum(node.energy for node in nodes)
-
-    for _, row in tr_ob.info(levels, order="freq", leaf_nodes=min_entropy).iterrows():
-        # Skip if the node does not meet energy requirements.
-        energy = row["energy"]
-        if (
-            energy / total_energy < min_energy
-            and np.random.random() > include_low_energy
-        ):
-            continue
-
-        # Add the entire row to the new DataFrame
-        rows_to_add.append(row)
-
-    wpt_df = pd.DataFrame(rows_to_add)
-
-    # Print additional info about how many nodes were retained from the DWPT
-    if print_nodes_kept is True:
-        print(f"nodes kept: {len(wpt_df['energy'])}/{2 ** levels}")
+    wpt_df = tr_ob.info(levels, order="natural", leaf_nodes=min_entropy)
 
     # Return the transform object if specified
     if include_tr_ob is True:
