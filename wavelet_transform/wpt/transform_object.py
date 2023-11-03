@@ -2,6 +2,7 @@ from pywt import Wavelet as pywtWavelet
 
 from wavelet_transform.wpt.transform_node import BaseNode, Node
 from wavelet_transform.wpt.transform_results import TransformResults
+from wavelet_transform.wpt.tree_graph import TreeGraph
 
 
 class Transform:
@@ -28,9 +29,8 @@ class Transform:
         self.base_node = BaseNode(data, self)  # initialise base node
         self.levels = {0: [self.base_node]}  # initialise list of all nodes
         self.filter_bank = self.pywt_filter_bank(self.wavelet)
-        self.sampling_rate = (
-            None  # used for calculating the frequency range of each node
-        )
+        self.sampling_rate = None  # for calculating the frequency range of each node
+        self.tree = TreeGraph(self)
 
     # -------------------- Functions used for Transform ---------------
 
@@ -72,7 +72,7 @@ class Transform:
             full_level_nodes[node.node_number] = node
         return full_level_nodes
 
-    def get_leaf_nodes(self):
+    def get_leaf_nodes(self, order="natural"):
         "Get the leaf nodes in the tree. Ordered by frequency."
         leaf_nodes = [
             node
@@ -80,8 +80,11 @@ class Transform:
             for node in self.get_level(level)  # gather nodes with no children
             if 2 * node.node_number not in self.node_numbers(level + 1)
         ]
+        if order not in ["freq", "natural"]:
+            raise ValueError("order must be 'freq' or 'natural'")
         # Sort nodes in order of frequency.
-        leaf_nodes.sort(key=lambda x: x.norm_frequency_range[0])
+        if order == "freq":
+            leaf_nodes.sort(key=lambda x: x.norm_frequency_range[0])
         return leaf_nodes
 
     def node_numbers(self, level=None):
@@ -138,3 +141,22 @@ class Transform:
 
     def info(self, level=None, order="natural", leaf_nodes=False):
         return self.results.info(level, order, leaf_nodes)
+
+    # ---------------- Plot Tree Diagram ---------------
+
+    def plot_tree(self, node_size=1500, node_colour="skyblue"):
+        """
+        Plot the tree diagram for the wavelet transform.
+
+        Parameters
+        ----------
+        node_size: int or str
+            use an integer to set a global size for all nodes.
+            use a string with the same name as an attribute of the Transform.info()
+            dataframe to set size based on the attribute e.g. node_size = "energy"
+            will make higher energy nodes larger.
+        node_colour: str or list
+            use a string to set a global colour name.
+            use a list of labels (one for each leaf node) to colour the leaf nodes by label
+        """
+        self.tree.plot_tree(node_size, node_colour)

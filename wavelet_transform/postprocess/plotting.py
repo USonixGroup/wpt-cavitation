@@ -180,7 +180,7 @@ def heisenberg(transform_object, t_end=1):
     fig, ax = plt.subplots()
     fig.set_size_inches(18, 9)
 
-    nodes = transform_object.get_leaf_nodes()
+    nodes = transform_object.get_leaf_nodes(order="freq")
     data = np.zeros((len(nodes), len(nodes[0].data)))
     for i, j in enumerate(range(len(nodes) - 1, -1, -1)):  # maybe reverse
         node = nodes[j]
@@ -221,7 +221,9 @@ def heisenberg(transform_object, t_end=1):
     plt.show()
 
 
-def plot_reconstructions_by_group(transform_object, labels, no_clusters, t_plot=None):
+def plot_reconstructions_by_group(
+    transform_object, labels, no_clusters, t_plot=None, sampling_rate=None
+):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
     and plot the summation of those belonging to the same cluster.
@@ -234,9 +236,11 @@ def plot_reconstructions_by_group(transform_object, labels, no_clusters, t_plot=
         transform object from this library
     labels: list
         list of labels from training. Must be a power of 2
-    no_clusters:
+    no_clusters: int
         the number of clusters used. If set to None, the number of clusters will be
         derived from the number of unique elements in the list of labels.
+    sampling_rate: float
+        provide the sampling rate to plot the FFTs of the reconstructions as well
     """
     if no_clusters is None:
         no_clusters = len(set(labels))
@@ -244,11 +248,13 @@ def plot_reconstructions_by_group(transform_object, labels, no_clusters, t_plot=
     data = transform_object.data
     tr_ob = transform_object
 
+    signal_length = len(data)
+
     # List reconstructions by group
-    reconstructions = [np.zeros(len(data)) for _ in range(no_clusters)]
+    reconstructions = [np.zeros(signal_length) for _ in range(no_clusters)]
 
     # Sum all reconstructions belonging to the same group
-    for node, assignment in zip(tr_ob.get_leaf_nodes(), labels):
+    for node, assignment in zip(tr_ob.get_leaf_nodes(), labels):  # natural order
         rec_signal = inv.inv_dwpt(tr_ob, level=node.level, nodes=node)
         i = assignment
         reconstructions[i] = reconstructions[i] + rec_signal
@@ -265,6 +271,28 @@ def plot_reconstructions_by_group(transform_object, labels, no_clusters, t_plot=
         axes[i].set_title(f"Cluster {i}")
         axes[i].set_xlabel("Time [s]")
         axes[i].set_ylabel("Amplitude")
+
+    if sampling_rate is not None:
+        fig2, axes2 = plt.subplots(nrows=no_clusters, ncols=1, figsize=(8, 10))
+        freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[
+            0 : int(signal_length / 2)
+        ]
+        # Iterate through clusters
+        for i in range(no_clusters):
+            fft_rec = np.fft.fft(reconstructions[i])[0 : int(signal_length / 2)] / (
+                signal_length / 2
+            )  # division by signal_length/2 is to correct the amplitude (energy) in the freq domain
+            axes2[i].stem(
+                freq,
+                np.abs(fft_rec),
+                linefmt="b",
+                markerfmt=" ",
+                basefmt="-b",
+                use_line_collection=True,
+            )
+            axes2[i].set_title(f"Cluster {i} FFT")
+            axes2[i].set_xlabel("Frequency [Hz]")
+            axes2[i].set_ylabel("Amplitude [DL]")
 
     plt.tight_layout()
     plt.show()

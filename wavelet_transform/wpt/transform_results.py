@@ -54,7 +54,7 @@ class TransformResults:
         order: str
             "natural" or "freq" (see self.get_level())
         use_leaf_nodes: bool
-            display info about the leaf nodes of the transform. overrides level keyword
+            display info about the leaf nodes of the transform.
 
         Returns
         -------
@@ -76,7 +76,7 @@ class TransformResults:
         if leaf_nodes is False:
             nodes = self.tr_obj.get_level(level, order=order)
         elif leaf_nodes is True:
-            nodes = self.tr_obj.get_leaf_nodes()
+            nodes = self.tr_obj.get_leaf_nodes(order=order)
         for node in nodes:
             assert isinstance(node, Node)
             info_data.append(
