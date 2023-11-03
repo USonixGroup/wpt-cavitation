@@ -228,47 +228,47 @@ Another issue of the \km algorithm is that the number of clusters $k$ must be sp
 
 \subsection{Method overview}
 \label{sec:method_overview}
-The proposed algorithm is outlined in \figg{\ref{fig:adaptive_method_flowchart}}. The PCD data are normalised and windowed, using Blackman-Harris window, to reduce the border effects of DWPT. Next, the DWPT is applied to the signal, decomposing it into frequency subbands using the minimum entropy decomposition algorithm and the statistical metrics are calculated at the nodes of the deepest scale. These metrics are fed into the \km algorithm for feature classification. We only need to specify the wavelet family and the order of the wavelet function. The depth of decomposition and the number of clusters are determined automatically.
+The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD data are normalised and windowed, using Blackman-Harris window, to reduce the border effects of DWPT. Next, the DWPT is applied to the signal, decomposing it into frequency subbands using the minimum entropy decomposition algorithm and the statistical metrics are calculated at the nodes of the deepest scale. These metrics are fed into the \km algorithm for feature classification. We only need to specify the wavelet family and the order of the wavelet function. The depth of decomposition and the number of clusters are determined automatically.
 
 % \subsubsection{Selecting Number of Clusters}
 % \label{sec:n_clusters_selection}
 % Another drawback is that the number of clusters can change depending on the signal. For example, a signal comprised of a sine wave and noise, representing a measurement of stable cavitation, will results in nodes which fall into two clusters: those representing noise, and those representing the fundamental frequency. Once harmonics and transients are added to the signal, more clusters could be formed. Therefore, the algorithm must adapt to the number of clusters that exist in the data. This is done by fitting the clustering algorithm a few times with different numbers of clusters and using the results with the greatest silhouette score.
 
-\begin{figure}
-\begin{center}
-\begin{tikzpicture}[node distance=2cm]
-  % Define nodes
-  \node (signal) [startstop] {PCD signal};
-  \node (preprocess) [process, right of=signal, xshift=2cm] {Normalisation and windowing};
-  
-  \node (dwpt) [process, below of=preprocess] {DWPT};
-  \node (dwpt_check) [decision, below of=dwpt, yshift=-1cm] {Are there enough nodes?};  
-  \node (dwpt_adjustment) [process, left of=dwpt_check, xshift=-2cm] {Reduce order of filter};
-  \node (feature_extraction) [process, below of=dwpt_check, yshift=-1cm] {Calculate statistical metrics}; 
-  
-  \node (standardise) [process, left of=feature_extraction, xshift=-2cm] {Construct the feature matrix};
-  \node (kmeans) [process, below of=standardise] {\km clustering};
-
-  \node (results) [startstop, below of=feature_extraction] {Identified and classified features of the PCD data};
-
-  % Define edges
-  \draw [arrow] (signal) -- (preprocess);
-  \draw [arrow] (preprocess) -- (dwpt);
-  
-  \draw [arrow] (dwpt) -- (dwpt_check);
-  \draw [arrow] (dwpt_check) -- node[anchor=east] {Yes} (feature_extraction);
-  \draw [arrow] (dwpt_check) -- node[anchor=south] {No} (dwpt_adjustment);
-  \draw [arrow] (dwpt_adjustment) |- (dwpt);
-  
-  \draw [arrow] (feature_extraction) -- (standardise);
-  \draw [arrow] (standardise) -- (kmeans);
-
-  \draw [arrow] (kmeans) -- (results);
-\end{tikzpicture}
-\end{center}
-\caption{Flowchart of the algorithm.}
-\label{fig:adaptive_method_flowchart}
-\end{figure}
+%\begin{figure}
+%\begin{center}
+%\begin{tikzpicture}[node distance=2cm]
+%  % Define nodes
+%  \node (signal) [startstop] {PCD signal};
+%  \node (preprocess) [process, right of=signal, xshift=2cm] {Normalisation and windowing};
+%  
+%  \node (dwpt) [process, below of=preprocess] {DWPT};
+%  \node (dwpt_check) [decision, below of=dwpt, yshift=-1cm] {Are there enough nodes?};  
+%  \node (dwpt_adjustment) [process, left of=dwpt_check, xshift=-2cm] {Reduce order of filter};
+%  \node (feature_extraction) [process, below of=dwpt_check, yshift=-1cm] {Calculate statistical metrics}; 
+%  
+%  \node (standardise) [process, left of=feature_extraction, xshift=-2cm] {Construct the feature matrix};
+%  \node (kmeans) [process, below of=standardise] {\km clustering};
+%
+%  \node (results) [startstop, below of=feature_extraction] {Identified and classified features of the PCD data};
+%
+%  % Define edges
+%  \draw [arrow] (signal) -- (preprocess);
+%  \draw [arrow] (preprocess) -- (dwpt);
+%  
+%  \draw [arrow] (dwpt) -- (dwpt_check);
+%  \draw [arrow] (dwpt_check) -- node[anchor=east] {Yes} (feature_extraction);
+%  \draw [arrow] (dwpt_check) -- node[anchor=south] {No} (dwpt_adjustment);
+%  \draw [arrow] (dwpt_adjustment) |- (dwpt);
+%  
+%  \draw [arrow] (feature_extraction) -- (standardise);
+%  \draw [arrow] (standardise) -- (kmeans);
+%
+%  \draw [arrow] (kmeans) -- (results);
+%\end{tikzpicture}
+%\end{center}
+%\caption{Flowchart of the algorithm.}
+%\label{fig:adaptive_method_flowchart}
+%\end{figure}
 
 % % Method flowchart
 % \begin{figure}
@@ -309,38 +309,38 @@ The proposed algorithm is outlined in \figg{\ref{fig:adaptive_method_flowchart}}
 % \subsubsection{Training Data}
 % The 2nd algorithm involves clustering the nodes from many signals to form a single, more complete, classification model. This model can use more statistical features because of the greater number of observations. If the training data is chosen carefully, it will lead to more meaningful clusters representing harmonics, fundamental frequencies, transients, noise, and combinations of them. As shown in \ref{fig:method_flowchart}, this no longer requires the step of checking if a given signal has enough decompositions and the number of clusters can now be more feasibly chosen manually.
 
-% % Training data method flowchart
-% \begin{figure}
-% \begin{center}
-% \begin{tikzpicture}[node distance=2cm]
+  Training data method flowchart
+ \begin{figure}
+ \begin{center}
+ \begin{tikzpicture}[node distance=2cm]
 
-%   % Define nodes
-%   \node (signal) [startstop] {Signals};
-%   \node (preprocess) [process, right of=signal, xshift=2cm] {Normalisation and windowing};
+   % Define nodes
+   \node (signal) [startstop] {Signals};
+   \node (preprocess) [process, right of=signal, xshift=2cm] {Normalisation and windowing};
   
-%   \node (dwpt) [process, below of=preprocess] {DWPT};
-%   \node (feature_extraction) [process, below of=signal] {Extract statistical features}; 
+   \node (dwpt) [process, below of=preprocess] {DWPT};
+   \node (feature_extraction) [process, below of=signal] {Extract statistical features}; 
   
-%   \node (standardise) [process, below of=feature_extraction] {Standardise the data};
-%   \node (kmeans) [process, below of=dwpt] {\km clustering};
+   \node (standardise) [process, below of=feature_extraction] {Standardise the data};
+   \node (kmeans) [process, below of=dwpt] {\km clustering};
 
-%   \node (results) [startstop, below of=kmeans] {Clustering results};
+   \node (results) [startstop, below of=kmeans] {Clustering results};
 
-%   % Define edges
-%   \draw [arrow] (signal) -- (preprocess);
-%   \draw [arrow] (preprocess) -- (dwpt);
+   % Define edges
+   \draw [arrow] (signal) -- (preprocess);
+   \draw [arrow] (preprocess) -- (dwpt);
   
-%   \draw [arrow] (dwpt) -- (feature_extraction);
+   \draw [arrow] (dwpt) -- (feature_extraction);
   
-%   \draw [arrow] (feature_extraction) -- (standardise);
-%   \draw [arrow] (standardise) -- (kmeans);
+   \draw [arrow] (feature_extraction) -- (standardise);
+   \draw [arrow] (standardise) -- (kmeans);
 
-%   \draw [arrow] (kmeans) -- (results);
-% \end{tikzpicture}
-% \end{center}
-% \caption{Non-adaptive method using training data.}
-% \label{method_flowchart}
-% \end{figure}
+   \draw [arrow] (kmeans) -- (results);
+ \end{tikzpicture}
+ \end{center}
+ \caption{Non-adaptive method using training data.}
+ \label{method_flowchart}
+ \end{figure}
 
 \subsection{Gilmore-Akulichev model}
 \label{sec:GA_model}
@@ -474,12 +474,7 @@ To assess the impact of randomised starting positions for the cluster centroids,
 \subsection{Experimental set up and protocols}
 \label{sec:Exp_setup}
 \subsection{Analyzing experimental PCD data}
-The signal from PCD is expected to contain a range of harmonics \cite{leighton1994}. These have frequencies which are multiples of the fundamental frequency (the frequency of the ultrasound). Neppiras outlined the expected acoustic emissions for ultrasound at a range of power levels \cite{neppiras1980}. At low powers, the fundamental frequency was the only one measured. As the power was increased, but before collapse cavitation occurred, high-order harmonics were emitted by the bubbles. The emission with frequency equal to twice fundamental was prominent and had an amplitude proportional to the square of the fundamental.
-
-Subharmonics occasionally appear. These have frequency of 1/N of the fundamental where N is an integer. This can be formed by both stable and inertial cavitation and there are many theories as to what may cause subharmonics \cite{leighton1994}. The main theory is that they are generated by the non-linear pulsations of stable cavitation. If they are emitted by a system with only inertial cavitation, this can be explained by the prolonged expansion phase that can occur when the bubble oscillates for a few cycles before collapsing. The 1/2 and 1/3 frequency sub-harmonics are the most commonly occurring ones in acoustic cavitation.
-
-The final component of the signal is broadband noise. There are several theories as to why this might occur. Most importantly, it is an indicator of transient cavitation. The shock wave is thought to cause this \cite{frohly2000}. Another possible cause for broadband noise is the bubble-to-bubble interaction, where bubbles pulsate non-periodically \cite{yasui2010numerical}. The interaction between bubbles is thought to produce harmonics and sub-harmonics as well, further increasing the difficulty in analysing clusters of bubbles. Broadband noise has the effect of increasing the intensity of each of the harmonics and sub-harmonics. The transducer will produce some noise as well. The frequency ranges affected depends on the specifications of the transducer.
-Overall, the feature extraction method must be able to separate and quantify harmonics, sub-harmonics, and broadband noise. This will make it possible to extract and classify features. In this section, three signals will be analysed and the results will be discussed.
+The feature extraction method must be able to separate and quantify harmonics, sub-harmonics, and broadband noise. This will make it possible to extract and classify features. In this section, three signals will be analysed and the results will be discussed.
 
 The first signal is shown in \figg{\ref{fig:pcd_5-10}}. This signal appears like a regular sine wave with some noise and the FFT shows a single peak indicating the fundamental frequency. The results are plotted in \figg{\ref{fig:pcd_5-10_results}}. Cluster two is made up of a single node with frequency range 1.56 - 2.34 MHz. This was separated from the rest of the nodes due to its high energy. The transform finds nodes containing harmonics and sub-harmonics but is unable to separate them using the selected features. Instead, it puts them both in cluster 1 with some nodes containing noise. Next, the parameters for the algorithm are tweaked by setting the number of minimum number of clusters to 3 and using the log average energy feature instead of the average energy feature to better separate out the harmonic and sub-harmonic components. The results are shown in \figg{\ref{fig:pcd_5-10_results_log}}. This time, cluster 2 contains the nodes with frequency ranges containing 2MHz, 1MHz, and 4MHz, i.e., the first harmonic and sub-harmonic components are now clustered alongside the fundamental frequency. The noise is now better separated into cluster 0 as well, producing a lower-amplitude signal. This shows that the parameters can be tweaked in a way that produces more desirable results.
 
@@ -529,7 +524,7 @@ Overall, the proposed proposed algorithm performs well in separating the signal 
 
 \section{Summary}
 \label{sec:summary}
-Overall, this paper has developed a novel approach to classifying PCD data by clustering DWPT nodes, in an attempt to create an automated algorithm that can separate out features relating to stable and transient cavitation. The DWPT has been found to be useful in separating out these components in a flexible manner, especially when combined with the minimum entropy decomposition, which is able to generate a reasonable time-frequency tiling. Several features were assessed to help classify the nodes. Self-organising maps were used to help visualise the feature space, a useful method in determining which ones may be the most useful. However, the algorithm is unable to consistently separate harmonics and sub-harmonics from lower-kurtosis noise. This leads to several suggestions for future work:
+In this paper a novel approach was developed for classifying PCD data by clustering DWPT nodes, in an attempt to create an automated algorithm that can separate out features relating to stable and transient cavitation. The DWPT has been found to be useful in separating out these components in a flexible manner, especially when combined with the minimum entropy decomposition, which is able to generate a reasonable time-frequency tiling. Several features were assessed to help classify the nodes. Self-organising maps were used to help visualise the feature space, a useful method in determining which ones may be the most useful. However, the algorithm is unable to consistently separate harmonics and sub-harmonics from lower-kurtosis noise. This leads to several suggestions for future work:
 
 \begin{itemize}
 \item Explore alternative algorithms to \km which may be able to find more meaningful clusters.
