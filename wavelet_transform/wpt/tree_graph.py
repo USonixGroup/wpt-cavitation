@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import numpy as np
 
 from networkx.drawing.nx_agraph import graphviz_layout
 import networkx as nx
@@ -59,10 +60,13 @@ class TreeGraph:
 
         # Calculate node sizes
         if isinstance(node_size, str):
-            node_size = [
-                getattr(node_attributes[i], node_size.replace(" ", "_")) for i in G
-            ]
-            node_size = [1e4 / max(node_size) * i for i in node_size]
+            node_size = np.array(
+                list(
+                    getattr(node_attributes[i], node_size.replace(" ", "_")) for i in G
+                )
+            )
+            node_size = (node_size - np.mean(node_size)) / np.std(node_size) + 2
+            node_size *= 1e4 / np.max(node_size)
 
         # Plot figure
         fig, ax = plt.subplots(1, 1, figsize=(40, 20))
