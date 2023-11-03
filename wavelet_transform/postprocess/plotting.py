@@ -272,6 +272,8 @@ def plot_reconstructions_by_group(
         axes[i].set_xlabel("Time [s]")
         axes[i].set_ylabel("Amplitude")
 
+    plt.tight_layout()
+
     if sampling_rate is not None:
         fig2, axes2 = plt.subplots(nrows=no_clusters, ncols=1, figsize=(8, 10))
         freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[
