@@ -42,26 +42,20 @@ def dataset1(dataset):
 
     if dataset == "5-10":
         # i = [50, 100], n = 3, (i = 50, i_lo = [2500::5000])
-        file = (
-            r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\PCD data for paper\TestID5-10W per cm2 intensity\C1test00"
-            + num
-            + ".txt"
-        )
+        file = "TestID5-10W per cm2 intensity/C1test00" + num + ".txt"
 
     elif dataset == "5-34":
         # i = [00 - 21], n = 2, (i = 00, i_lo = [2150::5000])
         file = (
-            r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\PCD data for paper\TestID5-34W per cm2 intensity\C2test016"
-            + num
-            + ".txt"
+            r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\PCD data for"
+            r" paper\TestID5-34W per cm2 intensity\C2test016" + num + ".txt"
         )
 
     elif dataset == "6-12":
         # i = [01 - 20], n = 2, (i = 01, i_lo = [0::5000])
         file = (
-            r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\PCD data for paper\TestID6-12W per cm2 intensity\C1test000"
-            + num
-            + ".txt"
+            r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\PCD data for"
+            r" paper\TestID6-12W per cm2 intensity\C1test000" + num + ".txt"
         )
     dfb = pd.read_csv(file, sep=",", header=None)
 
@@ -75,13 +69,10 @@ def dataset1(dataset):
 
 def dataset2(dataset):
     voltage, frequency = dataset
-    file = (
-        r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\Data used for the IOP paper 2014\Test2_HIFU_NoVial_"
-        + str(voltage)
-        + r"mVpp_Modf.mat"
-    )
+    file = "../PCD data for paper/Test2_HIFU_NoVial_" + str(voltage) + "mVpp_Modf.mat"
+    print("\n the data file imported is: \n" + file)
     data = sio.loadmat(file)
-    signal = data["c" + str(frequency) + "hat"]  # Get c1hat, c5hat, c10hat
+    signal = data["c" + str(frequency)]  # + "hat"]  # Get c1hat, c5hat, c10hat
     time = np.arange(len(signal)) / data["fs"]  # Generate time array with sampling rate
 
     return signal.squeeze(), time.squeeze()

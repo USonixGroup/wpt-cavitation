@@ -70,7 +70,7 @@ def generate_training_data_with_wavelet(
     return wpt_df
 
 
-def get_data(R_init, frequency, pac, sampling_rate, n_cycles=20, return_time=False):
+def get_data(R_init, frequency, pac, sampling_rate, n_cycles=100, return_time=False):
     """
     Get data from bubble dynamics model or generate it if it doesn't exist.
 
@@ -149,7 +149,8 @@ def _generate_data_for_storage(R_init, frequency, pac, n_cycles=20):
         i += 1
         if i > 50:
             print(
-                f"Could not generate dynamics data with R_init: {R_init}, frequency: {frequency}, pac: {pac}"
+                f"Could not generate dynamics data with R_init: {R_init}, frequency:"
+                f" {frequency}, pac: {pac}"
             )
             return None
 

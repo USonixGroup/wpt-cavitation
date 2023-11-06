@@ -186,7 +186,7 @@ def heisenberg(transform_object, t_end=1):
         node = nodes[j]
         data[i, :] = np.abs(node.data)  # plot absolute values of wavelet coefficients
 
-    graph = ax.imshow(data, cmap="turbo", aspect="auto")
+    graph = ax.imshow(np.log10(data), cmap="turbo", aspect="auto")
     ax.set_ylabel("Frequency of Subband [Hz]", fontsize=20)
     ax.set_xlabel("Time [s]", fontsize=20)
     ax.set_title("DWPT of Signal", fontsize=25)
@@ -194,7 +194,8 @@ def heisenberg(transform_object, t_end=1):
     frequencies = [node.frequency_range for node in nodes]
     if any((freq is None for freq in frequencies)):
         raise ValueError(
-            "Check that the frequencies have been calculated -> transform_obj.calc_frequencies()"
+            "Check that the frequencies have been calculated ->"
+            " transform_obj.calc_frequencies()"
         )
     y_labels = [
         (sci_form(freq[0], 1), sci_form(freq[1], 1)) for freq in reversed(frequencies)
