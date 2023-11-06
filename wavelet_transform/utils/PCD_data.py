@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import scipy.io as sio
 
 
 def add_0s(number, i):
@@ -10,27 +11,36 @@ def add_0s(number, i):
     return num
 
 
-def get_data(id_intensity):
-    # Define parameters for each set of data
-    id_dict = {
+def get_data(dataset):
+    if dataset in ["5-10", "5-34", "6-12"]:
+        return dataset1(dataset)  # get data from 1st dataset
+
+    elif (
+        isinstance(dataset, tuple)
+        and dataset[0] in [80, 120, 200, 280]
+        and dataset[1] in [1, 5, 10]
+    ):
+        return dataset2(dataset)  # get data from 2nd dataset
+
+    else:
+        raise ValueError("invalid dataset named")
+
+
+def dataset1(dataset):
+    # Get parameters for extracting signal from input dataset
+    datasets1 = {
         "5-10": (50, 3, 20, 2e6, 2500),
         "5-34": (0, 2, 20, 2e6, 2150),
         "6-12": (1, 2, 22, 7.37e6, 0),
     }
-
-    # Check id
-    if id_intensity not in id_dict:
-        raise ValueError("invalid id_intensity")
-
-    # Get parameters for extracting signal from id_intensity
     sampling_rate = 50e6
-    i, n, n_cycles, freq, i_lo = id_dict[id_intensity]
+    i, n, n_cycles, freq, i_lo = datasets1[dataset]
     i_hi = int(i_lo + n_cycles / freq * sampling_rate)
 
     # Get raw data
     num = add_0s(i, n)
 
-    if id_intensity == "5-10":
+    if dataset == "5-10":
         # i = [50, 100], n = 3, (i = 50, i_lo = [2500::5000])
         file = (
             r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\PCD data for paper\TestID5-10W per cm2 intensity\C1test00"
@@ -38,7 +48,7 @@ def get_data(id_intensity):
             + ".txt"
         )
 
-    elif id_intensity == "5-34":
+    elif dataset == "5-34":
         # i = [00 - 21], n = 2, (i = 00, i_lo = [2150::5000])
         file = (
             r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\PCD data for paper\TestID5-34W per cm2 intensity\C2test016"
@@ -46,7 +56,7 @@ def get_data(id_intensity):
             + ".txt"
         )
 
-    elif id_intensity == "6-12":
+    elif dataset == "6-12":
         # i = [01 - 20], n = 2, (i = 01, i_lo = [0::5000])
         file = (
             r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\PCD data for paper\TestID6-12W per cm2 intensity\C1test000"
@@ -61,3 +71,17 @@ def get_data(id_intensity):
     time -= time[0]
 
     return np.array(data[i_lo:i_hi]), np.array(time[i_lo:i_hi])
+
+
+def dataset2(dataset):
+    voltage, frequency = dataset
+    file = (
+        r"C:\Users\maxau\OneDrive\Codes\WPT-Cavitation\docs\Data used for the IOP paper 2014\Test2_HIFU_NoVial_"
+        + str(voltage)
+        + r"mVpp_Modf.mat"
+    )
+    data = sio.loadmat(file)
+    signal = data["c" + str(frequency) + "hat"]  # Get c1hat, c5hat, c10hat
+    time = np.arange(len(signal)) / data["fs"]  # Generate time array with sampling rate
+
+    return signal.squeeze(), time.squeeze()

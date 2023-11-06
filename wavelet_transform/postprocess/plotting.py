@@ -221,9 +221,24 @@ def heisenberg(transform_object, t_end=1):
     plt.show()
 
 
-def plot_reconstructions_by_group(
-    transform_object, labels, no_clusters, t_plot=None, sampling_rate=None
-):
+# ---------------- Plot Reconstructed Data & FFTs ---------------
+
+
+def get_reconstructions_by_group(tr_ob, labels, n_clusters):
+    signal_length = len(tr_ob.data)
+    # List reconstructions by group
+    reconstructions = [np.zeros(signal_length) for _ in range(n_clusters)]
+
+    # Sum all reconstructions belonging to the same group
+    for node, assignment in zip(tr_ob.get_leaf_nodes(), labels):  # natural order
+        rec_signal = inv.inv_dwpt(tr_ob, level=node.level, nodes=node)
+        i = assignment
+        reconstructions[i] = reconstructions[i] + rec_signal
+
+    return reconstructions
+
+
+def plot_reconstructions_by_group(transform_object, labels, no_clusters, t_plot=None):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
     and plot the summation of those belonging to the same cluster.
@@ -245,19 +260,9 @@ def plot_reconstructions_by_group(
     if no_clusters is None:
         no_clusters = len(set(labels))
 
-    data = transform_object.data
-    tr_ob = transform_object
-
-    signal_length = len(data)
-
-    # List reconstructions by group
-    reconstructions = [np.zeros(signal_length) for _ in range(no_clusters)]
-
-    # Sum all reconstructions belonging to the same group
-    for node, assignment in zip(tr_ob.get_leaf_nodes(), labels):  # natural order
-        rec_signal = inv.inv_dwpt(tr_ob, level=node.level, nodes=node)
-        i = assignment
-        reconstructions[i] = reconstructions[i] + rec_signal
+    reconstructions = get_reconstructions_by_group(
+        transform_object, labels, no_clusters
+    )
 
     print("Reconstructed nodes by group:")
     fig, axes = plt.subplots(nrows=no_clusters, ncols=1, figsize=(8, 10))
@@ -273,28 +278,72 @@ def plot_reconstructions_by_group(
         axes[i].set_ylabel("Amplitude")
 
     plt.tight_layout()
+    plt.show()
 
-    if sampling_rate is not None:
-        fig2, axes2 = plt.subplots(nrows=no_clusters, ncols=1, figsize=(8, 10))
-        freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[
-            0 : int(signal_length / 2)
-        ]
-        # Iterate through clusters
-        for i in range(no_clusters):
-            fft_rec = np.fft.fft(reconstructions[i])[0 : int(signal_length / 2)] / (
-                signal_length / 2
-            )  # division by signal_length/2 is to correct the amplitude (energy) in the freq domain
-            axes2[i].stem(
-                freq,
-                np.abs(fft_rec),
-                linefmt="b",
-                markerfmt=" ",
-                basefmt="-b",
-                use_line_collection=True,
-            )
-            axes2[i].set_title(f"Cluster {i} FFT")
-            axes2[i].set_xlabel("Frequency [Hz]")
-            axes2[i].set_ylabel("Amplitude [DL]")
 
-    plt.tight_layout()
+def plot_fft_by_group(
+    transform_object,
+    labels,
+    no_clusters,
+    sampling_rate,
+    clusters=None,
+    xlim=None,
+    fundamental_freq=None,
+):
+    """
+    Plot FFTs of reconstructed signals and original signal
+
+    Paramters (incomplete)
+    ---------
+    clusters: list of int
+        a list of clusters to plot.
+    """
+    if isinstance(clusters, int):
+        clusters = list(clusters)
+
+    if no_clusters is None:
+        no_clusters = len(set(labels))
+
+    signal_length = len(transform_object.data)
+    reconstructions = get_reconstructions_by_group(
+        transform_object, labels, no_clusters
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[
+        0 : int(signal_length / 2)
+    ]
+
+    if fundamental_freq is not None:
+        freq /= fundamental_freq
+
+    # FFT of original signal
+    fft_original = np.fft.fft(transform_object.data)[0 : int(signal_length / 2)] / (
+        signal_length / 2
+    )
+
+    ax.plot(freq, np.log10(np.abs(fft_original)), label="Original Signal", color="blue")
+
+    # Plot FFTs
+    if clusters is None:
+        clusters = range(no_clusters)
+
+    # reconstructions = list(i * np.blackman(len(i)) for i in reconstructions)
+    for i in clusters:
+        fft_rec = np.fft.fft(reconstructions[i])[0 : int(signal_length / 2)] / (
+            signal_length / 2
+        )
+        ax.plot(freq, np.log(np.abs(fft_rec)), label=f"Cluster {i}")
+
+    ax.set_title("FFT Comparison")
+    if fundamental_freq is None:
+        xlabel = "Frequency [Hz]"
+    else:
+        xlabel = "Frequency / Fundamental frequency"
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("Amplitude [DL]")
+    ax.legend()
+    if xlim is not None:
+        ax.set_xlim(0, xlim)
     plt.show()

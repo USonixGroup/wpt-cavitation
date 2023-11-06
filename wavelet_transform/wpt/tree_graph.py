@@ -19,6 +19,8 @@ class TreeGraph:
             1: "blue",
             2: "green",
             3: "purple",
+            4: "cyan",
+            5: "red",
         }  # Map label number to colour
 
     def plot_tree(self, node_size=1500, node_colour="skyblue"):
@@ -109,16 +111,14 @@ class TreeGraph:
         # Add legend for clusters
         if isinstance(node_colour, list):
             # Create legend labels
-            legend_labels = {
-                -1: "Unclassified",
-                0: "Cluster 0",
-                1: "Cluster 1",
-                2: "Cluster 2",
-                3: "Cluster 3",
-            }
+            legend_labels = dict(
+                (i, f"Cluster {i}") for i in range(len(node_colour) + 1)
+            )
+            legend_labels[-1] = "Unclassified"
+
             colour_dict = {
                 i: self.colour_dict[i]
-                for i in list(self.colour_dict.keys())[: n_clusters + 1]
+                for i in sorted(self.colour_dict.keys())[: n_clusters + 1]
             }
 
             # Get relevant clusters
