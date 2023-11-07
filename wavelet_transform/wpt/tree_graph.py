@@ -11,17 +11,18 @@ if TYPE_CHECKING:
 
 
 class TreeGraph:
+    colour_dict = {
+        -1: "skyblue",
+        0: "orange",
+        1: "brown",
+        2: "green",
+        3: "purple",
+        4: "cyan",
+        5: "red",
+    }  # Map label number to colour
+
     def __init__(self, tr_obj: "Transform"):
         self.tr_obj = tr_obj  # Transform object
-        self.colour_dict = {
-            -1: "skyblue",
-            0: "orange",
-            1: "blue",
-            2: "green",
-            3: "purple",
-            4: "cyan",
-            5: "red",
-        }  # Map label number to colour
 
     def plot_tree(self, node_size=1500, node_colour="skyblue"):
         "Plot the tree diagram for the wavelet packet transform."

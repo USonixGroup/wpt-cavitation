@@ -2,6 +2,8 @@ from wavelet_transform.utils.extensions import sci_form
 import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
+from wavelet_transform.wpt.tree_graph import TreeGraph
 
 FS = 15  # fontsize
 
@@ -300,7 +302,7 @@ def plot_fft_by_group(
         a list of clusters to plot.
     """
     if isinstance(clusters, int):
-        clusters = list(clusters)
+        clusters = [clusters]
 
     if no_clusters is None:
         no_clusters = len(set(labels))
@@ -310,7 +312,7 @@ def plot_fft_by_group(
         transform_object, labels, no_clusters
     )
 
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig = go.Figure()
 
     freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[
         0 : int(signal_length / 2)
@@ -324,27 +326,44 @@ def plot_fft_by_group(
         signal_length / 2
     )
 
-    ax.plot(freq, np.log10(np.abs(fft_original)), label="Original Signal", color="blue")
+    fig.add_trace(
+        go.Scatter(
+            x=freq,
+            y=20 * np.log10(np.abs(fft_original)),
+            mode="lines",
+            name="Original Signal",
+            line=dict(color="blue"),
+        )
+    )
 
     # Plot FFTs
     if clusters is None:
         clusters = range(no_clusters)
 
-    # reconstructions = list(i * np.blackman(len(i)) for i in reconstructions)
+    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+
     for i in clusters:
         fft_rec = np.fft.fft(reconstructions[i])[0 : int(signal_length / 2)] / (
             signal_length / 2
         )
-        ax.plot(freq, np.log(np.abs(fft_rec)), label=f"Cluster {i}")
+        fig.add_trace(
+            go.Scatter(
+                x=freq,
+                y=20 * np.log10(np.abs(fft_rec)),
+                mode="lines",
+                name=f"Cluster {i}",
+                line=dict(color=colours[i]),
+            )
+        )
 
-    ax.set_title("FFT Comparison")
-    if fundamental_freq is None:
-        xlabel = "Frequency [Hz]"
-    else:
-        xlabel = "Frequency / Fundamental frequency"
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel("Amplitude [DL]")
-    ax.legend()
-    if xlim is not None:
-        ax.set_xlim(0, xlim)
-    plt.show()
+    fig.update_layout(
+        title="FFT Comparison",
+        xaxis_title="Frequency [Hz]"
+        if fundamental_freq is None
+        else "Frequency / f_0 [DL]",
+        yaxis_title="Amplitude [dB]",
+        legend=dict(title="Clusters"),
+        xaxis=dict(range=[0, xlim] if xlim is not None else None),
+    )
+
+    fig.show()
