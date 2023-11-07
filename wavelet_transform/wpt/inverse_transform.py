@@ -4,6 +4,7 @@ import pandas as pd
 
 from wavelet_transform.wpt.transform_object import Transform
 import wavelet_transform.utils.statistical_features as stats
+from wavelet_transform.wpt.transform_node import Node
 
 
 def nodes2data(nodes):
@@ -143,7 +144,7 @@ class InverseTransform:
     def inv_dwt(self, levels, **kwargs):
         return inv_dwt(self.transform_object, levels, **kwargs)
 
-    def info(self, level=None, order="natural"):
+    def info(self, level=None, order="natural", leaf_nodes=False):
         """
         Perform the inverse transform on each node then calculate statistical measures on each.
 
@@ -153,6 +154,8 @@ class InverseTransform:
             the level of transform to display information for
         order: str
             "natural" or "freq" (see Transform.get_level())
+        leaf_nodes: bool
+        display info about the leaf nodes of the transform
 
         Returns
         -------
@@ -169,17 +172,35 @@ class InverseTransform:
 
         # Reconstruct each node separately
         info_data = []
-        for node in tr_ob.get_level(level, order):
+        if not isinstance(leaf_nodes, bool):
+            raise ValueError("leaf_nodes argument must be boolean")
+        if leaf_nodes is False:
+            nodes = self.transform_object.get_level(level, order=order)
+        elif leaf_nodes is True:
+            nodes = self.transform_object.get_leaf_nodes(order=order)
+        for node in nodes:
+            assert isinstance(node, Node)
             # Calculate inverse transform
-            inverse = inv_dwpt(tr_ob, level, nodes=node)
+            inverse = inv_dwpt(tr_ob, node.level, nodes=node)
             info_data.append(
                 {
+                    "level": node.level,
                     "node number": node.node_number,
+                    "frequency range": node.freq_range,
+                    "centre frequency": np.average(node.numeric_freq_range),
                     "energy": stats.energy(inverse),
+                    "log energy": stats.log_energy(inverse),
+                    "average energy": stats.avg_energy(inverse),
+                    "log average energy": stats.log_avg_energy(inverse),
                     "kurtosis": stats.kurtosis(inverse),
                     "crest factor": stats.crest_factor(inverse),
                     "skewness": stats.skewness(inverse),
-                    "frequency range": node.freq_range,
+                    "abs skewness": stats.abs_skewness(inverse),
+                    "entropy": stats.entropy(inverse),
+                    "spectral entropy": stats.spectral_entropy(inverse),
+                    "level entropy": stats.entropy(
+                        inverse, node.transform_object.total_energy(0)
+                    ),
                 }
             )
         info = pd.DataFrame(info_data)

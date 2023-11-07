@@ -53,7 +53,7 @@ class TransformResults:
             the level of transform to display information for
         order: str
             "natural" or "freq" (see self.get_level())
-        use_leaf_nodes: bool
+        leaf_nodes: bool
             display info about the leaf nodes of the transform.
 
         Returns
