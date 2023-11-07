@@ -63,9 +63,7 @@ def dataset1(dataset):
 
 def dataset2(dataset):
     voltage, frequency = dataset
-    file = (
-        "../docs/PCD data for paper/Test2_HIFU_NoVial_" + str(voltage) + "mVpp_Modf.mat"
-    )
+    file = "../PCD data for paper/Test2_HIFU_NoVial_" + str(voltage) + "mVpp_Modf.mat"
     print("/n the data file imported is: /n" + file)
     data = sio.loadmat(file)
     signal = data["c" + str(frequency)]  # + "hat"]  # Get c1hat, c5hat, c10hat
