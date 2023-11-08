@@ -44,12 +44,12 @@ def generate_training_data_with_wavelet(
         for frequency in [i * 1e5 for i in range(5, 20, 2)]:
             for pac in [-i * 1e4 for i in range(1, 20, 2)]:
                 data = get_data(R_init, frequency, pac, sampling_rate)
-                data = (data - np.mean(data)) / np.std(data)
                 data += np.random.normal(0, std_noise, size=len(data))
 
                 length = len(data) if data_len is None else data_len
                 data = data[:length]
                 data *= np.blackman(len(data))
+                data = (data - np.mean(data)) / np.std(data)
 
                 # Generate traning data using the wavelet transform
                 training_data = generate_training_data(
@@ -57,7 +57,6 @@ def generate_training_data_with_wavelet(
                     levels,
                     wavelet,
                     mode,
-                    print_nodes_kept=False,
                     min_entropy=min_entropy,
                     min_level=min_level,
                 )
