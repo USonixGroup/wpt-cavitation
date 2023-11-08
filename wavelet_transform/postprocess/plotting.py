@@ -1,4 +1,4 @@
-from wavelet_transform.utils.extensions import sci_form
+from wavelet_transform.utils.extensions import sci_form, fft
 import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
@@ -307,24 +307,14 @@ def plot_fft_by_group(
     if no_clusters is None:
         no_clusters = len(set(labels))
 
-    signal_length = len(transform_object.data)
     reconstructions = get_reconstructions_by_group(
         transform_object, labels, no_clusters
     )
 
     fig = go.Figure()
 
-    freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[
-        0 : int(signal_length / 2)
-    ]
-
-    if fundamental_freq is not None:
-        freq /= fundamental_freq
-
     # FFT of original signal
-    fft_original = np.fft.fft(transform_object.data)[0 : int(signal_length / 2)] / (
-        signal_length / 2
-    )
+    fft_original, freq = fft(transform_object.data, sampling_rate, fundamental_freq)
 
     fig.add_trace(
         go.Scatter(
@@ -343,9 +333,7 @@ def plot_fft_by_group(
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
 
     for i in clusters:
-        fft_rec = np.fft.fft(reconstructions[i])[0 : int(signal_length / 2)] / (
-            signal_length / 2
-        )
+        fft_rec = fft(reconstructions[i])
         fig.add_trace(
             go.Scatter(
                 x=freq,
