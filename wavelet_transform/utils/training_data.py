@@ -40,9 +40,9 @@ def generate_training_data_with_wavelet(
     number of samples.
     """
     wpt_df = None
-    for R_init in (i / 1e6 for i in range(4, 11, 2)):
+    for R_init in (i / 1e6 for i in range(1, 11, 2)):
         for frequency in [i * 1e5 for i in range(5, 20, 2)]:
-            for pac in [-i * 1e4 for i in range(1, 20, 2)]:
+            for pac in [-i * 1e3 for i in range(100, 2000, 100)]:
                 data = get_data(R_init, frequency, pac, sampling_rate)
                 data += np.random.normal(0, std_noise, size=len(data))
 
