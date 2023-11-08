@@ -227,13 +227,15 @@ def heisenberg(transform_object, t_end=1):
 # ---------------- Plot Reconstructed Data & FFTs ---------------
 
 
-def get_reconstructions_by_group(tr_ob, labels, n_clusters):
+def get_reconstructions_by_group(tr_ob, labels, n_clusters, freq_threshold):
     signal_length = len(tr_ob.data)
     # List reconstructions by group
     reconstructions = [np.zeros(signal_length) for _ in range(n_clusters)]
 
     # Sum all reconstructions belonging to the same group
-    for node, assignment in zip(tr_ob.get_leaf_nodes(), labels):  # natural order
+    for node, assignment in zip(
+        tr_ob.get_leaf_nodes(freq_threshold=freq_threshold), labels
+    ):  # natural order
         rec_signal = inv.inv_dwpt(tr_ob, level=node.level, nodes=node)
         i = assignment
         reconstructions[i] = reconstructions[i] + rec_signal
@@ -241,7 +243,9 @@ def get_reconstructions_by_group(tr_ob, labels, n_clusters):
     return reconstructions
 
 
-def plot_reconstructions_by_group(transform_object, labels, no_clusters, t_plot=None):
+def plot_reconstructions_by_group(
+    transform_object, labels, no_clusters, t_plot=None, freq_threshold=None
+):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
     and plot the summation of those belonging to the same cluster.
@@ -264,7 +268,7 @@ def plot_reconstructions_by_group(transform_object, labels, no_clusters, t_plot=
         no_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, no_clusters
+        transform_object, labels, no_clusters, freq_threshold
     )
 
     print("Reconstructed nodes by group:")
@@ -292,6 +296,7 @@ def plot_fft_by_group(
     clusters=None,
     xlim=None,
     fundamental_freq=None,
+    freq_threshold=None,
 ):
     """
     Plot FFTs of reconstructed signals and original signal
@@ -308,7 +313,7 @@ def plot_fft_by_group(
         no_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, no_clusters
+        transform_object, labels, no_clusters, freq_threshold
     )
 
     fig = go.Figure()
@@ -346,9 +351,7 @@ def plot_fft_by_group(
 
     fig.update_layout(
         title="FFT Comparison",
-        xaxis_title="Frequency [Hz]"
-        if fundamental_freq is None
-        else "Frequency / f_0 [DL]",
+        xaxis_title="Frequency [Hz]" if fundamental_freq is None else "f / f_0 [DL]",
         yaxis_title="Amplitude [dB]",
         legend=dict(title="Clusters"),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),

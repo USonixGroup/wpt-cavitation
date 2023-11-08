@@ -83,6 +83,7 @@ class TransformResults:
                 {
                     "level": node.level,
                     "node number": node.node_number,
+                    "norm frequency range": node.norm_frequency_range,
                     "frequency range": node.freq_range,
                     "centre frequency": average(node.numeric_freq_range),
                     "energy": node.energy,

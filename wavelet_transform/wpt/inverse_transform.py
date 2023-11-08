@@ -186,6 +186,7 @@ class InverseTransform:
                 {
                     "level": node.level,
                     "node number": node.node_number,
+                    "norm frequency range": node.norm_frequency_range,
                     "frequency range": node.freq_range,
                     "centre frequency": np.average(node.numeric_freq_range),
                     "energy": stats.energy(inverse),

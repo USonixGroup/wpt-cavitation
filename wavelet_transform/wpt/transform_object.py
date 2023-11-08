@@ -72,7 +72,7 @@ class Transform:
             full_level_nodes[node.node_number] = node
         return full_level_nodes
 
-    def get_leaf_nodes(self, order="natural"):
+    def get_leaf_nodes(self, order="natural", freq_threshold=None):
         "Get the leaf nodes in the tree. Ordered by frequency."
         leaf_nodes = [
             node
@@ -80,6 +80,10 @@ class Transform:
             for node in self.get_level(level)  # gather nodes with no children
             if 2 * node.node_number not in self.node_numbers(level + 1)
         ]
+        if freq_threshold is not None:
+            leaf_nodes = [
+                i for i in leaf_nodes if i.norm_frequency_range[1] <= freq_threshold
+            ]
         if order not in ["freq", "natural"]:
             raise ValueError("order must be 'freq' or 'natural'")
         # Sort nodes in order of frequency.
@@ -144,7 +148,7 @@ class Transform:
 
     # ---------------- Plot Tree Diagram ---------------
 
-    def plot_tree(self, node_size=1500, node_colour="skyblue"):
+    def plot_tree(self, node_size=1500, node_colour="skyblue", freq_threshold=None):
         """
         Plot the tree diagram for the wavelet transform.
 
@@ -158,5 +162,8 @@ class Transform:
         node_colour: str or list
             use a string to set a global colour name.
             use a list of labels (one for each leaf node) to colour the leaf nodes by label
+        freq_threshold: float
+            the frequency threshold for leaf nodes to be labeled. Nodes with upper bound
+            of frequency range above this threshold will not be labeled
         """
-        self.tree.plot_tree(node_size, node_colour)
+        self.tree.plot_tree(node_size, node_colour, freq_threshold)

@@ -24,10 +24,12 @@ class TreeGraph:
     def __init__(self, tr_obj: "Transform"):
         self.tr_obj = tr_obj  # Transform object
 
-    def plot_tree(self, node_size=1500, node_colour="skyblue"):
+    def plot_tree(self, node_size=1500, node_colour="skyblue", freq_threshold=None):
         "Plot the tree diagram for the wavelet packet transform."
         self.graph_nodes, self.graph_edges = self._get_nodes_and_edges()
-        self._generate_plot(self.graph_nodes, self.graph_edges, node_size, node_colour)
+        self._generate_plot(
+            self.graph_nodes, self.graph_edges, node_size, node_colour, freq_threshold
+        )
 
     # ---------------- Getting Nodes & Edges ----------------
 
@@ -49,7 +51,9 @@ class TreeGraph:
 
     # ------------------ Plotting -------------------
 
-    def _generate_plot(self, graph_nodes, graph_edges, node_size, node_colour):
+    def _generate_plot(
+        self, graph_nodes, graph_edges, node_size, node_colour, freq_threshold
+    ):
         # Make networkx graph object
         G = nx.DiGraph()
         G.add_nodes_from(graph_nodes)
@@ -59,7 +63,7 @@ class TreeGraph:
         # Get colours for labels
         if isinstance(node_colour, (list)):
             n_clusters = max(node_colour) + 1
-            node_colour = self._get_colours(G, node_colour)
+            node_colour = self._get_colours(G, node_colour, freq_threshold)
 
         # Calculate node sizes
         if isinstance(node_size, str):
@@ -81,7 +85,7 @@ class TreeGraph:
             ax=ax,
             arrowsize=5,
             verticalalignment="top",
-            font_size=40,
+            font_size=20,
             font_color="red",
             with_labels=True,
             node_size=node_size,
@@ -104,7 +108,7 @@ class TreeGraph:
             G,
             offset_pos,
             labels=labels,
-            font_size=20,
+            font_size=10,
             font_color="black",
             verticalalignment="top",
         )
@@ -139,9 +143,9 @@ class TreeGraph:
 
         plt.show()
 
-    def _get_colours(self, G, node_colour):
+    def _get_colours(self, G, node_colour, freq_threshold):
         labels = []
-        leaf_nodes = self.tr_obj.get_leaf_nodes()
+        leaf_nodes = self.tr_obj.get_leaf_nodes(freq_threshold=freq_threshold)
         i = 0
         for node in G:
             if nx.get_node_attributes(G, "node")[node] in leaf_nodes:
