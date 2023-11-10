@@ -19,12 +19,13 @@ def save_figure(figure, file_name):
 
     if isinstance(figure, plt.Figure):
         file_path = get_path(file_name, ".pdf")
-        with PdfPages(file_path + ".pdf") as pdf:
+        with PdfPages(file_path) as pdf:
             pdf.savefig(figure)
 
     elif isinstance(figure, go.Figure):
         file_path = get_path(file_name, ".html")
         figure.write_html(file_path)
+        figure.write_image
     else:
         raise ValueError("figure has to be a plt.Figure or go.Figure")
 
