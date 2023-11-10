@@ -1,0 +1,37 @@
+from matplotlib.backends.backend_pdf import PdfPages
+import os
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+
+FILE_PATH = os.path.abspath(__file__)
+RELATIVE_PATH = "../../../notebooks/figures"
+FOLDER_PATH = os.path.abspath(os.path.join(FILE_PATH, RELATIVE_PATH))
+
+
+def save_figure(figure, file_name):
+    """
+    Save a figure with a file_name to the figures folder in notebooks.
+
+    matplotlib plots are saved as pdfs, plotly plots are saved using html.
+    """
+    if "." in file_name:
+        raise ValueError("do not include '.' in file name ")
+
+    if isinstance(figure, plt.Figure):
+        file_path = get_path(file_name, ".pdf")
+        with PdfPages(file_path + ".pdf") as pdf:
+            pdf.savefig(figure)
+
+    elif isinstance(figure, go.Figure):
+        file_path = get_path(file_name, ".html")
+        figure.write_html(file_path)
+    else:
+        raise ValueError("figure has to be a plt.Figure or go.Figure")
+
+
+def get_path(file_name, file_type):
+    if not isinstance(file_name, str):
+        raise ValueError("file_name must be a string")
+    file_name = file_name + file_type
+    file_path = os.path.join(FOLDER_PATH, file_name)
+    return file_path
