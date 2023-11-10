@@ -68,6 +68,9 @@ def generate_training_data_with_wavelet(
                 else:  # Add data to dataframe
                     wpt_df = pd.concat([wpt_df, training_data], ignore_index=True)
 
+    if freq_threshold is not None:
+        wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
+
     return wpt_df
 
 
