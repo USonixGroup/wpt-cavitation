@@ -261,8 +261,15 @@ def plot_reconstructions_by_group(
     no_clusters: int
         the number of clusters used. If set to None, the number of clusters will be
         derived from the number of unique elements in the list of labels.
-    sampling_rate: float
-        provide the sampling rate to plot the FFTs of the reconstructions as well
+    t_plot: array-like, optional
+        time array for plotting
+    freq_threshold: float, optional
+        frequency threshold for reconstruction
+
+    Returns
+    -------
+    fig: plotly.graph_objects.Figure
+        The Plotly figure object.
     """
     if no_clusters is None:
         no_clusters = len(set(labels))
@@ -271,21 +278,44 @@ def plot_reconstructions_by_group(
         transform_object, labels, no_clusters, freq_threshold
     )
 
-    print("Reconstructed nodes by group:")
-    fig, axes = plt.subplots(nrows=no_clusters, ncols=1, figsize=(8, 10))
+    fig = go.Figure()
+
+    if t_plot is None:
+        xvals = len(transform_object.data)
+    else:
+        xvals = t_plot
+
+    fig.add_trace(
+        go.Scatter(
+            x=xvals,
+            y=transform_object.data,
+            mode="lines",
+            name="Original signal",
+        )
+    )
+
+    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
 
     # Iterate through clusters
     for i in range(no_clusters):
-        if t_plot is None:
-            axes[i].plot(reconstructions[i])
-        else:
-            axes[i].plot(t_plot, reconstructions[i])
-        axes[i].set_title(f"Cluster {i}")
-        axes[i].set_xlabel("Time [s]")
-        axes[i].set_ylabel("Amplitude")
+        fig.add_trace(
+            go.Scatter(
+                x=xvals,
+                y=reconstructions[i],
+                mode="lines",
+                name=f"Cluster {i}",
+                line=dict(color=colours[i]),
+            )
+        )
 
-    plt.tight_layout()
-    plt.show()
+    fig.update_layout(
+        title="Reconstructed nodes by group",
+        xaxis_title="Time [s]" if t_plot is not None else None,
+        yaxis_title="Amplitude",
+        legend=dict(title="Clusters"),
+    )
+
+    fig.show()
 
     return fig
 
