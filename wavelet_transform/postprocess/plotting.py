@@ -287,6 +287,8 @@ def plot_reconstructions_by_group(
     plt.tight_layout()
     plt.show()
 
+    return fig
+
 
 def plot_fft_by_group(
     transform_object,
@@ -358,3 +360,5 @@ def plot_fft_by_group(
     )
 
     fig.show()
+
+    return fig
