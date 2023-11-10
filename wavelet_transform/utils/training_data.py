@@ -33,6 +33,7 @@ def generate_training_data_with_wavelet(
     *,
     min_entropy=False,
     min_level=0,
+    freq_threshold=None,
 ):
     """
     Generate training data from a range of signals.
@@ -59,6 +60,7 @@ def generate_training_data_with_wavelet(
                     mode,
                     min_entropy=min_entropy,
                     min_level=min_level,
+                    freq_threshold=freq_threshold,
                 )
 
                 if wpt_df is None:  # Init dataframe
@@ -172,7 +174,7 @@ def generate_data(R_init, Rdot_init, frequency, pac, time, tstep, r_measure):
     return data
 
 
-# ------------ Generate Training Data from Sound Wave ------------
+# ------------ Generate Training Data from Single Sound Wave ------------
 
 
 def generate_training_data(
@@ -184,6 +186,7 @@ def generate_training_data(
     min_entropy=False,
     min_level=0,
     include_tr_ob=False,
+    freq_threshold=None,
 ):
     """
     Generate training data for clustering using the wavelet packet transform. Statistical
@@ -206,6 +209,9 @@ def generate_training_data(
         whether to use the minimum entropy decomposition
     min_level: int
         the minimum level of decomposition for the minimum entropy decomposition
+    freq_threshold: float
+        between 0 - 1. nodes with normalised frequency range (a, b) where a and b are
+        between 0 and 1 will be removed if b > freq_threshold.
     include_tr_ob: bool
         whether to return the transform object used for the transform containing
         info about the nodes.
@@ -224,8 +230,24 @@ def generate_training_data(
 
     wpt_df = tr_ob.info(levels, order="natural", leaf_nodes=min_entropy)
 
+    if freq_threshold is not None:
+        wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
     # Return the transform object if specified
     if include_tr_ob is True:
         return wpt_df, tr_ob
     else:
         return wpt_df
+
+
+def _ditch_nodes_above_threshold(wpt_df, freq_threshold):
+    "Remove nodes from the dataframe with noramlisesd upper frequency below threshold"
+    if not 0 <= freq_threshold <= 1:
+        raise ValueError(
+            "freq_threshold must be the normalised with the nyquist frequency"
+        )
+    # Filter out nodes which have upper bound freq greater than threshold
+    node_mask = wpt_df["norm frequency range"].apply(
+        lambda x: float(x[1]) <= freq_threshold
+    )
+
+    return wpt_df[node_mask]
