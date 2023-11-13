@@ -2,12 +2,13 @@ import os
 import numpy as np
 import pandas as pd
 import pickle
-from scipy.signal import resample
-
+from scipy.signal import windows, resample
 
 import wavelet_transform.wpt.transform as wpt
 from wavelet_transform.utils.bubbledynamics import BubbleDynamics as BD
-
+import itertools
+import multiprocessing
+from functools import partial
 
 # ------------- Generating Bubble Dynamics Data --------------
 
@@ -23,14 +24,46 @@ R_MEASURE = 500e-6
 RDOT_INIT = 0
 
 
+def generate_training_data_with_wavelet_par(
+    input_params,
+    sampling_rate,
+    std_noise,
+    levels,
+    wavelet,
+    mode,
+    min_entropy,
+    min_level,
+    freq_threshold,
+):
+    R_init = input_params[0]
+    frequency = input_params[1]
+    pac = input_params[2]
+
+    data = get_data(R_init, frequency, pac, sampling_rate)
+    data = data + np.random.normal(0, std_noise, size=len(data))
+    data = data * windows.blackmanharris(len(data), sym=False)
+    data = (data - np.mean(data)) / np.std(data)
+
+    # Generate traning data using the wavelet transform
+    training_data = generate_training_data(
+        data,
+        levels,
+        wavelet,
+        mode,
+        min_entropy=min_entropy,
+        min_level=min_level,
+        freq_threshold=freq_threshold,
+    )
+
+    return training_data
+
+
 def generate_training_data_with_wavelet(
     wavelet,
     sampling_rate,
     levels,
     mode,
     std_noise,
-    data_len=None,
-    *,
     min_entropy=False,
     min_level=0,
     freq_threshold=None,
@@ -40,33 +73,29 @@ def generate_training_data_with_wavelet(
     min_level forces the minimum entropy decomposition to decompose the signal to a specified
     number of samples.
     """
-    wpt_df = None
-    for R_init in (i / 1e6 for i in range(1, 11, 2)):
-        for frequency in [i * 1e5 for i in range(5, 20, 2)]:
-            for pac in [-i * 1e3 for i in range(100, 2000, 100)]:
-                data = get_data(R_init, frequency, pac, sampling_rate)
-                data += np.random.normal(0, std_noise, size=len(data))
 
-                length = len(data) if data_len is None else data_len
-                data = data[:length]
-                data *= np.blackman(len(data))
-                data = (data - np.mean(data)) / np.std(data)
+    R_init = [i * 1e-6 for i in range(1, 9, 1)]
+    frequency = [i * 1e5 for i in range(5, 20, 1)]
+    pac = [-i * 1e3 for i in range(100, 3000, 100)]
+    paramlist = list(itertools.product(R_init, frequency, pac))
 
-                # Generate traning data using the wavelet transform
-                training_data = generate_training_data(
-                    data,
-                    levels,
-                    wavelet,
-                    mode,
-                    min_entropy=min_entropy,
-                    min_level=min_level,
-                    freq_threshold=freq_threshold,
-                )
-
-                if wpt_df is None:  # Init dataframe
-                    wpt_df = training_data
-                else:  # Add data to dataframe
-                    wpt_df = pd.concat([wpt_df, training_data], ignore_index=True)
+    pool = multiprocessing.Pool(processes=16)
+    results = pool.map(
+        partial(
+            generate_training_data_with_wavelet_par,
+            sampling_rate=sampling_rate,
+            std_noise=std_noise,
+            levels=levels,
+            wavelet=wavelet,
+            mode=mode,
+            min_entropy=min_entropy,
+            min_level=min_level,
+            freq_threshold=freq_threshold,
+        ),
+        paramlist,
+    )
+    # Concat all dataframes into a single dataframe
+    wpt_df = pd.concat(results, ignore_index=True)
 
     if freq_threshold is not None:
         wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
