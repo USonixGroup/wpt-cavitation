@@ -14,8 +14,6 @@ def save_figure(figure, file_name):
 
     matplotlib plots are saved as pdfs, plotly plots are saved using html.
     """
-    if "." in file_name:
-        raise ValueError("do not include '.' in file name ")
 
     if isinstance(figure, plt.Figure):
         file_path = get_path(file_name, ".pdf")

@@ -261,8 +261,9 @@ def plot_reconstructions_by_group(
     no_clusters: int
         the number of clusters used. If set to None, the number of clusters will be
         derived from the number of unique elements in the list of labels.
-    t_plot: array-like, optional
-        time array for plotting
+    t_plot: array-like, float, int
+        time array for plotting. if this is a float or int, it will be assumed to represent the
+        sampling rate
     freq_threshold: float, optional
         frequency threshold for reconstruction
 
@@ -280,10 +281,13 @@ def plot_reconstructions_by_group(
 
     fig = go.Figure()
 
+    data_len = len(transform_object.data)
     if t_plot is None:
-        xvals = len(transform_object.data)
-    else:
+        xvals = data_len
+    elif isinstance(t_plot, (list, np.ndarray)):
         xvals = t_plot
+    elif isinstance(t_plot, (float, int)):
+        xvals = np.arange(0, data_len / t_plot, 1 / t_plot)
 
     fig.add_trace(
         go.Scatter(
@@ -351,6 +355,8 @@ def plot_fft_by_group(
     fig = go.Figure()
 
     # FFT of original signal
+    if not isinstance(sampling_rate, (float, int)):
+        raise ValueError("sampling rate must be provided as a float or int")
     fft_original, freq = fft(transform_object.data, sampling_rate, fundamental_freq)
 
     fig.add_trace(
@@ -390,5 +396,74 @@ def plot_fft_by_group(
     )
 
     fig.show()
+
+    return fig
+
+
+def plot_clustering(data_train, centers, labels):
+    # Define data and titles for each subplot
+    data_sets = [
+        (data_train.values.tolist(), centers, labels, "Original Data"),
+        # (data_train.values.tolist(), centers_pca, labels_pca, "PCA Data")
+    ]
+    colours = list(TreeGraph.colour_dict.values())[1:]
+
+    # Create separate figures for each subplot
+    for data_scatter, centers_scatter, labels_scatter, title in data_sets:
+        fig = plt.figure(figsize=(20, 20))
+        ax = fig.add_subplot(111, projection="3d")
+
+        ax.scatter(
+            [point[0] for point in data_scatter],
+            [point[1] for point in data_scatter],
+            [point[2] for point in data_scatter],
+            c=[colours[i] for i in labels_scatter],
+        )
+        ax.scatter(
+            centers_scatter[:, 0],
+            centers_scatter[:, 1],
+            centers_scatter[:, 2],
+            c="red",
+            marker="x",
+            s=100,
+        )
+
+        for j, center in enumerate(centers_scatter):
+            ax.text(
+                center[0],
+                center[1],
+                center[2],
+                f"Center {j}",
+                color="black",
+                fontsize=20,
+            )
+
+        ax.set_xlabel(data_train.columns[0].capitalize(), fontsize=25)
+        ax.set_ylabel(data_train.columns[1].capitalize(), fontsize=25)
+        ax.set_zlabel(data_train.columns[2].capitalize(), fontsize=25)
+        ax.set_title(title, fontsize=30)
+
+    plt.show()
+
+    return fig
+
+
+def plot_centers(classifying_metrics, centers):
+    n_clusters = centers.shape[0]
+    colours = list(TreeGraph.colour_dict.values())[1:]
+
+    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(12, 6))
+    for i in range(len(classifying_metrics)):
+        yvals = centers[:, i]
+        ylabel = "Value"
+        if "energy" in classifying_metrics[i]:
+            yvals = np.log10(yvals)
+            ylabel = "Value [dB]"
+        ax[i].bar(np.arange(n_clusters), yvals, color=colours)
+        ax[i].set_title(f"{classifying_metrics[i].capitalize()}", fontsize=20)
+        ax[i].set_xlabel("Cluster number")
+        ax[i].set_ylabel(ylabel)
+    plt.tight_layout()
+    plt.show()
 
     return fig
