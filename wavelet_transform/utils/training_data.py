@@ -217,7 +217,7 @@ def generate_training_data(
     *,
     min_entropy=False,
     min_level=0,
-    include_tr_ob=False,
+    include_tr_obj=False,
     freq_threshold=None,
 ):
     """
@@ -244,7 +244,7 @@ def generate_training_data(
     freq_threshold: float
         between 0 - 1. nodes with normalised frequency range (a, b) where a and b are
         between 0 and 1 will be removed if b > freq_threshold.
-    include_tr_ob: bool
+    include_tr_obj: bool
         whether to return the transform object used for the transform containing
         info about the nodes.
 
@@ -256,17 +256,17 @@ def generate_training_data(
 
     """
     # DWPT
-    tr_ob = wpt.dwpt(
+    tr_obj = wpt.dwpt(
         data, levels, wavelet, mode, min_entropy=min_entropy, min_level=min_level
     )
 
-    wpt_df = tr_ob.info(levels, order="natural", leaf_nodes=min_entropy)
+    wpt_df = tr_obj.info(levels, order="natural", leaf_nodes=min_entropy)
 
     if freq_threshold is not None:
         wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
     # Return the transform object if specified
-    if include_tr_ob is True:
-        return wpt_df, tr_ob
+    if include_tr_obj is True:
+        return wpt_df, tr_obj
     else:
         return wpt_df
 
