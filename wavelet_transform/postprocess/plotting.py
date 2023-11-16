@@ -227,16 +227,16 @@ def heisenberg(transform_object, t_end=1):
 # ---------------- Plot Reconstructed Data & FFTs ---------------
 
 
-def get_reconstructions_by_group(tr_ob, labels, n_clusters, freq_threshold):
-    signal_length = len(tr_ob.data)
+def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
+    signal_length = len(tr_obj.data)
     # List reconstructions by group
     reconstructions = [np.zeros(signal_length) for _ in range(n_clusters)]
 
     # Sum all reconstructions belonging to the same group
     for node, assignment in zip(
-        tr_ob.get_leaf_nodes(freq_threshold=freq_threshold), labels
+        tr_obj.get_leaf_nodes(freq_threshold=freq_threshold), labels
     ):  # natural order
-        rec_signal = inv.inv_dwpt(tr_ob, level=node.level, nodes=node)
+        rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
         i = assignment
         reconstructions[i] = reconstructions[i] + rec_signal
 
