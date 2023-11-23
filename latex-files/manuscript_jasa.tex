@@ -202,6 +202,7 @@ The crest factor is the ratio between the peak value and the mean of the signal,
 A feature matrix of these statistical metrics of all subbands is formed. The next step of the algorithm is to classify these features, hence subbands. A commonly used technique, adopted in our algorithm too, is \km clustering \cite{yiakopoulos2011, shete2013}, which is discussed in the next section. 
 
 \subsection{\km clustering for feature classification}
+\label{sec:k-means_intro}
 \km splits a dataset comprised of $n$ observations, each with a number of features, into $k$ clusters. The aim of the algorithm is to minimise the total loss measured as the sum of the Euclidean distances between the centroid of the cluster and each point assigned to it (see \eq{\ref{eq:kmeans}}). To do this, the cluster centroids are initiated randomly and each data point is assigned to the nearest cluster. The clusters are iteratively re-allocated to minimise the loss function.
 
 \begin{align}
@@ -211,7 +212,7 @@ A feature matrix of these statistical metrics of all subbands is formed. The nex
 
 \noindent where $\Theta$ is the distortion (loss) function, $\rho$ is the assignment of the data point, $i$, to cluster, $j$, and $x$ and $\mu$ are the data point and cluster centroid respectively.
 
-\km is a non-convex optimisation problem and yields different results depending on the starting position of the clusters. This is further discussed in section \ref{sec:??}
+\km is a non-convex optimisation problem and yields different results depending on the starting position of the clusters. This is further discussed in section \ref{sec:method_overview}.
 
 Another issue of the \km algorithm is that the number of clusters $k$ must be specified before training. This presents a challenge in this scenario where the number of clusters is expected to vary depending on the type of cavitation that occurs. For example, a signal comprised of a sine wave and noise, representing a measurement of stable cavitation, will results in nodes which fall into two clusters: those representing noise, and those representing the fundamental frequency. Once harmonics and transients are added to the signal, more clusters could be formed. Therefore, the algorithm must adapt to the number of clusters that exist in the data.  Several techniques have been developed for choosing the optimal number of clusters\ref{schubert2022stop, yuan2019research}. Here, we will use the silhouette score to to automate the selection of $k$. It is easy to implement and works well for small datasets. \cite{shahapure2020cluster}. The silhouette score is score is given by
 
@@ -223,96 +224,15 @@ Another issue of the \km algorithm is that the number of clusters $k$ must be sp
 
 
 
-
-% The combination of \km and DWPT has been previously applied to identify and classify the transients and harmonics in complex signals. Yiakopulos et al. \cite{yiakopoulos2011} applied the \km algorithm to the problem of fault detection for rolling element bearings. Their method used two instances of \km, one to determine whether the bearing was faulty and another to determine the nature of the fault. Each algorithm used a different set of used a different of features. They noticed that the non-convexity of \km was a major disadvantage of the \km algorithm and identified several techniques that have been developed to reduce the effect of this.  In their method, the centres were initialised using results from a dynamic model of the system. Shete et al. \cite{shete2013} also used the \km algorithm to detect the k-complex in EEG signals. This was achieved by using the \km algorithm to compare feature of a reference k-complex signal and extracted sections of an input signal to determine whether that section contained a k-complex. This allows the training of the algorithm by providing it with examples of the feature that is sought after. Desai et al. \cite{desai2020} combined the WPT with \km to categorise EEG data into different stress states. They calculated statistical features from the reconstructed coefficients at specific subbands and used these as features in the \km algorithm. This study computes statistical features based on the wavelet coefficients themselves which avoids the computational load introduced by the inverse WPT. This does not cause a drop in performance.
+% The combination of \km and DWPT has been previously applied to identify and classify the transients and harmonics in complex signals. Yiakopulos et al. \cite{yiakopoulos2011} applied the \km algorithm to the problem of fault detection for rolling element bearings. Their method used two instances of \km, one to determine whether the bearing was faulty and another to determine the nature of the fault. Each algorithm used a different set of used a different of features. They noticed that the non-convexity of \km was a major disadvantage of the \km algorithm and identified several techniques that have been developed to reduce the effect of this. In their method, the centres were initialised using results from a dynamic model of the system. Shete et al. \cite{shete2013} also used the \km algorithm to detect the k-complex in EEG signals. This was achieved by using the \km algorithm to compare feature of a reference k-complex signal and extracted sections of an input signal to determine whether that section contained a k-complex. This allows the training of the algorithm by providing it with examples of the feature that is sought after. Desai et al. \cite{desai2020} combined the WPT with \km to categorise EEG data into different stress states. They calculated statistical features from the reconstructed coefficients at specific subbands and used these as features in the \km algorithm. This study computes statistical features based on the wavelet coefficients themselves which avoids the computational load introduced by the inverse WPT. This does not cause a drop in performance.
 
 \subsection{Method overview}
 \label{sec:method_overview}
-The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD data are normalised and windowed, using Blackman-Harris window, to reduce the border effects of DWPT. Next, the DWPT is applied to the signal, decomposing it into frequency subbands using the minimum entropy decomposition algorithm and the statistical metrics are calculated at the nodes of the deepest scale. These metrics are fed into the \km algorithm for feature classification. We only need to specify the wavelet family and the order of the wavelet function. The depth of decomposition and the number of clusters are determined automatically.
+The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD data are normalised and windowed, using Blackman-Harris window, to reduce the border effects of DWPT. Next, the DWPT is applied to the signal, decomposing it into frequency subbands using the minimum entropy decomposition algorithm and the statistical metrics are calculated at the leaf nodes. The nodes with frequency higher than a specified frequency are left out. These metrics are normalised using a standard scalar, fitting each set of statistical metrics to a standard Guassian distribution to ensure that their difference in scale does not affect clustering. Each node, now represented as a set of features calculated from their coefficients, is fed into the \km algorithm for to be clustered. We only need to specify the wavelet family and the order of the wavelet function. The depth of decomposition and the number of clusters are determined automatically.
 
-% \subsubsection{Selecting Number of Clusters}
-% \label{sec:n_clusters_selection}
-% Another drawback is that the number of clusters can change depending on the signal. For example, a signal comprised of a sine wave and noise, representing a measurement of stable cavitation, will results in nodes which fall into two clusters: those representing noise, and those representing the fundamental frequency. Once harmonics and transients are added to the signal, more clusters could be formed. Therefore, the algorithm must adapt to the number of clusters that exist in the data. This is done by fitting the clustering algorithm a few times with different numbers of clusters and using the results with the greatest silhouette score.
-
-%\begin{figure}
-%\begin{center}
-%\begin{tikzpicture}[node distance=2cm]
-%  % Define nodes
-%  \node (signal) [startstop] {PCD signal};
-%  \node (preprocess) [process, right of=signal, xshift=2cm] {Normalisation and windowing};
-%  
-%  \node (dwpt) [process, below of=preprocess] {DWPT};
-%  \node (dwpt_check) [decision, below of=dwpt, yshift=-1cm] {Are there enough nodes?};  
-%  \node (dwpt_adjustment) [process, left of=dwpt_check, xshift=-2cm] {Reduce order of filter};
-%  \node (feature_extraction) [process, below of=dwpt_check, yshift=-1cm] {Calculate statistical metrics}; 
-%  
-%  \node (standardise) [process, left of=feature_extraction, xshift=-2cm] {Construct the feature matrix};
-%  \node (kmeans) [process, below of=standardise] {\km clustering};
-%
-%  \node (results) [startstop, below of=feature_extraction] {Identified and classified features of the PCD data};
-%
-%  % Define edges
-%  \draw [arrow] (signal) -- (preprocess);
-%  \draw [arrow] (preprocess) -- (dwpt);
-%  
-%  \draw [arrow] (dwpt) -- (dwpt_check);
-%  \draw [arrow] (dwpt_check) -- node[anchor=east] {Yes} (feature_extraction);
-%  \draw [arrow] (dwpt_check) -- node[anchor=south] {No} (dwpt_adjustment);
-%  \draw [arrow] (dwpt_adjustment) |- (dwpt);
-%  
-%  \draw [arrow] (feature_extraction) -- (standardise);
-%  \draw [arrow] (standardise) -- (kmeans);
-%
-%  \draw [arrow] (kmeans) -- (results);
-%\end{tikzpicture}
-%\end{center}
-%\caption{Flowchart of the algorithm.}
-%\label{fig:adaptive_method_flowchart}
-%\end{figure}
-
-% % Method flowchart
-% \begin{figure}
-% \begin{center}
-% \begin{tikzpicture}[node distance=2cm]
-%   % Define nodes
-%   \node (signal) [startstop] {Signal};
-%   \node (preprocess) [process, right of=signal, xshift=2cm] {Normalisation and windowing};
-  
-%   \node (dwpt) [process, below of=preprocess] {DWPT};
-%   \node (dwpt_check) [decision, below of=dwpt, yshift=-1cm] {Does the DWPT have decompositions?};  
-%   \node (no_clustering) [startstop, left of=dwpt_check, xshift=-2cm] {Signal does not need to be split};
-%   \node (feature_extraction) [process, below of=dwpt_check, yshift=-1cm] {Extract statistical features}; 
-  
-%   \node (standardise) [process, left of=feature_extraction, xshift=-2cm] {Standardise the data};
-%   \node (kmeans) [process, below of=standardise] {\km clustering};
-
-%   \node (results) [startstop, below of=feature_extraction] {Clustering results};
-
-%   % Define edges
-%   \draw [arrow] (signal) -- (preprocess);
-%   \draw [arrow] (preprocess) -- (dwpt);
-  
-%   \draw [arrow] (dwpt) -- (dwpt_check);
-%   \draw [arrow] (dwpt_check) -- node[anchor=east] {Yes} (feature_extraction);
-%   \draw [arrow] (dwpt_check) -- node[anchor=south] {No} (no_clustering);
-  
-%   \draw [arrow] (feature_extraction) -- (standardise);
-%   \draw [arrow] (standardise) -- (kmeans);
-
-%   \draw [arrow] (kmeans) -- (results);
-% \end{tikzpicture}
-% \end{center}
-% \caption{Flowchart of proposed method.}
-% \label{fig:method_flowchart}
-% \end{figure}
-
-% \subsubsection{Training Data}
-% The 2nd algorithm involves clustering the nodes from many signals to form a single, more complete, classification model. This model can use more statistical features because of the greater number of observations. If the training data is chosen carefully, it will lead to more meaningful clusters representing harmonics, fundamental frequencies, transients, noise, and combinations of them. As shown in \ref{fig:method_flowchart}, this no longer requires the step of checking if a given signal has enough decompositions and the number of clusters can now be more feasibly chosen manually.
-
-  Training data method flowchart
- \begin{figure}
- \begin{center}
- \begin{tikzpicture}[node distance=2cm]
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[node distance=2cm]
 
    % Define nodes
    \node (signal) [startstop] {Signals};
@@ -336,11 +256,14 @@ The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD
    \draw [arrow] (standardise) -- (kmeans);
 
    \draw [arrow] (kmeans) -- (results);
- \end{tikzpicture}
- \end{center}
- \caption{Non-adaptive method using training data.}
- \label{method_flowchart}
- \end{figure}
+\end{tikzpicture}
+\end{center}
+\caption{Flowchart of proposed method}
+\label{fig:method_flowchart}
+\end{figure}
+
+\subsection{\km parameters}
+The k-means algorithm is run with Lloyd's algorithm described in section \ref{sec:k-means_intro}. The clustering problem is sparse, so the effects the non-convexity of the k-means algorithm is mitigated using multiple runs of the k-means algorithm. The clustering with the best value of the distortion function (see \eq{\ref{eq:kmeans}}) is selected. Furthermore, the k-means++ algorithm \cite{arthur2007k} is used to select the starting centroids. This method selects data points as clusters one-by-one, while enforcing that points further away from existing selections are more likely to be chosen. This can improve clustering time and performance, reducing the chance that clusters are merged.
 
 \subsection{Gilmore-Akulichev model}
 \label{sec:GA_model}
@@ -388,30 +311,20 @@ This section will present results generated using the proposed method and discus
 \section{Feature Selection}
 \label{sec:feature_selection}
 %explain how self-organisisng maps work?
-The features space is explored using self-organising maps, a type of neural networks which can be used to visualise high dimensional data in 2 dimensions. The algorithm generates nodes which are arranged in a 2 dimensional space, each containing an array of weights, one for each input feature. The nodes are essentially cluster centres which are reliant on each other and determined by a neural network. The features can be plotted separately, giving a map which can be visually compared to evaluate which features might be more useful. The details of the algorithm will not be discussed here and can be found in paper written by Haroun et al. \cite{haroun2017feature} in the context of bearing fault detection and diagnosis. 
+The features space is explored using self-organising maps \cite{kohonen2012self}, a type of neural network which can be used to visualise high dimensional data in 2 dimensions. The algorithm generates nodes which are arranged in a two-dimensional space, each containing an array of weights, one for each input feature. The nodes can be thought of as cluster centres which are interconnected such that neighbouring neurons have similar features. The features can be plotted separately, giving a set of maps which can be visually compared to evaluate the usefulness of each feature. The details of the algorithm will not be discussed here and can be found in paper written by Haroun et al. \cite{haroun2017feature} in the context of bearing fault detection and diagnosis. 
 
-The data used to train the self-organising map uses 80 signals representing both stable and inertial cavitation. The signals have noise added to them and are windowed and normalised. The minimum entropy decomposition is not used for the first test and a 4-level DWPT is used with a db10 wavelet. The results are shown in \ref{fig:som}. When the maps have similar shapes, the features are correlated with each other. This shows that the high energy DWPT nodes tend to have low frequencies, skewness, kurtosis, and spectral entropy, as expected from the physical interpretations of each. This area represents the nodes containing fundamental frequencies. The spectral entropy and log energy are able to find nodes to around the high energy area. These represent harmonics which have less energy than the fundamental frequency but are still picked out using the measure of spectral entropy. Towards the right of the map, there are nodes with high frequency, low kurtosis, and low energy, indicative of noise. At the bottom left, there are nodes with medium frequency, low entropy, and high spectral entropy, indicating nodes containing sharp transients.
+The data used to train the self-organising map uses 192 signals generated at a sampling rate of 50 MHz, representing both stable and inertial cavitation. The signals have noise added to them and are windowed and normalised as described in \figg{\ref{fig:method_flowchart}}. The results are shown in \ref{fig:som}. When the maps are visually similar, their respective features are correlated with each other. This shows that the high energy DWPT nodes tend to have low skewness, kurtosis, and spectral entropy, as expected given the physical interpretations of each. This area represents packet nodes containing fundamental frequencies. The spectral entropy and level entropy are able to find nodes around the high energy area. These represent harmonics which are not easily picked out using average energy alone. Towards the left of the map, there are nodes with high frequency and kurtosis, and low energy, indicative of signals with sharp transients. At the bottom left, there are nodes with medium frequency, high spectral entropy, indicative of noise.
 
-Several plots look similar to each other, indicating redundancy in the feature space. Skewness, kurtosis, and crest factor perform similarly, while energy, level entropy (normalised by the energy of the original signal), and log energy are highly correlated because their computations are related.
+Several plots look similar to each other, indicating redundancy in the feature space. Skewness, kurtosis, and crest factor perform similarly, while level entropy (normalised by the energy of the original signal), and spectral entropy are highly correlated.
 
-Next, the minimum entropy decomposition is used with a maximum level of 10 and a minimum level of 3. The level of the node is plotted instead of its centre frequency to highlight the effect of clustering nodes at different levels. The results can be seen in \ref{fig:som_entropy}. This plot shows that the entropy and spectral entropy are correlated with the level of the node, making them less useful in the minimum entropy decomposition where nodes will be clustered inappropriately depending on their length.
-
-Overall, the three best features are hand picked as average energy, crest factor, and kurtosis as they are independent on the level of the node and have useful physical meanings for classifying nodes that represent stable and transient cavitation.
+Overall, the three best features are hand picked as average energy, level entropy?, spectral entropy?, and kurtosis as they are useful for separating nodes representing fundamentals, harmonics, and noise.
 
 \begin{figure}
 \begin{center}
-\includegraphics[width=3.5in]{./figs/som}
+\includegraphics[width=3.5in]{./figs/SOMs}
 \end{center}
-\caption{Self organising maps results where the nodes are arranged in a 12$\times$12 square. Each feature has its own plot to show its relationship with other features. The data was generated using a 4-level DWPT.}
+\caption{Self organising maps results where the nodes are arranged in a rectangle of aspect ratio 1.5. Each feature has its own plot to show its relationship with other features. The data was generated using a minimum entropy decomposition of data generated using the Gilmore-Akulichev model. The minimum and maximum levels of decomposition are 5 and 10 respectively. The db10 wavelet is used.}
 \label{fig:som}
-\end{figure}
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/som_entropy}
-\end{center}
-\caption{see caption for \ref{fig:som}. The data is generated with a minimum entropy decomposition instead of a full 4-level decomposition. The effects of clustering nodes of different lengths can be observed.}
-\label{fig:som_entropy}
 \end{figure}
 
 This method was chosen over PCA which requires the computation of every feature at run time. It is worth noting that the results for self-organising maps is highly inconsistent where the shape of the maps can significantly change depending on the randomly-selected starting points. However, the observed correlations between the features remain similar each time.
@@ -422,7 +335,7 @@ In this section, the data is generated using the bubble dynamics model discussed
 
 The algorithm was applied to a single signal. This approach is useful for characterising a short array of data like that which would be produced in an application such as HIFU. The DWPT is applied to the entire signal, producing a relatively sparse number of nodes for clustering. The minimum level of transform was set to 3 to make sure that there are always enough nodes for clustering. The wavelet used is the db10 wavelet. This choice is difficult to analyse. In general, a higher order wavelet will result in filters with narrower frequency response functions, better separation of each leaf node in the frequency domain. However, they come with lower time resolution, making it more difficult to separate out transient features that are close together. The order of the wavelet also affects the behaviour of the minimum entropy decomposition; higher wavelet orders will tend to result in a smaller tree. db10 was chosen which has a good trade-off between frequency and time resolution.
 
-The synthetic signal is shown alongside its FFT in \figg{\ref{fig:synthetic_stable}}. The FFT reveals a fundamental frequency at 2 MHz alongside several harmonics. The results from clustering are shown in \figg{\ref{fig:synth_stable_results}} where the nodes have been separated into clusters based on the similarity of their data and their  reconstructions are summed. 3 clusters are found by the algorithm. Cluster 2 contains nodes that represent harmonic components of the signal. The frequency ranges of the nodes belonging to this cluster are: 1.56 - 2.34 MHz, 3.13 - 6.25 MHz, and 6.25 - 9.38 MHz at levels 5, 3, and 3 respectively. The node corresponding to the fundamental frequency at 2 MHz has a greater amplitude and a higher average energy than the other two but is still clustered with them due to the sparseness of the data. Clusters 0 and 1 represent noise. Cluster 0 consists of nodes with high measures of kurtosis and crest factor, indicating more transient features. In this case, they represent the higher peaks in the stable cavitation. The silhouette score of the clustering is 0.6 on average, indicating well defined clusters.
+The synthetic signal is shown alongside its FFT in \figg{\ref{fig:synthetic_stable}}. The FFT reveals a fundamental frequency at 2 MHz alongside several harmonics. The results from clustering are shown in \figg{\ref{fig:synth_stable_results}} where the nodes have been separated into clusters based on the similarity of their data and their  reconstructions are summed. Three clusters are found by the algorithm. Cluster 2 contains nodes that represent harmonic components of the signal. The frequency ranges of the nodes belonging to this cluster are: 1.56 - 2.34 MHz, 3.13 - 6.25 MHz, and 6.25 - 9.38 MHz at levels 5, 3, and 3 respectively. The node corresponding to the fundamental frequency at 2 MHz has a greater amplitude and a higher average energy than the other two but is still clustered with them due to the sparseness of the data. Clusters 0 and 1 represent noise. Cluster 0 consists of nodes with high measures of kurtosis and crest factor, indicating more transient features. In this case, they represent the higher peaks in the stable cavitation. The silhouette score of the clustering is 0.6 on average, indicating well defined clusters.
 
 \begin{figure}
 \begin{center}
