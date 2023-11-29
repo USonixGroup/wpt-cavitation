@@ -1,6 +1,9 @@
-from wavelet_transform.utils.extensions import sci_form
+from wavelet_transform.utils.extensions import sci_form, fft
+import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
+from wavelet_transform.wpt.tree_graph import TreeGraph
 
 FS = 15  # fontsize
 
@@ -162,7 +165,7 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
         plt.ylabel("Energy (arbitrary)", fontsize=FS)
 
 
-def heisenberg(transform_object, t_end):
+def heisenberg(transform_object, t_end=1):
     """
     calls imshow to create a heisenberg plot of the wavelet packet
 
@@ -179,18 +182,23 @@ def heisenberg(transform_object, t_end):
     fig, ax = plt.subplots()
     fig.set_size_inches(18, 9)
 
-    nodes = transform_object.get_level(order="freq")
+    nodes = transform_object.get_leaf_nodes(order="freq")
     data = np.zeros((len(nodes), len(nodes[0].data)))
     for i, j in enumerate(range(len(nodes) - 1, -1, -1)):  # maybe reverse
         node = nodes[j]
         data[i, :] = np.abs(node.data)  # plot absolute values of wavelet coefficients
 
-    graph = ax.imshow(data, cmap="turbo", aspect="auto")
+    graph = ax.imshow(np.log10(data), cmap="turbo", aspect="auto")
     ax.set_ylabel("Frequency of Subband [Hz]", fontsize=20)
     ax.set_xlabel("Time [s]", fontsize=20)
     ax.set_title("DWPT of Signal", fontsize=25)
 
     frequencies = [node.frequency_range for node in nodes]
+    if any((freq is None for freq in frequencies)):
+        raise ValueError(
+            "Check that the frequencies have been calculated ->"
+            " transform_obj.calc_frequencies()"
+        )
     y_labels = [
         (sci_form(freq[0], 1), sci_form(freq[1], 1)) for freq in reversed(frequencies)
     ]
@@ -214,3 +222,248 @@ def heisenberg(transform_object, t_end):
     cbar.set_label(label="Coefficient amplitude", size=20)
 
     plt.show()
+
+
+# ---------------- Plot Reconstructed Data & FFTs ---------------
+
+
+def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
+    signal_length = len(tr_obj.data)
+    # List reconstructions by group
+    reconstructions = [np.zeros(signal_length) for _ in range(n_clusters)]
+
+    # Sum all reconstructions belonging to the same group
+    for node, assignment in zip(
+        tr_obj.get_leaf_nodes(freq_threshold=freq_threshold), labels
+    ):  # natural order
+        rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
+        i = assignment
+        reconstructions[i] = reconstructions[i] + rec_signal
+
+    return reconstructions
+
+
+def plot_reconstructions_by_group(
+    transform_object, labels, no_clusters, t_plot=None, freq_threshold=None
+):
+    """
+    Reconstruct each node from the level of transform used to train the clustering algorithm
+    and plot the summation of those belonging to the same cluster.
+
+    Assumes that the labels are arranged in frequency order by default. Always uses leaf nodes.
+
+    Parameters
+    ----------
+    transform_object: Transform
+        transform object from this library
+    labels: list
+        list of labels from training. Must be a power of 2
+    no_clusters: int
+        the number of clusters used. If set to None, the number of clusters will be
+        derived from the number of unique elements in the list of labels.
+    t_plot: array-like, float, int
+        time array for plotting. if this is a float or int, it will be assumed to represent the
+        sampling rate
+    freq_threshold: float, optional
+        frequency threshold for reconstruction
+
+    Returns
+    -------
+    fig: plotly.graph_objects.Figure
+        The Plotly figure object.
+    """
+    if no_clusters is None:
+        no_clusters = len(set(labels))
+
+    reconstructions = get_reconstructions_by_group(
+        transform_object, labels, no_clusters, freq_threshold
+    )
+
+    fig = go.Figure()
+
+    data_len = len(transform_object.data)
+    if t_plot is None:
+        xvals = data_len
+    elif isinstance(t_plot, (list, np.ndarray)):
+        xvals = t_plot
+    elif isinstance(t_plot, (float, int)):
+        xvals = np.arange(0, data_len / t_plot, 1 / t_plot)
+
+    fig.add_trace(
+        go.Scatter(
+            x=xvals,
+            y=transform_object.data,
+            mode="lines",
+            name="Original signal",
+        )
+    )
+
+    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+
+    # Iterate through clusters
+    for i in range(no_clusters):
+        fig.add_trace(
+            go.Scatter(
+                x=xvals,
+                y=reconstructions[i],
+                mode="lines",
+                name=f"Cluster {i}",
+                line=dict(color=colours[i]),
+            )
+        )
+
+    fig.update_layout(
+        title="Reconstructed nodes by group",
+        xaxis_title="Time [s]" if t_plot is not None else None,
+        yaxis_title="Amplitude",
+        legend=dict(title="Clusters"),
+    )
+
+    fig.show()
+
+    return fig
+
+
+def plot_fft_by_group(
+    transform_object,
+    labels,
+    no_clusters,
+    sampling_rate,
+    clusters=None,
+    xlim=None,
+    fundamental_freq=None,
+    freq_threshold=None,
+):
+    """
+    Plot FFTs of reconstructed signals and original signal
+
+    Paramters (incomplete)
+    ---------
+    clusters: list of int
+        a list of clusters to plot.
+    """
+    if isinstance(clusters, int):
+        clusters = [clusters]
+
+    if no_clusters is None:
+        no_clusters = len(set(labels))
+
+    reconstructions = get_reconstructions_by_group(
+        transform_object, labels, no_clusters, freq_threshold
+    )
+
+    fig = go.Figure()
+
+    # FFT of original signal
+    if not isinstance(sampling_rate, (float, int)):
+        raise ValueError("sampling rate must be provided as a float or int")
+    fft_original, freq = fft(transform_object.data, sampling_rate, fundamental_freq)
+
+    fig.add_trace(
+        go.Scatter(
+            x=freq,
+            y=20 * np.log10(np.abs(fft_original)),
+            mode="lines",
+            name="Original Signal",
+            line=dict(color="blue"),
+        )
+    )
+
+    # Plot FFTs
+    if clusters is None:
+        clusters = range(no_clusters)
+
+    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+
+    for i in clusters:
+        fft_rec = fft(reconstructions[i])
+        fig.add_trace(
+            go.Scatter(
+                x=freq,
+                y=20 * np.log10(np.abs(fft_rec)),
+                mode="lines",
+                name=f"Cluster {i}",
+                line=dict(color=colours[i]),
+            )
+        )
+
+    fig.update_layout(
+        title="FFT Comparison",
+        xaxis_title="Frequency [Hz]" if fundamental_freq is None else "f / f_0 [DL]",
+        yaxis_title="Amplitude [dB]",
+        legend=dict(title="Clusters"),
+        xaxis=dict(range=[0, xlim] if xlim is not None else None),
+    )
+
+    fig.show()
+
+    return fig
+
+
+def plot_clustering(data_train, centers, labels):
+    # Define data and titles for each subplot
+    data_sets = [
+        (data_train.values.tolist(), centers, labels, "Original Data"),
+        # (data_train.values.tolist(), centers_pca, labels_pca, "PCA Data")
+    ]
+    colours = list(TreeGraph.colour_dict.values())[1:]
+
+    # Create separate figures for each subplot
+    for data_scatter, centers_scatter, labels_scatter, title in data_sets:
+        fig = plt.figure(figsize=(20, 20))
+        ax = fig.add_subplot(111, projection="3d")
+
+        ax.scatter(
+            [point[0] for point in data_scatter],
+            [point[1] for point in data_scatter],
+            [point[2] for point in data_scatter],
+            c=[colours[i] for i in labels_scatter],
+        )
+        ax.scatter(
+            centers_scatter[:, 0],
+            centers_scatter[:, 1],
+            centers_scatter[:, 2],
+            c="red",
+            marker="x",
+            s=100,
+        )
+
+        for j, center in enumerate(centers_scatter):
+            ax.text(
+                center[0],
+                center[1],
+                center[2],
+                f"Center {j}",
+                color="black",
+                fontsize=20,
+            )
+
+        ax.set_xlabel(data_train.columns[0].capitalize(), fontsize=25)
+        ax.set_ylabel(data_train.columns[1].capitalize(), fontsize=25)
+        ax.set_zlabel(data_train.columns[2].capitalize(), fontsize=25)
+        ax.set_title(title, fontsize=30)
+
+    plt.show()
+
+    return fig
+
+
+def plot_centers(classifying_metrics, centers):
+    n_clusters = centers.shape[0]
+    colours = list(TreeGraph.colour_dict.values())[1:]
+
+    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(12, 6))
+    for i in range(len(classifying_metrics)):
+        yvals = centers[:, i]
+        ylabel = "Value"
+        if "energy" in classifying_metrics[i]:
+            yvals = np.log10(yvals)
+            ylabel = "Value [dB]"
+        ax[i].bar(np.arange(n_clusters), yvals, color=colours)
+        ax[i].set_title(f"{classifying_metrics[i].capitalize()}", fontsize=20)
+        ax[i].set_xlabel("Cluster number")
+        ax[i].set_ylabel(ylabel)
+    plt.tight_layout()
+    plt.show()
+
+    return fig
