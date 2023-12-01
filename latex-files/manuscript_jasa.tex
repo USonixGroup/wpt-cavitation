@@ -148,10 +148,10 @@ To extract the signatures of inertial and stable cavitations at each subband, we
 
 \begin{align}
   \label{eq:avg_energy}
-  E_k^j = \dfrac{1}{N_k^j} {\mathbf{v}_k^j}^T \mathbf{v}_k^j 
+  \bar{E}_{k,j} = \dfrac{1}{N_{k,j}} E_{j,k}
 \end{align}
 
-\noindent where $\mathbf{v}_k^j$ is a vector containing the coefficients in a subband $(j,k)$ and $N_k^j$ is the number of coefficients in the subband.
+\noindent where $E_{j,k}$ is the energy of the coefficients in a subband $(j,k)$ and $N_k^j$ is the number of coefficients in the subband.
 
 To better distinguish fundamental, sub- and ultra-harmonics, we also use the log-energy metric, i.e., $LE_{j,k}~=~ \log{E_{j,k}}$. To measure the energy distribution of a subband - compared to other subbands, we use Shannon entropy which is defined as
 
@@ -214,7 +214,7 @@ A feature matrix of these statistical metrics of all subbands is formed. The nex
 
 \km is a non-convex optimisation problem and yields different results depending on the starting position of the clusters. This is further discussed in section \ref{sec:method_overview}.
 
-Another issue of the \km algorithm is that the number of clusters $k$ must be specified before training. This presents a challenge in this scenario where the number of clusters is expected to vary depending on the type of cavitation that occurs. For example, a signal comprised of a sine wave and noise, representing a measurement of stable cavitation, will results in nodes which fall into two clusters: those representing noise, and those representing the fundamental frequency. Once harmonics and transients are added to the signal, more clusters could be formed. Therefore, the algorithm must adapt to the number of clusters that exist in the data.  Several techniques have been developed for choosing the optimal number of clusters\ref{schubert2022stop, yuan2019research}. Here, we will use the silhouette score to to automate the selection of $k$. It is easy to implement and works well for small datasets. \cite{shahapure2020cluster}. The silhouette score is score is given by
+Another issue of the \km algorithm is that the number of clusters $k$ must be specified before training. This presents a challenge in this scenario where the number of clusters is expected to vary depending on the type of cavitation that occurs. For example, a signal comprised of a sine wave and noise, representing a measurement of stable cavitation, will results in nodes which fall into two clusters: those representing noise, and those representing the fundamental frequency. Once harmonics and transients are added to the signal, more clusters could be formed. Therefore, the algorithm must adapt to the number of clusters that exist in the data.  Several techniques have been developed for choosing the optimal number of clusters \cite{schubert2022stop, yuan2019research}. Here, we will use the silhouette score to to automate the selection of $k$. It is easy to implement and works well for small datasets. \cite{shahapure2020cluster}. The silhouette score is score is given by
 
 \begin{align}
   s = \frac{b-a}{\max(a,b)}\label{eq:silhouette_score}
@@ -228,7 +228,7 @@ Another issue of the \km algorithm is that the number of clusters $k$ must be sp
 
 \subsection{Method overview}
 \label{sec:method_overview}
-The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD data are normalised and windowed, using Blackman-Harris window, to reduce the border effects of DWPT. Next, the DWPT is applied to the signal, decomposing it into frequency subbands using the minimum entropy decomposition algorithm and the statistical metrics are calculated at the leaf nodes. The nodes with frequency higher than a specified frequency are left out. These metrics are normalised using a standard scalar, fitting each set of statistical metrics to a standard Guassian distribution to ensure that their difference in scale does not affect clustering. Each node, now represented as a set of features calculated from their coefficients, is fed into the \km algorithm for to be clustered. We only need to specify the wavelet family and the order of the wavelet function. The depth of decomposition and the number of clusters are determined automatically.
+The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD data were normalised by taking off the mean and dividing by the standard deviation. Next, the DWPT was applied to the signal, decomposing it into frequency subbands using the minimum entropy decomposition algorithm and the statistical metrics were calculated at the leaf nodes. The nodes with frequency higher than a specified frequency were left out. These metrics were normalised using a standard scalar, fitting each set of statistical metrics to a standard Guassian distribution to ensure that their difference in scale does not affect clustering. Each node, now represented as a set of features calculated from their coefficients, was fed into the \km algorithm for to be clustered. We only need to specify the wavelet family and the order of the wavelet function. The depth of decomposition and the number of clusters was determined automatically.
 
 \begin{figure}
 \begin{center}
@@ -236,7 +236,7 @@ The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD
 
    % Define nodes
    \node (signal) [startstop] {Signals};
-   \node (preprocess) [process, right of=signal, xshift=2cm] {Normalisation and windowing};
+   \node (preprocess) [process, right of=signal, xshift=2cm] {Normalisation};
   
    \node (dwpt) [process, below of=preprocess] {DWPT};
    \node (feature_extraction) [process, below of=signal] {Extract statistical features}; 
@@ -245,7 +245,7 @@ The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD
    \node (kmeans) [process, below of=dwpt] {\km clustering};
 
    \node (results) [startstop, below of=kmeans] {Clustering results};
-
+   
    % Define edges
    \draw [arrow] (signal) -- (preprocess);
    \draw [arrow] (preprocess) -- (dwpt);
@@ -263,7 +263,7 @@ The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD
 \end{figure}
 
 \subsection{\km parameters}
-The k-means algorithm is run with Lloyd's algorithm described in section \ref{sec:k-means_intro}. The clustering problem is sparse, so the effects the non-convexity of the k-means algorithm is mitigated using multiple runs of the k-means algorithm. The clustering with the best value of the distortion function (see \eq{\ref{eq:kmeans}}) is selected. Furthermore, the k-means++ algorithm \cite{arthur2007k} is used to select the starting centroids. This method selects data points as clusters one-by-one, while enforcing that points further away from existing selections are more likely to be chosen. This can improve clustering time and performance, reducing the chance that clusters are merged.
+The k-means algorithm was run with Lloyd's algorithm described in section \ref{sec:k-means_intro}. The clustering problem is sparse, so the effects the non-convexity of the k-means algorithm was mitigated using multiple runs of the k-means algorithm. The clustering with the best value of the distortion function (see \eq{\ref{eq:kmeans}}) was selected. Furthermore, the k-means++ algorithm \cite{arthur2007} is used to select the starting centroids. This method selects data points as clusters one-by-one, while enforcing that points further away from existing selections are more likely to be chosen. This can improve clustering time and performance, reducing the chance that clusters are merged.
 
 \subsection{Gilmore-Akulichev model}
 \label{sec:GA_model}
@@ -311,13 +311,13 @@ This section will present results generated using the proposed method and discus
 \section{Feature Selection}
 \label{sec:feature_selection}
 %explain how self-organisisng maps work?
-The features space is explored using self-organising maps \cite{kohonen2012self}, a type of neural network which can be used to visualise high dimensional data in 2 dimensions. The algorithm generates nodes which are arranged in a two-dimensional space, each containing an array of weights, one for each input feature. The nodes can be thought of as cluster centres which are interconnected such that neighbouring neurons have similar features. The features can be plotted separately, giving a set of maps which can be visually compared to evaluate the usefulness of each feature. The details of the algorithm will not be discussed here and can be found in paper written by Haroun et al. \cite{haroun2017feature} in the context of bearing fault detection and diagnosis. 
+The features space is explored using self-organising maps \cite{kohonen2012}, a type of neural network which can be used to visualise high dimensional data in two dimensions. The algorithm generates nodes which are arranged in a two-dimensional space, each containing an array of weights, one for each input feature. The nodes can be thought of as cluster centres which are interconnected such that neighbouring neurons have similar features. The features can be plotted separately, giving a set of maps which can be visually compared to evaluate the usefulness of each feature. The details of the algorithm will not be discussed here and can be found in paper written by Haroun et al. \cite{haroun2017feature} in the context of bearing fault detection and diagnosis. 
 
-The data used to train the self-organising map uses 192 signals generated at a sampling rate of 50 MHz, representing both stable and inertial cavitation. The signals have noise added to them and are windowed and normalised as described in \figg{\ref{fig:method_flowchart}}. The results are shown in \ref{fig:som}. When the maps are visually similar, their respective features are correlated with each other. This shows that the high energy DWPT nodes tend to have low skewness, kurtosis, and spectral entropy, as expected given the physical interpretations of each. This area represents packet nodes containing fundamental frequencies. The spectral entropy and level entropy are able to find nodes around the high energy area. These represent harmonics which are not easily picked out using average energy alone. Towards the left of the map, there are nodes with high frequency and kurtosis, and low energy, indicative of signals with sharp transients. At the bottom left, there are nodes with medium frequency, high spectral entropy, indicative of noise.
+The data used to train the self-organising map uses 192 signals generated at a sampling rate of 50 MHz, representing both stable and inertial cavitation. The signals have noise added to them and are windowed and normalised as described in \figg{\ref{fig:method_flowchart}}. The results are shown in \ref{fig:som}. When the maps are visually similar, their respective features are correlated with each other. This shows that the high energy DWPT nodes tend to have low skewness, kurtosis, and spectral entropy, as expected given the physical interpretations of each. This area represents packet nodes containing fundamental frequencies. The spectral entropy and level entropy are able to find nodes around the high energy area. These represent harmonics which are not easily picked out using average energy alone. The nodes with high frequency and kurtosis, and low energy indicate signals with sharp transients. The rest of the high-frequency nodes represent noise.
 
 Several plots look similar to each other, indicating redundancy in the feature space. Skewness, kurtosis, and crest factor perform similarly, while level entropy (normalised by the energy of the original signal), and spectral entropy are highly correlated.
 
-Overall, the three best features are hand picked as average energy, level entropy?, spectral entropy?, and kurtosis as they are useful for separating nodes representing fundamentals, harmonics, and noise.
+Overall, the three best features are hand picked as average energy, spectral entropy, and kurtosis as they are useful for separating nodes representing fundamentals, harmonics, and noise.
 
 \begin{figure}
 \begin{center}
@@ -330,101 +330,12 @@ Overall, the three best features are hand picked as average energy, level entrop
 This method was chosen over PCA which requires the computation of every feature at run time. It is worth noting that the results for self-organising maps is highly inconsistent where the shape of the maps can significantly change depending on the randomly-selected starting points. However, the observed correlations between the features remain similar each time.
 
 \subsection{Analyzing numerical results}
-%what exactly is PAC?
-In this section, the data is generated using the bubble dynamics model discussed in section \ref{sec:GA_model}. The synthetic signals are generated with a sampling rate of 1 GHz and are downsampled to a sampling rate of 50 MHz. The bubbles are assumed to start at rest, with their radius at a constant size. Next, a ultrasonic signal is applied with frequency 2 MHz and peak acoustic pressure ($P_{ac}$) 0.1 and 1 MPa to produce signals representing stable and transient cavitation respectively. The initial radius of the bubble is 1$\mu$m. Noise is added with standard deviation 0.01.
 
-The algorithm was applied to a single signal. This approach is useful for characterising a short array of data like that which would be produced in an application such as HIFU. The DWPT is applied to the entire signal, producing a relatively sparse number of nodes for clustering. The minimum level of transform was set to 3 to make sure that there are always enough nodes for clustering. The wavelet used is the db10 wavelet. This choice is difficult to analyse. In general, a higher order wavelet will result in filters with narrower frequency response functions, better separation of each leaf node in the frequency domain. However, they come with lower time resolution, making it more difficult to separate out transient features that are close together. The order of the wavelet also affects the behaviour of the minimum entropy decomposition; higher wavelet orders will tend to result in a smaller tree. db10 was chosen which has a good trade-off between frequency and time resolution.
-
-The synthetic signal is shown alongside its FFT in \figg{\ref{fig:synthetic_stable}}. The FFT reveals a fundamental frequency at 2 MHz alongside several harmonics. The results from clustering are shown in \figg{\ref{fig:synth_stable_results}} where the nodes have been separated into clusters based on the similarity of their data and their  reconstructions are summed. Three clusters are found by the algorithm. Cluster 2 contains nodes that represent harmonic components of the signal. The frequency ranges of the nodes belonging to this cluster are: 1.56 - 2.34 MHz, 3.13 - 6.25 MHz, and 6.25 - 9.38 MHz at levels 5, 3, and 3 respectively. The node corresponding to the fundamental frequency at 2 MHz has a greater amplitude and a higher average energy than the other two but is still clustered with them due to the sparseness of the data. Clusters 0 and 1 represent noise. Cluster 0 consists of nodes with high measures of kurtosis and crest factor, indicating more transient features. In this case, they represent the higher peaks in the stable cavitation. The silhouette score of the clustering is 0.6 on average, indicating well defined clusters.
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/synthetic_stable}
-\end{center}
-\caption{A synthetic signal generated using the Gilmore-Akulichev model for the stable cavitation of a single bubble.}
-\label{fig:synthetic_stable}
-\end{figure}
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/synthetic_stable_results}
-\end{center}
-\caption{Results of the proposed algorithm for the stable synthetic signal in \figg{\ref{fig:synthetic_stable}}}
-\label{fig:synth_stable_results}
-\end{figure}
-
-Next, a signal representing transient cavitation is generated and plotted in \figg{\ref{fig:synthetic_transient}}. This signal contains a strong fundamental frequency at 2 MHz and several sharp transients. The results are shown in \figg{\ref{fig:synth_transient_results}}. Cluster 2 singles out a single node with frequency band 1.56 - 2.34 MHz representing the sinusoidal component of the signal. Similarly to before, clusters 0 and 1 represent noise where cluster 0 contains more transient peaks. Overall, the algorithm is able to split the signal into relevant nodes and distinguish between those containing transient data and harmonics.
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/synthetic_transient}
-\end{center}
-\caption{A synthetic signal generated using the Gilmore-Akulichev model for the stable cavitation of a single bubble.}
-\label{fig:synthetic_transient}
-\end{figure}
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/synthetic_transient_results}
-\end{center}
-\caption{Results for the transient synthetic signal in  \figg{\ref{fig:synthetic_transient}}}
-\label{fig:synth_transient_results}
-\end{figure}
-
-The clusters are not consistently numbered by the algorithm. This is because of the lack of labelled data, however it is possible to assign labels to each cluster post-hoc depending on the position of the cluster centre. For example, the cluster with the highest average energy can be safely labelled as representing harmonics.
-
-To assess the impact of randomised starting positions for the cluster centroids, the adjusted rand index is calculated with 100 runs. The average score is 1, indicating that the algorithm is highly consistent and no work needs to be done in selecting the starting points.
 
 \subsection{Experimental set up and protocols}
 \label{sec:Exp_setup}
 \subsection{Analyzing experimental PCD data}
-The feature extraction method must be able to separate and quantify harmonics, sub-harmonics, and broadband noise. This will make it possible to extract and classify features. In this section, three signals will be analysed and the results will be discussed.
 
-The first signal is shown in \figg{\ref{fig:pcd_5-10}}. This signal appears like a regular sine wave with some noise and the FFT shows a single peak indicating the fundamental frequency. The results are plotted in \figg{\ref{fig:pcd_5-10_results}}. Cluster two is made up of a single node with frequency range 1.56 - 2.34 MHz. This was separated from the rest of the nodes due to its high energy. The transform finds nodes containing harmonics and sub-harmonics but is unable to separate them using the selected features. Instead, it puts them both in cluster 1 with some nodes containing noise. Next, the parameters for the algorithm are tweaked by setting the number of minimum number of clusters to 3 and using the log average energy feature instead of the average energy feature to better separate out the harmonic and sub-harmonic components. The results are shown in \figg{\ref{fig:pcd_5-10_results_log}}. This time, cluster 2 contains the nodes with frequency ranges containing 2MHz, 1MHz, and 4MHz, i.e., the first harmonic and sub-harmonic components are now clustered alongside the fundamental frequency. The noise is now better separated into cluster 0 as well, producing a lower-amplitude signal. This shows that the parameters can be tweaked in a way that produces more desirable results.
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/pcd_5-10}
-\end{center}
-\caption{The first PCD signal being analysed.}
-\label{fig:pcd_5-10}
-\end{figure}
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/pcd_5-10_results}
-\end{center}
-\caption{Results for \figg{\ref{fig:pcd_5-10}}}
-\label{fig:pcd_5-10_results}
-\end{figure}
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/pcd_5-10_results_log}
-\end{center}
-\caption{Results for \figg{\ref{fig:pcd_5-10}} using the log average energy feature instead of average energy and forcing the algorithm to pick 3 clusters.}
-\label{fig:pcd_5-10_results_log}
-\end{figure}
-
-Another signal is analysed and is plotted in \figg{\ref{fig:pcd_5-34}}. The FFT reveals a more pronounced sub-harmonic than in the first signal in \figg{\ref{fig:pcd_5-10}}. The results are plotted in \figg{\ref{fig:pcd_5-34_results}}. Similarly to the previous example, cluster 2 contains a single node with the same frequency range. This time, cluster 1 contains noise and demonstrates a couple transient peaks. Cluster 0 contains the 1st harmonic and sub-harmonic nodes alongside some noise from the nodes at the higher frequency ranges. The centroid of this cluster has higher measures of kurtosis and crest factors than cluster 0. The algorithm has successfully separated the fundamental frequency from the harmonics and noise. There is also a cluster that contains more transient features, which is useful if the PCD can be placed close enough to the shock waves generated from inertial cavitation. However, the sub-harmonics, harmonics, and noise are not separated in cluster 0.
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/pcd_5-34}
-\end{center}
-\caption{2nd PCD signal}
-\label{fig:pcd_5-34}
-\end{figure}
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/pcd_5-34_results}
-\end{center}
-\caption{Results for \figg{\ref{fig:pcd_5-34}}}
-\label{fig:pcd_5-34_results}
-\end{figure}
-
-Overall, the proposed proposed algorithm performs well in separating the signal into its main components representing noise, harmonics, and transient signals. The main drawback is the sparseness of the data as it is only applied to a short signal, and the minimum entropy decomposition does not produce many nodes for clustering. This makes it difficult for the algorithm to tell apart harmonics from the higher-energy fundamental frequency. There are also several parameters that must be fine-tuned for the algorithm to work effectively, such as the number of clusters, wavelet family and order, and features.
 
 \section{Summary}
 \label{sec:summary}
@@ -437,7 +348,7 @@ In this paper a novel approach was developed for classifying PCD data by cluster
 \item Separate noise generated through cavitation and measurement noise.
 \item Extend the algorithm to automatically detect cavitation activity over noise. This can be useful for applications where the ultrasound is pulsed.
 \item Explore the use of entropy, getting around the issue discussed in section \ref{sec:feature_selection} where the level of the transform dominates their measure. Possible approaches could involve calculating the entropy and spectral entropy on the reconstructed signals which always have the same length as the original signal or by using an undecimated transform.
-\item The sparseness of the algorithm could be addressed by clustering nodes from more than 1 sample. This could allow it to classify harmonics in separate clusters.
+\item The sparseness of the algorithm could be addressed by clustering nodes from more than one sample. This could allow it to classify harmonics in separate clusters.
 \end{itemize}
 % ---------------------------------------------------------------------
 % Appendix  (optional)
@@ -458,48 +369,5 @@ In this paper a novel approach was developed for classifying PCD data by cluster
 
 
 %=======================================================
-
-% \subsection{Gilmore-Akulichev model}
-% \label{sec:GA_model}
-% Gilmore's model describes the dynamics of a spherical bubble undergoing symmetric oscillations due to acoustic excitation in a compressible liquid. It has been shown that predicted results by the Gilmore's model agree well with the most of experimental data.\cite{lauterborn2010} The Gilmore equation is expressed as follows \cite{gilmore1952}
-
-% \begin{align}
-%   \left(1~-~\dfrac{\dot{R}}{C}\right) R \ddot{R} ~+~ \dfrac{3}{2}\left(1~-~\dfrac{\dot{R}}{3C}\right){\dot{R}}^2 ~=~ \nonumber \\
-%   \left(1~+~\dfrac{\dot{R}}{C}\right) H ~+~ \dfrac{\dot{R}}{C}\left(1~-~\dfrac{\dot{R}}{C}\right) R \dfrac{d H}{d R}
-% \end{align}
-
-% \noindent where $C$ is the wave speed at the bubble's wall and $H$ is the enthalpy difference in the fluid at pressure $P$ and $P_\infty$. They are calculated using the following equations
-
-% \begin{align}
-% \label{eq:enthalpy_generic}
-% H~=~\int_{P_\infty}^{P(R)} \dfrac{dP(\rho_L)}{\rho_L}
-% \end{align}
-% \begin{align}
-% 	C ~=~ \sqrt{c_\infty^2~+~(n-1)H}
-% \end{align}
-
-% \noindent where $c_\infty$ and $P_\infty$ are the speed of sound and pressure at far-field, respectively, and $\rho_L$ is the density of the liquid in the vicinity of the bubble. To account for the compressibility of the liquid, Gilmore used the Tait's equation of state which reads
-
-% \begin{align}
-% 	\label{eq:state}
-% 	P_L(\rho)~=~ A\left(\dfrac{\rho_L}{\rho_{L,\infty}}\right)^n ~-~ B
-% \end{align}
-
-% \noindent substituting \eq{\ref{eq:state}} into \eq{\ref{eq:enthalpy_generic}}, enthalpy can be calculated as a function of the pressure as follows
-
-% \begin{align}
-%   \label{eq:enthalpy}
-%   H ~=~ \dfrac{n A^{1/n}}{(n-1)\rho_L}  \left[ \left(P(R) ~+~ B\right)^{\left(1~-~1/n\right)} \nonumber \\
-%   ~-~ \left(P_\infty ~+~ B\right)^{\left(1~-~1/n\right)} \right]
-% \end{align}
-
-% \noindent where $A, B,~\mathrm{and}~n$ are constants in the Tait's equation which are obtained experimentally. In order to determine the enthalpy and the wave speed at the bubble's wall, it is required to calculate the value of pressure in the medium at the surface of the bubble, i.e., $P(R)$. This can be obtained using a modified Laplace equation as follows
-
-% \begin{align}
-%   \label{eq:pressure_at_R}
-%   P(R)~=~ \left(P_0~+~\frac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\kappa}~-~\dfrac{2\sigma}{R}~-~\dfrac{4\mu \dot{R}}{R}
-% \end{align}
-
-
 
 \end{document}
