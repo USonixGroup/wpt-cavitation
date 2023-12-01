@@ -164,7 +164,7 @@ class InverseTransform:
             coefficients at each node.
         """
 
-        tr_ob = self.transform_object
+        tr_obj = self.transform_object
 
         # Return data from transform object at level 0
         if level == 0:
@@ -181,7 +181,7 @@ class InverseTransform:
         for node in nodes:
             assert isinstance(node, Node)
             # Calculate inverse transform
-            inverse = inv_dwpt(tr_ob, node.level, nodes=node)
+            inverse = inv_dwpt(tr_obj, node.level, nodes=node)
             info_data.append(
                 {
                     "level": node.level,

@@ -2,10 +2,11 @@ import os
 import numpy as np
 import pandas as pd
 import pickle
-from scipy.signal import windows, resample
+from scipy.signal import resample
 
 import wavelet_transform.wpt.transform as wpt
 from wavelet_transform.utils.bubbledynamics import BubbleDynamics as BD
+from wavelet_transform.utils.preprocessing import preprocess
 import itertools
 import multiprocessing
 from functools import partial
@@ -34,15 +35,15 @@ def generate_training_data_with_wavelet_par(
     min_entropy,
     min_level,
     freq_threshold,
+    window=False,
 ):
     R_init = input_params[0]
     frequency = input_params[1]
     pac = input_params[2]
 
     data = get_data(R_init, frequency, pac, sampling_rate)
-    data = data + np.random.normal(0, std_noise, size=len(data))
-    data = data * windows.blackmanharris(len(data), sym=False)
-    data = (data - np.mean(data)) / np.std(data)
+    data += np.random.normal(0, std_noise, len(data))
+    data = preprocess(data, window=window)
 
     # Generate traning data using the wavelet transform
     training_data = generate_training_data(
@@ -67,6 +68,7 @@ def generate_training_data_with_wavelet(
     min_entropy=False,
     min_level=0,
     freq_threshold=None,
+    window=False,
 ):
     """
     Generate training data from a range of signals.
@@ -74,12 +76,12 @@ def generate_training_data_with_wavelet(
     number of samples.
     """
 
-    R_init = [i * 1e-6 for i in range(1, 9, 1)]
-    frequency = [i * 1e5 for i in range(5, 20, 1)]
-    pac = [-i * 1e3 for i in range(100, 3000, 100)]
+    R_init = [i * 1e-6 for i in range(1, 9, 2)]
+    frequency = [i * 1e5 for i in range(5, 20, 2)]
+    pac = [-i * 1e3 for i in range(100, 3000, 500)]
     paramlist = list(itertools.product(R_init, frequency, pac))
 
-    pool = multiprocessing.Pool(processes=16)
+    pool = multiprocessing.Pool()
     results = pool.map(
         partial(
             generate_training_data_with_wavelet_par,
@@ -91,6 +93,7 @@ def generate_training_data_with_wavelet(
             min_entropy=min_entropy,
             min_level=min_level,
             freq_threshold=freq_threshold,
+            window=window,
         ),
         paramlist,
     )
@@ -217,7 +220,7 @@ def generate_training_data(
     *,
     min_entropy=False,
     min_level=0,
-    include_tr_ob=False,
+    include_tr_obj=False,
     freq_threshold=None,
 ):
     """
@@ -244,7 +247,7 @@ def generate_training_data(
     freq_threshold: float
         between 0 - 1. nodes with normalised frequency range (a, b) where a and b are
         between 0 and 1 will be removed if b > freq_threshold.
-    include_tr_ob: bool
+    include_tr_obj: bool
         whether to return the transform object used for the transform containing
         info about the nodes.
 
@@ -256,17 +259,17 @@ def generate_training_data(
 
     """
     # DWPT
-    tr_ob = wpt.dwpt(
+    tr_obj = wpt.dwpt(
         data, levels, wavelet, mode, min_entropy=min_entropy, min_level=min_level
     )
 
-    wpt_df = tr_ob.info(levels, order="natural", leaf_nodes=min_entropy)
+    wpt_df = tr_obj.info(levels, order="natural", leaf_nodes=min_entropy)
 
     if freq_threshold is not None:
         wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
     # Return the transform object if specified
-    if include_tr_ob is True:
-        return wpt_df, tr_ob
+    if include_tr_obj is True:
+        return wpt_df, tr_obj
     else:
         return wpt_df
 

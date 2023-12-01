@@ -227,6 +227,17 @@ def heisenberg(transform_object, t_end=1):
 # ---------------- Plot Reconstructed Data & FFTs ---------------
 
 
+def get_label(label_no, label_map):
+    if isinstance(label_map, dict):
+        return label_map.get(label_no)
+
+    elif label_map is None:
+        return f"Cluster {label_no}"
+
+    else:
+        raise ValueError("label_map must be a dictionary of label_no: label")
+
+
 def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
     signal_length = len(tr_obj.data)
     # List reconstructions by group
@@ -244,7 +255,12 @@ def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
 
 
 def plot_reconstructions_by_group(
-    transform_object, labels, no_clusters, t_plot=None, freq_threshold=None
+    transform_object,
+    labels,
+    no_clusters,
+    t_plot=None,
+    freq_threshold=None,
+    label_map=None,
 ):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
@@ -261,10 +277,13 @@ def plot_reconstructions_by_group(
     no_clusters: int
         the number of clusters used. If set to None, the number of clusters will be
         derived from the number of unique elements in the list of labels.
-    t_plot: array-like, optional
-        time array for plotting
+    t_plot: array-like, float, int
+        time array for plotting. if this is a float or int, it will be assumed to represent the
+        sampling rate
     freq_threshold: float, optional
         frequency threshold for reconstruction
+    label_map: dict int: str
+        relabel cluster numbers to a string
 
     Returns
     -------
@@ -280,10 +299,13 @@ def plot_reconstructions_by_group(
 
     fig = go.Figure()
 
+    data_len = len(transform_object.data)
     if t_plot is None:
-        xvals = len(transform_object.data)
-    else:
+        xvals = np.arange(data_len)
+    elif isinstance(t_plot, (list, np.ndarray)):
         xvals = t_plot
+    elif isinstance(t_plot, (float, int)):
+        xvals = np.arange(0, data_len / t_plot, 1 / t_plot)
 
     fig.add_trace(
         go.Scatter(
@@ -303,7 +325,7 @@ def plot_reconstructions_by_group(
                 x=xvals,
                 y=reconstructions[i],
                 mode="lines",
-                name=f"Cluster {i}",
+                name=get_label(i, label_map),
                 line=dict(color=colours[i]),
             )
         )
@@ -329,6 +351,7 @@ def plot_fft_by_group(
     xlim=None,
     fundamental_freq=None,
     freq_threshold=None,
+    label_map=None,
 ):
     """
     Plot FFTs of reconstructed signals and original signal
@@ -351,6 +374,8 @@ def plot_fft_by_group(
     fig = go.Figure()
 
     # FFT of original signal
+    if not isinstance(sampling_rate, (float, int)):
+        raise ValueError("sampling rate must be provided as a float or int")
     fft_original, freq = fft(transform_object.data, sampling_rate, fundamental_freq)
 
     fig.add_trace(
@@ -376,19 +401,103 @@ def plot_fft_by_group(
                 x=freq,
                 y=20 * np.log10(np.abs(fft_rec)),
                 mode="lines",
-                name=f"Cluster {i}",
+                name=get_label(i, label_map),
                 line=dict(color=colours[i]),
             )
         )
 
     fig.update_layout(
         title="FFT Comparison",
-        xaxis_title="Frequency [Hz]" if fundamental_freq is None else "f / f_0 [DL]",
+        xaxis_title="Frequency [Hz]"
+        if fundamental_freq is None
+        else "f / f<sub>0</sub> [DL]",
         yaxis_title="Amplitude [dB]",
         legend=dict(title="Clusters"),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),
     )
 
     fig.show()
+
+    return fig
+
+
+# ---------------------- Clustering Results ----------------------
+
+
+def plot_clustering(
+    data_train, centers, labels, title="Clustering Results", label_map=None
+):
+    # Define data and titles for each subplot
+    data_sets = [
+        (data_train.values.tolist(), centers, labels, title),
+        # (data_train.values.tolist(), centers_pca, labels_pca, "PCA Data")
+    ]
+    colours = list(TreeGraph.colour_dict.values())[1:]
+
+    # Create separate figures for each subplot
+    for data_scatter, centers_scatter, labels_scatter, title in data_sets:
+        fig = plt.figure(figsize=(20, 20))
+        ax = fig.add_subplot(111, projection="3d")
+
+        ax.scatter(
+            [point[0] for point in data_scatter],
+            [point[1] for point in data_scatter],
+            [point[2] for point in data_scatter],
+            c=[colours[i] for i in labels_scatter],
+        )
+        ax.scatter(
+            centers_scatter[:, 0],
+            centers_scatter[:, 1],
+            centers_scatter[:, 2],
+            c="red",
+            marker="x",
+            s=100,
+        )
+
+        for j, center in enumerate(centers_scatter):
+            ax.text(
+                center[0],
+                center[1],
+                center[2],
+                get_label(j, label_map),
+                color="black",
+                fontsize=20,
+            )
+
+        ax.set_xlabel(data_train.columns[0].capitalize(), fontsize=25)
+        ax.set_ylabel(data_train.columns[1].capitalize(), fontsize=25)
+        ax.set_zlabel(data_train.columns[2].capitalize(), fontsize=25)
+        ax.set_title(title, fontsize=30)
+
+    plt.show()
+
+    return fig
+
+
+def plot_centers(classifying_metrics, centers, label_map=None):
+    n_clusters = centers.shape[0]
+    colours = list(TreeGraph.colour_dict.values())[1:]
+
+    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(12, 6))
+    for i in range(len(classifying_metrics)):
+        yvals = centers[:, i]
+        ylabel = "Value"
+        if "energy" in classifying_metrics[i] and "log" not in classifying_metrics[i]:
+            yvals = np.log10(yvals)
+            ylabel = "Value [dB]"
+
+        if isinstance(label_map, dict):
+            xlabel = "Feature"
+            xvals = [v for v in label_map.values()]
+        else:
+            xlabel = "Cluster Number"
+            xvals = np.arange(n_clusters)
+
+        ax[i].bar(xvals, yvals, color=colours)
+        ax[i].set_title(f"{classifying_metrics[i].capitalize()}", fontsize=20)
+        ax[i].set_xlabel(xlabel)
+        ax[i].set_ylabel(ylabel)
+    plt.tight_layout()
+    plt.show()
 
     return fig
