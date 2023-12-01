@@ -227,6 +227,17 @@ def heisenberg(transform_object, t_end=1):
 # ---------------- Plot Reconstructed Data & FFTs ---------------
 
 
+def get_label(label_no, label_map):
+    if isinstance(label_map, dict):
+        return label_map.get(label_no)
+
+    elif label_map is None:
+        return f"Cluster {label_no}"
+
+    else:
+        raise ValueError("label_map must be a dictionary of label_no: label")
+
+
 def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
     signal_length = len(tr_obj.data)
     # List reconstructions by group
@@ -244,7 +255,12 @@ def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
 
 
 def plot_reconstructions_by_group(
-    transform_object, labels, no_clusters, t_plot=None, freq_threshold=None
+    transform_object,
+    labels,
+    no_clusters,
+    t_plot=None,
+    freq_threshold=None,
+    label_map=None,
 ):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
@@ -266,6 +282,8 @@ def plot_reconstructions_by_group(
         sampling rate
     freq_threshold: float, optional
         frequency threshold for reconstruction
+    label_map: dict int: str
+        relabel cluster numbers to a string
 
     Returns
     -------
@@ -283,7 +301,7 @@ def plot_reconstructions_by_group(
 
     data_len = len(transform_object.data)
     if t_plot is None:
-        xvals = data_len
+        xvals = np.arange(data_len)
     elif isinstance(t_plot, (list, np.ndarray)):
         xvals = t_plot
     elif isinstance(t_plot, (float, int)):
@@ -307,7 +325,7 @@ def plot_reconstructions_by_group(
                 x=xvals,
                 y=reconstructions[i],
                 mode="lines",
-                name=f"Cluster {i}",
+                name=get_label(i, label_map),
                 line=dict(color=colours[i]),
             )
         )
@@ -333,6 +351,7 @@ def plot_fft_by_group(
     xlim=None,
     fundamental_freq=None,
     freq_threshold=None,
+    label_map=None,
 ):
     """
     Plot FFTs of reconstructed signals and original signal
@@ -382,14 +401,16 @@ def plot_fft_by_group(
                 x=freq,
                 y=20 * np.log10(np.abs(fft_rec)),
                 mode="lines",
-                name=f"Cluster {i}",
+                name=get_label(i, label_map),
                 line=dict(color=colours[i]),
             )
         )
 
     fig.update_layout(
         title="FFT Comparison",
-        xaxis_title="Frequency [Hz]" if fundamental_freq is None else "f / f_0 [DL]",
+        xaxis_title="Frequency [Hz]"
+        if fundamental_freq is None
+        else "f / f<sub>0</sub> [DL]",
         yaxis_title="Amplitude [dB]",
         legend=dict(title="Clusters"),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),
@@ -400,10 +421,15 @@ def plot_fft_by_group(
     return fig
 
 
-def plot_clustering(data_train, centers, labels):
+# ---------------------- Clustering Results ----------------------
+
+
+def plot_clustering(
+    data_train, centers, labels, title="Clustering Results", label_map=None
+):
     # Define data and titles for each subplot
     data_sets = [
-        (data_train.values.tolist(), centers, labels, "Original Data"),
+        (data_train.values.tolist(), centers, labels, title),
         # (data_train.values.tolist(), centers_pca, labels_pca, "PCA Data")
     ]
     colours = list(TreeGraph.colour_dict.values())[1:]
@@ -433,7 +459,7 @@ def plot_clustering(data_train, centers, labels):
                 center[0],
                 center[1],
                 center[2],
-                f"Center {j}",
+                get_label(j, label_map),
                 color="black",
                 fontsize=20,
             )
@@ -448,7 +474,7 @@ def plot_clustering(data_train, centers, labels):
     return fig
 
 
-def plot_centers(classifying_metrics, centers):
+def plot_centers(classifying_metrics, centers, label_map=None):
     n_clusters = centers.shape[0]
     colours = list(TreeGraph.colour_dict.values())[1:]
 
@@ -456,12 +482,20 @@ def plot_centers(classifying_metrics, centers):
     for i in range(len(classifying_metrics)):
         yvals = centers[:, i]
         ylabel = "Value"
-        if "energy" in classifying_metrics[i]:
+        if "energy" in classifying_metrics[i] and "log" not in classifying_metrics[i]:
             yvals = np.log10(yvals)
             ylabel = "Value [dB]"
-        ax[i].bar(np.arange(n_clusters), yvals, color=colours)
+
+        if isinstance(label_map, dict):
+            xlabel = "Feature"
+            xvals = [v for v in label_map.values()]
+        else:
+            xlabel = "Cluster Number"
+            xvals = np.arange(n_clusters)
+
+        ax[i].bar(xvals, yvals, color=colours)
         ax[i].set_title(f"{classifying_metrics[i].capitalize()}", fontsize=20)
-        ax[i].set_xlabel("Cluster number")
+        ax[i].set_xlabel(xlabel)
         ax[i].set_ylabel(ylabel)
     plt.tight_layout()
     plt.show()

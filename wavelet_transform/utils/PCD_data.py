@@ -22,6 +22,9 @@ def get_data(dataset):
     ):
         return dataset2(dataset)  # get data from 2nd dataset
 
+    elif isinstance(dataset, int):
+        return dataset3(dataset)
+
     else:
         raise ValueError("invalid dataset named")
 
@@ -64,9 +67,24 @@ def dataset1(dataset):
 def dataset2(dataset):
     voltage, frequency = dataset
     file = "../PCD data for paper/Test2_HIFU_NoVial_" + str(voltage) + "mVpp_Modf.mat"
-    print("/n the data file imported is: /n" + file)
+    print("imported data from file:", file)
     data = sio.loadmat(file)
     signal = data["c" + str(frequency)]  # + "hat"]  # Get c1hat, c5hat, c10hat
     time = np.arange(len(signal)) / data["fs"]  # Generate time array with sampling rate
 
     return signal.squeeze(), time.squeeze()
+
+
+def dataset3(dataset):
+    exp_number = add_0s(dataset, 2)  # dataset represents experiment number
+    file = (
+        "../PCD data - 2MHz FUS - 16 Nov 2023/C4pcdNovial000" + str(exp_number) + ".txt"
+    )
+    dfb = pd.read_csv(file, sep=",", header=None)
+
+    data = dfb.iloc[:, -1]
+    time = dfb.iloc[:, -2]
+
+    time -= time[0]
+
+    return np.array(data), np.array(time)

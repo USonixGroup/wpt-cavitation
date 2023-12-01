@@ -1,11 +1,16 @@
 from collections import defaultdict
 from time import time
 import numpy as np
+import pandas as pd
 
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn import metrics
+import skfuzzy as fuzz
+from sklearn.mixture import GaussianMixture
+
+# ---------------------- Kmeans -----------------------
 
 evaluations = []
 evaluations_std = []
@@ -138,3 +143,111 @@ def assess_parameter(
         rand_indices.append(rand_index)
 
     return rand_indices
+
+
+# ---------------------- Fuzzy c-means --------------------
+
+
+class Cmeans:
+    def __init__(self):
+        self.n_clusters = None
+
+    def train(self, wpt_df, n_clusters, classifying_metrics, m):
+        # Get data
+        data_train = wpt_df[classifying_metrics]
+
+        # Standardise data
+        self.scaler = StandardScaler()
+        scaler = self.scaler
+        data_train_normalised = scaler.fit_transform(data_train)
+
+        # Fuzzy C-Means clustering
+        cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
+            data_train_normalised.T,
+            c=n_clusters,
+            m=m,
+            error=1e-6,
+            maxiter=100,
+        )
+        # Cluster centres
+        centers = scaler.inverse_transform(cntr)
+
+        # Membership matrix
+        membership_matrix = u.T
+
+        # Hard cluster assignments
+        labels = np.argmax(membership_matrix, axis=1)
+
+        self.n_clusters = n_clusters
+        self.labels, self.membership_matrix = labels, membership_matrix
+        self.cntr, self.m = cntr, m
+
+        return data_train, labels, data_train_normalised, centers, cntr, scaler
+
+    def test(self, new_entry):
+        "New entry should be a set of data with the same features used to train the algorithm"
+
+        # Standardize the new entry using the same scaler
+        new_entry_normalized = self.scaler.transform(new_entry)
+
+        # Predict membership using the cluster centers and membership matrix
+        new_u, *_ = fuzz.cluster.cmeans_predict(
+            new_entry_normalized.T,
+            self.cntr,
+            m=self.m,
+            error=1e-6,
+            maxiter=100,
+        )
+
+        new_membership_matrix = new_u.T
+        # Convert membership to hard cluster assignment
+        new_labels = np.argmax(new_u, axis=0)
+
+        membership_results = pd.DataFrame()
+        for i, membership in enumerate(new_membership_matrix):
+            membership_results.loc[i, "hard assignment"] = new_labels[i]
+            for j in range(self.n_clusters):
+                membership_results.loc[i, f"membership {j}"] = membership[j]
+
+        return new_labels, new_membership_matrix, membership_results
+
+    def membership_results(self):
+        n_clusters = self.n_clusters
+        labels = self.labels
+        for i in range(n_clusters):
+            print(f"label {i} count:", list(labels).count(i))
+
+            membership_results = pd.DataFrame()
+            for i, membership in enumerate(self.membership_matrix):
+                membership_results.loc[i, "hard assignment"] = labels[i]
+                for j in range(n_clusters):
+                    membership_results.loc[i, f"membership {j}"] = membership[j]
+
+            membership_results.head()
+
+
+# --------------- Mixture of Gaussians --------------
+
+
+# Turn this into an object like fuzzy c-means?
+def train_mixture_of_gaussians(wpt_df, classifying_metrics, n_clusters):
+    # Get training data
+    data_train = wpt_df[classifying_metrics]
+
+    # Standardise data
+    scaler = StandardScaler()
+    data_train_normalised = scaler.fit_transform(data_train)
+
+    # Mixture of gaussians clustering
+    gm = GaussianMixture(n_clusters)
+    labels = gm.fit_predict(data_train_normalised)
+
+    # Cluster centres
+    centers = scaler.inverse_transform(gm.means_)
+    # print("centers:", centers)
+
+    # # Hard cluster assignments
+    # for i in range(n_clusters):
+    #     print(f"label {i} count:", list(labels).count(i))
+
+    return data_train, labels, data_train_normalised, centers, scaler, gm
