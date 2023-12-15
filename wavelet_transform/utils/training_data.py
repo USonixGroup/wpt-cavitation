@@ -2,14 +2,16 @@ import os
 import numpy as np
 import pandas as pd
 import pickle
-from scipy.signal import resample
+from scipy.signal import resample as sc_resample
+import itertools
+import multiprocessing
+from functools import partial
 
 import wavelet_transform.wpt.transform as wpt
 from wavelet_transform.utils.bubbledynamics import BubbleDynamics as BD
 from wavelet_transform.utils.preprocessing import preprocess
-import itertools
-import multiprocessing
-from functools import partial
+from wavelet_transform.utils.extensions import sci_form
+
 
 # ------------- Generating Bubble Dynamics Data --------------
 
@@ -18,11 +20,32 @@ FILE_PATH = os.path.abspath(__file__)
 RELATIVE_PATH = "../../../docs/bubble_dynamics_data"
 FOLDER_PATH = os.path.abspath(os.path.join(FILE_PATH, RELATIVE_PATH))
 
+# Create folder if it doesn't exist
+os.makedirs(FOLDER_PATH, exist_ok=True)
+
 # Default parameters rate for generating bubble dynamics
-SAMPLING_RATE = 1e9
+SAMPLING_RATE = 1e9  # sampling rate for bd data generation
 TSTEP = 1.0 / SAMPLING_RATE
 R_MEASURE = 500e-6
 RDOT_INIT = 0
+TIME_DELAY = 0
+PHASE_INITIAL = 0
+PHASE_SHIFT = 0
+NO_HARMONICS = 1
+
+default_parameters = {
+    "R_init": None,  # None will be filled in _get_params_from_kwargs
+    "Rdot_init": RDOT_INIT,
+    "frequency": None,
+    "pac": None,
+    "time_delay": TIME_DELAY,
+    "pulse_width": None,  # default is calculated as duration of the time array
+    "phase_initial": PHASE_INITIAL,
+    "phase_shift": PHASE_SHIFT,
+    "no_harmonics": NO_HARMONICS,
+    "time": None,
+    "deltat": TSTEP,
+}
 
 
 def generate_training_data_with_wavelet_par(
@@ -106,9 +129,18 @@ def generate_training_data_with_wavelet(
     return wpt_df
 
 
-def get_data(R_init, frequency, pac, sampling_rate, n_cycles=100, return_time=False):
+def get_data(
+    R_init,
+    frequency,
+    pac,
+    sampling_rate,
+    n_cycles=50,
+    r_measure=R_MEASURE,
+    return_time=False,
+    **kwargs,
+):
     """
-    Get data from bubble dynamics model or generate it if it doesn't exist.
+    Read stored from bubble dynamics model or generate and store it if it doesn't exist.
 
     Parameters
     ----------
@@ -125,57 +157,87 @@ def get_data(R_init, frequency, pac, sampling_rate, n_cycles=100, return_time=Fa
     return_time: bool
         set to True to return the time array alongside the signal
 
+    Keyword arguments
+    -----------------
+    See BD class for more options.
+
+    r_measure: float
+        the distance from the bubble that the radiated pressure is measured at
+
     """
+    parameters = _get_params_from_kwargs(R_init, frequency, pac, n_cycles, **kwargs)
 
     # Get name of file containing data
-    identifier = f"R_{R_init}_freq_{frequency}_pac_{pac}.pkl"
+    identifier = str()
+
+    for i, j in zip(default_parameters, parameters):
+        if i in ["time"]:
+            continue  # Leave out some parameters from the name of the file
+        identifier += f"{i}{sci_form(j)}"
+
+    identifier += ".pkl"
+
     file_path = os.path.join(FOLDER_PATH, identifier)
 
-    # Create folder if it doesn't exist
-    os.makedirs(FOLDER_PATH, exist_ok=True)
+    generate_new_data = False
 
     # Check if file exists
     if os.path.isfile(file_path):
         # Load data from file
         with open(file_path, "rb") as file:
-            data = pickle.load(file)
+            file_data = pickle.load(file)
+            stored_cycles = float(file_data["n_cycles"])
+            data = file_data["data"]
+
+        if n_cycles <= stored_cycles:
+            time = _get_time_array(n_cycles, frequency)
+            data = data[: len(time)]  # trim down existing data
+        else:
+            generate_new_data = True
 
     else:
+        generate_new_data = True
+
+    if generate_new_data is True:
         # Generate data
-        data = _generate_data_for_storage(R_init, frequency, pac, n_cycles)
+        data = _generate_data_for_storage(r_measure, *parameters)
+        file_data = {
+            "data": data,
+            "n_cycles": float(n_cycles),
+            "sampling rate": SAMPLING_RATE,
+        }
         # Save the data for future use
         if data is None:  # Failed data generation
             return None
         with open(file_path, "wb") as file:
-            pickle.dump(data, file)
+            pickle.dump(file_data, file)
 
     # Downsample data
-    time = None
     if return_time is True:
-        tmax = n_cycles / frequency
-        tstep = 1 / SAMPLING_RATE
-        time = np.arange(0, tmax, tstep)
+        time = _get_time_array(n_cycles, frequency)
+    else:
+        time = None
 
-    return _resample(data, sampling_rate, time)
+    return resample(data, sampling_rate, time)
 
 
-def _resample(data, sampling_rate, time=None):
+def resample(data, sampling_rate, time=None):
     # Calculate sampling rate ratio and downsample the data
     new_length = len(data) * sampling_rate / SAMPLING_RATE
-    return resample(data, int(new_length), time)
+    return sc_resample(data, int(new_length), time)
 
 
-def _generate_data_for_storage(R_init, frequency, pac, n_cycles=20):
+def _generate_data_for_storage(r_measure, *parameters):
     """
     Generate data using bubble dynamics at a sampling rate of 1e9 Hz
-    and resample to a given sampling rate.
+    and resample to a given sampling rate. There are several default
+    parameters which cannot be changed to generate data for storage.
     """
     i = 0
+
     while True:
         # Generate sound wave
-        t_max = n_cycles / frequency
-        time = np.arange(0.0, t_max, TSTEP)
-        data = generate_data(R_init, RDOT_INIT, frequency, pac, time, TSTEP, R_MEASURE)
+        data = generate_data(r_measure, *parameters)
 
         # Check if the dynamics model failed
         if not np.isnan(data).any():
@@ -184,6 +246,7 @@ def _generate_data_for_storage(R_init, frequency, pac, n_cycles=20):
         # Repeat and give up after a number of attempts.
         i += 1
         if i > 50:
+            R_init, _, frequency, pac, *_ = parameters
             print(
                 f"Could not generate dynamics data with R_init: {R_init}, frequency:"
                 f" {frequency}, pac: {pac}"
@@ -196,10 +259,13 @@ def _generate_data_for_storage(R_init, frequency, pac, n_cycles=20):
     return data
 
 
-def generate_data(R_init, Rdot_init, frequency, pac, time, tstep, r_measure):
-    "Generate data from bubble dynamics."
+def generate_data(r_measure, *params):
+    """
+    Generate data from bubble dynamics.
+    See BD class for *params
+    """
     # Generate sound wave
-    BD_obj = BD(R_init, Rdot_init, frequency, pac, time, tstep)
+    BD_obj = BD(*params)
     BD_obj.solver()
 
     # Calculate pressure radiated (proportional to measured voltage)
@@ -207,6 +273,28 @@ def generate_data(R_init, Rdot_init, frequency, pac, time, tstep, r_measure):
     data = BD_obj.p_radiated
 
     return data
+
+
+def _get_params_from_kwargs(R_init, frequency, pac, n_cycles, **kwargs):
+    "Convert input into a list of parameters for the BD object"
+    kwargs.setdefault("R_init", R_init)
+    kwargs.setdefault("frequency", frequency)
+    kwargs.setdefault("pac", pac)
+
+    default_parameters["time"] = _get_time_array(n_cycles, frequency)
+    default_parameters["pulse_width"] = (
+        n_cycles / frequency
+    )  # pulse lasts for the same time as the array
+
+    parameters = [kwargs.get(k, v) for k, v in default_parameters.items()]
+
+    return parameters
+
+
+def _get_time_array(n_cycles, frequency):
+    tmax = n_cycles / frequency
+    time = np.arange(0, tmax, TSTEP)
+    return time
 
 
 # ------------ Generate Training Data from Single Sound Wave ------------
@@ -286,3 +374,16 @@ def _ditch_nodes_above_threshold(wpt_df, freq_threshold):
     )
 
     return wpt_df[node_mask]
+
+
+def add_noise(data, signal2noise, display_std_noise=False):
+    "Add noise to a signal with a given signal to noise ratio."
+    data_to_noise_power_ratio = 10 ** (signal2noise / 20)
+    power_noise = np.var(data) / data_to_noise_power_ratio
+    std_noise = np.sqrt(power_noise)
+    noise = np.random.normal(0, std_noise, len(data))
+    data += noise
+
+    if display_std_noise is True:
+        print("std_noise:", std_noise)
+    return data

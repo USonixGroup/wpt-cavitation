@@ -1,5 +1,7 @@
 import numpy as np
 
+from wavelet_transform.test.synthetic_data import find_time_indices
+
 
 def sci_form(number, dp=3):
     "returns a string of the scientific form of a number"
@@ -45,3 +47,18 @@ def fft(array, sampling_rate=None, fundamental_freq=None):
         return fft, freq
 
     return fft
+
+
+def plot_log10(array):
+    return [10 * np.log10(i) if i > 0 else 0 for i in array]
+
+
+def trim_data(data, t, t_lims, return_time=False):
+    start, end = find_time_indices(t, *t_lims)
+    data = data[start:end]
+
+    if return_time is True:
+        t = t[start:end]
+        return data, t
+
+    return data

@@ -81,8 +81,7 @@ def sound_wave(
         delay = 0
     if end is None:
         end = duration
-    delay_index = find_delay_index(t, delay)
-    end_index = find_end_index(t, end)
+    delay_index, end_index = find_time_indices(t, delay, end)
 
     wave[:delay_index] = 0
     wave[end_index:] = 0
@@ -169,6 +168,12 @@ def transients(
         transient_array[i : i + j] += amp * np.hanning(j)
 
     return transient_array
+
+
+def find_time_indices(t, delay, end):
+    delay_index = find_delay_index(t, delay)
+    end_index = find_end_index(t, end)
+    return delay_index, end_index
 
 
 def find_delay_index(t, delay):

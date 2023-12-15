@@ -25,6 +25,9 @@ def get_data(dataset):
     elif isinstance(dataset, int):
         return dataset3(dataset)
 
+    elif isinstance(dataset, dict):
+        return dataset4(dataset)
+
     else:
         raise ValueError("invalid dataset named")
 
@@ -45,15 +48,15 @@ def dataset1(dataset):
 
     if dataset == "5-10":
         # i = [50, 100], n = 3, (i = 50, i_lo = [2500::5000])
-        file = "../docs/PCD data/TestID5-10W per cm2 intensity/C1test00" + num + ".txt"
+        file = "../PCD data/TestID5-10W per cm2 intensity/C1test00" + num + ".txt"
 
     elif dataset == "5-34":
         # i = [00 - 21], n = 2, (i = 00, i_lo = [2150::5000])
-        file = "../docs/PCD data/TestID5-34W per cm2 intensity/C2test016" + num + ".txt"
+        file = "../PCD data/TestID5-34W per cm2 intensity/C2test016" + num + ".txt"
 
     elif dataset == "6-12":
         # i = [01 - 20], n = 2, (i = 01, i_lo = [0::5000])
-        file = "../docs/PCD data/TestID6-12W per cm2 intensity/C1test000" + num + ".txt"
+        file = "../PCD data/TestID6-12W per cm2 intensity/C1test000" + num + ".txt"
     dfb = pd.read_csv(file, sep=",", header=None)
 
     data = dfb.iloc[:, -1]
@@ -82,6 +85,27 @@ def dataset3(dataset):
     )
     dfb = pd.read_csv(file, sep=",", header=None)
 
+    return extract_data(dfb)
+
+
+def dataset4(dataset):
+    amp = dataset["amplitude"]
+    f = dataset["frequency"]
+    dc = dataset["duty cycle"]
+    prf = dataset["prf"]
+    exp_no = dataset["experiment"]
+    file_id = f"Amp{amp}mVppf{f}MHzDC{dc}PRF{prf}kHz{exp_no}"
+
+    # Open corresponding c1 and c2 files
+    files = [
+        f"../PCD measurements for WPT paper-09Dec2023/C{i}{file_id}.txt" for i in (1, 2)
+    ]
+    dfb = [pd.read_csv(file, sep=",", header=None) for file in files]
+
+    return {f"c{i+1}": extract_data(df) for i, df in enumerate(dfb)}
+
+
+def extract_data(dfb: pd.DataFrame):
     data = dfb.iloc[:, -1]
     time = dfb.iloc[:, -2]
 

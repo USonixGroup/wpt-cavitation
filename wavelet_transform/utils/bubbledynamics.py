@@ -197,7 +197,7 @@ class BubbleDynamics(object):
             [self.ND_params["nR_init"], self.ND_params["nRdot_init"]]
         )
         model_integrator = ode(self.GAmodel).set_integrator(
-            "vode", method="BDF", atol=1e-20
+            "vode", method="BDF", atol=1e-15
         )
         model_integrator.set_initial_value(
             initial_vals, self.ND_params["tau"][0]

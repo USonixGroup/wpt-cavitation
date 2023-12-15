@@ -1,4 +1,4 @@
-from wavelet_transform.utils.extensions import sci_form, fft
+from wavelet_transform.utils.extensions import sci_form, fft, plot_log10
 import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
@@ -475,29 +475,99 @@ def plot_clustering(
 
 
 def plot_centers(classifying_metrics, centers, label_map=None):
+    "Plot the clustering centres for one signal"
     n_clusters = centers.shape[0]
     colours = list(TreeGraph.colour_dict.values())[1:]
 
     fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(12, 6))
-    for i in range(len(classifying_metrics)):
+    for i, metric in enumerate(classifying_metrics):
         yvals = centers[:, i]
         ylabel = "Value"
-        if "energy" in classifying_metrics[i] and "log" not in classifying_metrics[i]:
+        if "energy" in metric and "log" not in metric:
             yvals = np.log10(yvals)
             ylabel = "Value [dB]"
 
         if isinstance(label_map, dict):
             xlabel = "Feature"
-            xvals = [v for v in label_map.values()]
+            xvals = [v for v in dict(sorted(label_map.items())).values()]
         else:
             xlabel = "Cluster Number"
             xvals = np.arange(n_clusters)
 
         ax[i].bar(xvals, yvals, color=colours)
-        ax[i].set_title(f"{classifying_metrics[i].capitalize()}", fontsize=20)
+        ax[i].set_title(f"{metric.capitalize()}", fontsize=20)
         ax[i].set_xlabel(xlabel)
         ax[i].set_ylabel(ylabel)
     plt.tight_layout()
+    plt.show()
+
+    return fig
+
+
+def plot_multiple_centers(
+    classifying_metrics, centers, label_maps, exp_labels=None, bar_width=0.2
+):
+    if any(not isinstance(i, list) for i in [classifying_metrics, centers, label_maps]):
+        raise ValueError(
+            "all inputs must be lists of lists, arrays, dictionaries respectively"
+        )
+
+    # Get all unique metrics and post-hoc feature labels from each experiment
+    all_metrics = [i for metrics in classifying_metrics for i in metrics]
+    unique_metrics = list(set(all_metrics))
+
+    all_labels = [i for label_map in label_maps for i in label_map.values()]
+    unique_labels = list(set(all_labels))
+
+    # Plot each metric on a separate graph
+    fig, ax = plt.subplots(len(unique_metrics), figsize=(12, 3 * len(unique_metrics)))
+    for i, metric in enumerate(unique_metrics):
+        handles = []
+        labels = []
+        for j, center in enumerate(centers):
+            # Get centre data corresponding to the classifying metric
+            try:
+                metric_index = classifying_metrics[j].index(metric)
+            except ValueError:  # metric was not used in this algorithm
+                continue
+            center_data = center[:, metric_index]
+
+            # Reorder center data by feature labels
+            label2index = {v: k for k, v in label_maps[j].items()}
+
+            ordered_center_data = [
+                0 if index is None else center_data[index]
+                for index in (label2index.get(label, None) for label in unique_labels)
+            ]
+
+            if "energy" in metric and "log" not in metric:
+                ordered_center_data = plot_log10(ordered_center_data)
+
+            # Offset for bars
+            offset = bar_width * j
+            x = np.arange(len(unique_labels)) + offset
+            exp_label = str(exp_labels[j]) if exp_labels is not None else str(j)
+
+            # Plot bars with offset
+            bar = ax[i].bar(x, ordered_center_data, width=bar_width, label=exp_label)
+            handles.append(bar)
+            labels.append(exp_label)
+
+        # Formatting
+        ylabel = "Value [dB]" if "energy" in metric and "log" not in metric else "Value"
+
+        n_experiments = len(classifying_metrics)
+        ax[i].set_xticks(
+            np.arange(len(unique_labels)) + bar_width * (n_experiments / 2 - 0.5)
+        )
+        ax[i].set_xticklabels([i.capitalize() for i in unique_labels])
+        ax[i].set_xlabel("Feature")
+        ax[i].set_ylabel(ylabel)
+        ax[i].set_title(f"{metric.capitalize()}")
+
+        # Create legend for centers
+        ax[i].legend(handles, labels)
+    fig.tight_layout()
     plt.show()
 
     return fig
