@@ -43,7 +43,7 @@ def train_k_means(
     else:
         # Find optimal numbemr of clusters using silhouette score
         algorithms = []
-        for no_clusters in range(3, 6):
+        for no_clusters in range(2, 6):
             kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
             labels = kmeans.fit_predict(data_train_normalised)
             silhouette_score = metrics.silhouette_score(data_train_normalised, labels)

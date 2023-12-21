@@ -60,6 +60,8 @@ def dwpt(
     assert transform_object.get_level(
         1
     ), "transform has no decompositions, try setting a minimum level"
+
+    transform_object.min_level = min_level
     return transform_object
 
 
@@ -79,6 +81,7 @@ def _min_entropy_dwpt(data, max_level, wavelet, mode, min_level):
         raise ValueError("min_level must be an integer")
 
     transform_object = Transform(data, wavelet, mode)
+    transform_object.min_entropy = True
     for level in range(max_level):
         for node in transform_object.get_level(level):
             # If a node has 0 entropy, it does not need to be further decomposed

@@ -32,6 +32,46 @@ class Transform:
         self.sampling_rate = None  # for calculating the frequency range of each node
         self.tree = TreeGraph(self)
 
+    # -------------------- Parameters --------------------
+
+    @property
+    def parameters(self):
+        if not hasattr(self, "_parameters"):
+            self._parameters = {
+                "wavelet": self.wavelet,
+                "mode": self.mode,
+                "data": self.data,
+                "min_level": self.min_level,
+                "min_entropy": self.min_entropy,
+            }
+        return self._parameters
+
+    @property
+    def min_level(self):
+        "The minimum level of transform"
+        if not hasattr(self, "_min_level"):
+            return None
+        else:
+            return self._min_level
+
+    @min_level.setter
+    def min_level(self, value):
+        assert isinstance(value, int)
+        self._min_level = value
+
+    @property
+    def min_entropy(self):
+        "Whether or not the minimum entropy transform has been used"
+        if not hasattr(self, "_min_entropy"):
+            return False
+        else:
+            return self._min_entropy
+
+    @min_entropy.setter
+    def min_entropy(self, value):
+        assert isinstance(value, bool)
+        self._min_entropy = value
+
     # -------------------- Functions used for Transform ---------------
 
     def get_level(self, level=None, order="natural"):

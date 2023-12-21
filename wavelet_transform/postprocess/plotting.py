@@ -516,7 +516,10 @@ def plot_multiple_centers(
     all_metrics = [i for metrics in classifying_metrics for i in metrics]
     unique_metrics = list(set(all_metrics))
 
-    all_labels = [i for label_map in label_maps for i in label_map.values()]
+    try:
+        all_labels = [i for label_map in label_maps for i in label_map.values()]
+    except AttributeError:
+        raise ValueError("label map must be defined")
     unique_labels = list(set(all_labels))
 
     # Plot each metric on a separate graph
