@@ -13,6 +13,7 @@
 
 \usepackage{color}
 \usepackage[caption=false]{subfig}
+\usepackage{siunitx}
 
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows}
@@ -36,7 +37,7 @@
 %\author{Author Two}
 %\author{Author Three}
 
-\affiliation{Ultrasonics Laboratory, Department of Mechanical Engineering, University College London, London, UK}
+\affiliation{Ultrasonics Group, Department of Mechanical Engineering, University College London, London, UK}
 \affiliation{Ultrasonics Laboratory, Department of Mechanical Engineering, University College London, London, UK}
 
 \altaffiliation{}
@@ -210,7 +211,7 @@ A feature matrix of these statistical metrics of all subbands is formed. The nex
   \label{eq:kmeans}
 \end{align}
 
-\noindent where $\Theta$ is the distortion (loss) function, $\rho$ is the assignment of the data point, $i$, to cluster, $j$, and $x$ and $\mu$ are the data point and cluster centroid respectively.
+\noindent where $\Theta$ is the distortion (loss) function, $\rho$ is the assignment of the data point $i$ to cluster $j$, and $x$ and $\mu$ are the data point and cluster centroid respectively.
 
 \km is a non-convex optimisation problem and yields different results depending on the starting position of the clusters. This is further discussed in section \ref{sec:method_overview}.
 
@@ -265,55 +266,76 @@ The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD
 \subsection{\km parameters}
 The k-means algorithm was run with Lloyd's algorithm described in section \ref{sec:k-means_intro}. The clustering problem is sparse, so the effects the non-convexity of the k-means algorithm was mitigated using multiple runs of the k-means algorithm. The clustering with the best value of the distortion function (see \eq{\ref{eq:kmeans}}) was selected. Furthermore, the k-means++ algorithm \cite{arthur2007} is used to select the starting centroids. This method selects data points as clusters one-by-one, while enforcing that points further away from existing selections are more likely to be chosen. This can improve clustering time and performance, reducing the chance that clusters are merged.
 
-\subsection{Gilmore-Akulichev model}
+\subsection{Gilmore--Akulichev model}
 \label{sec:GA_model}
-Gilmore's model describes the dynamics of a spherical bubble undergoing symmetric oscillations due to acoustic excitation in a compressible liquid. It has been shown that predicted results by the Gilmore's model agree well with the most of experimental data.\cite{lauterborn2010} The Gilmore equation is expressed as follows \cite{gilmore1952}
+Gilmore's model describes the dynamics of a spherical bubble in a compressible liquid, undergoing symmetric oscillations due to acoustic excitations. The model has been validated against experimental data and widely used for studying acoustic cavitation.\cite{lauterborn2010} The Gilmore equation is expressed as follows \cite{gilmore1952}
 
 \begin{align}
   \label{eq:gilmore}
-  & \left(1~-~\dfrac{\dot{R}}{C}\right) R \ddot{R} ~+~ \dfrac{3}{2}\left(1~-~\dfrac{\dot{R}}{3C}\right){\dot{R}}^2 ~=~ \nonumber \\
-  & \left(1~+~\dfrac{\dot{R}}{C}\right) H ~+~ \dfrac{\dot{R}}{C}\left(1~-~\dfrac{\dot{R}}{C}\right) R \dfrac{d H}{d R}
+  & R \ddot{R}\left(1~-~\dfrac{\dot{R}}{C}\right) ~+~ \dfrac{3}{2}{\dot{R}}^2 \left(1~-~\dfrac{\dot{R}}{3C}\right) ~=~ \nonumber \\
+  & H\left(1~+~\dfrac{\dot{R}}{C}\right)  ~+~ \dfrac{R \dot{H}}{C}\left(1~-~\dfrac{\dot{R}}{C}\right)
 \end{align}
 
-\noindent where $C$ is the wave speed at the bubble's wall and $H$ is the enthalpy difference in the fluid at pressure $P(R)$ at the bubble wall and $P_\infty$ in far-field. They are calculated using the following equations
+\noindent where $R$ is the instantaneous bubble radius, $C$ and $H$ are the speed of sound in the liquid at the bubble wall, and the enthalpy difference in the liquid at the bubble wall (at pressure $P(R)$) and at infinity (at $P_\infty$), respectively. Time derivatives are designated by dots. Pressure at infinity is the sum of the static reference pressure $P_0$ and the acoustic pressure $P_{ac}(t)$, i.e., $P_\infty(t)=P_0~+~P_{ac}(t)$. Gilmore's model implicitly assumes that the acoustic pressure is applied instantaneously and uniformly around the bubble without specifying a source location in the liquid. Thus, the liquid density and speed of sound at infinity are taken at the static reference state, denoted by $\rho_0$ and $c_0$, respectively, below. $C$ and $H$ are calculated using the following equations
 
 \begin{align}
   \label{eq:wavespeed}
-	C ~=~ \sqrt{c_\infty^2~+~(n-1)H}
+	C ~=~ \sqrt{c_0^2~+~(n-1)H}
 \end{align}
 
 \begin{align}
   \label{eq:enthalpy}
-  H ~=~ \dfrac{n A^{1/n}}{(n-1)\rho_L}  &\left[ \left(P(R) ~+~ B\right)^{\left(1~-~1/n\right)} ~ - \right. \nonumber \\
-  & \left. \left(P_\infty ~+~ B\right)^{\left(1~-~1/n\right)} \right]
+  H ~=~ \dfrac{n A^{1/n}}{(n-1)\rho_0}  &\left[ \left(P(R) ~+~ B\right)^{\left(1-1/n\right)} ~ - \right. \nonumber \\
+  & \left. \left(P_\infty(t) ~+~ B\right)^{\left(1-1/n\right)} \right]
 \end{align}
 
-\noindent where $c_\infty$ is the speed of sound in far-field, and $\rho_L$ is the density of the liquid at the bubble wall, $A, B,~\mathrm{and}~n$ are constants in the Tait's equation of state which are obtained experimentally. $P(R)$ is obtained using a modified Laplace equation as follows
+\noindent where $A, B,~\mathrm{and}~n$ are constants in the Tait's equation of state which are obtained experimentally. The time derivative of the enthalpy in the liquid at the bubble wall becomes
+
+\begin{align}
+  \label{eq:enthalpy_dot}
+  \dot{H} ~=~ \dfrac{A^{1/n}}{\rho_0}  &\left[ \dot{P}(R)\left(P(R) ~+~ B\right)^{-1/n} ~ - \right. \nonumber \\
+  & \left. \dot{P}_{ac}(t) \left(P_\infty(t) ~+~ B\right)^{-1/n} \right].
+\end{align}
+
+\noindent Note that $\dot{P}_\infty(t)=\dot{P}_{ac}(t)$. $P(R)$ is calculated using a modified Laplace equation
 
 \begin{align}
   \label{eq:pressure_at_R}
-  P(R)~=~ \left(P_\infty~+~\frac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\kappa}~-~\dfrac{2\sigma}{R}~-~\dfrac{4\mu \dot{R}}{R}
+  P(R)~=~ \left(P_0~+~\frac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\gamma}~-~\dfrac{2\sigma}{R}~-~\dfrac{4\mu \dot{R}}{R}
 \end{align}
 
-\noindent where $R_0$ and $P_0$ are the initial bubble radius and internal pressure, respectively, $\kappa$, $\mu$ and $\sigma$ are the heat capacity ratio, dynamic viscosity, and $\sigma$ surface tension, respectively. Using Eqs. \ref{eq:wavespeed}, \ref{eq:enthalpy}, \ref{eq:pressure_at_R}, we can numerically solve the Gilmore's model \eq{\ref{eq:gilmore}} and determine the pressure radiated from the bubble at a distance $r$ using the Akulichev formulation
+\noindent where $R_0$ is the initial bubble radius, $\gamma$, $\mu$ and $\sigma$ are the adiabatic index (ratio of specific heats), dynamic viscosity, and surface tension, respectively. Finally, taking the time derivative of the above equation, we arrive at
+
+\begin{align}
+  \label{eq:pressure_at_R_dot}
+  \dot{P}(R)~=~ & -3\gamma\dfrac{\dot{R}}{R} \left(P_0~+~\dfrac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\gamma}~+~ \nonumber \\
+  & \dfrac{\dot{R}}{R}\dfrac{2\sigma}{R}~+~4\mu \left(\dfrac{\dot{R}}{R}\right)^2~-~\dfrac{4\mu \ddot{R}}{R}.
+\end{align}
+
+\noindent Eqs. \ref{eq:wavespeed}-\ref{eq:pressure_at_R_dot} are used to numerically solve the Gilmore equation \eq{\ref{eq:gilmore}}. The radiated pressure in the liquid is then given by the Akulichev formula
 
 \begin{align}
 \label{eq:akulichev}
-  P_{rad }(r)= & A \left(\dfrac{2}{n+1} ~ + ~\dfrac{n-1}{n+1} \left( 1 + \dfrac{n+1}{r c_\infty^2 } G \right)^{1/2} \right)^{2n/(n-1)} \nonumber \\
+  P_{r}(t)= & A \left(\dfrac{2}{n+1} ~ + ~\dfrac{n-1}{n+1} \left( 1 + \dfrac{n+1}{r c_0^2 } G \right)^{1/2} \right)^{2n/(n-1)} \nonumber \\
   & ~ - ~ B
 \end{align}
 
-\noindent where $R$ is the instantaneous bubble radius, and $G~=~R~(~H~ +~ 0.5\dot{R}^2)$. This equation assumes that acoustic emissions from an oscillating bubble propagate as outward traveling spherical waves. The Gilmore-Akulichev model was solved numerically using a stiff ODE solver for different sonication conditions. The implementation is included in the library on the GitHub repository. The implementation and numerical results were verified against published results for identical parameters.
+\noindent where $r$ is the distance from the centre of the bubble, and $G=R(H ~+~ 0.5\dot{R}^2)$. This equation assumes that acoustic emissions from an oscillating bubble propagate as outward traveling spherical waves. The Gilmore--Akulichev model was nondimensionalized and solved numerically using a stiff ODE solver for different sonication conditions. The implementation is included in the project's GitHub repository. \cite{wpt-cavitation2024} The implementation and numerical results were verified against published results for identical parameters.
 
 \section{Results and discussion}
-This section will present results generated using the proposed method and discuss its performance. These studies aim to test the algorithm's ability to separate the signal into components representing stable and inertial cavitation.
+This section presents the results of studies aiming to test the algorithm's ability for identifying and classifying the features of stable and transient cavitation. Initially, the algorithm will be applied to simulated data generated by solving the Gilmore--Akulichev model for parameters resulting in stable and transient cavitation. Subsequently, we will process PCD data obtained experimentally, presented in Section \ref{sec:analyzing_PCD_data}.
+\subsection{Bubble dynamics data}
+\label{sec:GA_data}
+The temporal description of the acoustic pressure is modelled as a linear sine wave, i.e., $P_{ac}(t)= P_A sin(2 \pi f t)$ where $P_A$ and $f$ are the amplitude and frequency of acoustic pressure field. The frequency and pulse length are set to \qty{2}{\mega\hertz} and $10/f$, to mimic experiments, and $P_A=1$ \unit{\mega\pascal} for the results presented below. We choose water and oxygen for the liquid and the gas. The physical parameters used for numerical simulations are as follows (at room temperature \qty{293}{\kelvin} and atmospheric pressure $p_0=100$ \unit{\kilo\pascal}): $\rho_0=\qty{e3}{\kilogram\per\cubic\metre}$, $\sigma=\qty{7.25e-2}{\newton\per\metre}$, $\mu=\qty{e-3}{\pascal\second}$, $c_0=\qty{1482}{\metre\per\second}$, $n=7$, $A=\qty{3.04e2}{\mega\pascal}$, $B=\qty{3.039e2}{\mega\pascal}$ and $\gamma=1.4$. The initial conditions are: $R(0)=R_0$ and $\dot{R}(0)=0$. Here, we consider two scenarios in which $R_0=\qty{1}{\micro\metre}$ and $R_0=\qty{10}{\micro\metre}$, resulting in stable and transient cavitation, respectively.  
 
-\section{Feature Selection}
+The $R(t)$ curves and radiated pressures calculated at $r=\qty{100}{\micro\metre}$ are shown in Figs XX.  
+
+\subsection{Feature Selection}
 \label{sec:feature_selection}
 %explain how self-organisisng maps work?
 The features space is explored using self-organising maps \cite{kohonen2012}, a type of neural network which can be used to visualise high dimensional data in two dimensions. The algorithm generates nodes which are arranged in a two-dimensional space, each containing an array of weights, one for each input feature. The nodes can be thought of as cluster centres which are interconnected such that neighbouring neurons have similar features. The features can be plotted separately, giving a set of maps which can be visually compared to evaluate the usefulness of each feature. The details of the algorithm will not be discussed here and can be found in paper written by Haroun et al. \cite{haroun2017feature} in the context of bearing fault detection and diagnosis. 
 
-The data used to train the self-organising map uses 192 signals generated at a sampling rate of 50 MHz, representing both stable and inertial cavitation. The signals have noise added to them and are windowed and normalised as described in \figg{\ref{fig:method_flowchart}}. The results are shown in \ref{fig:som}. When the maps are visually similar, their respective features are correlated with each other. This shows that the high energy DWPT nodes tend to have low skewness, kurtosis, and spectral entropy, as expected given the physical interpretations of each. This area represents packet nodes containing fundamental frequencies. The spectral entropy and level entropy are able to find nodes around the high energy area. These represent harmonics which are not easily picked out using average energy alone. The nodes with high frequency and kurtosis, and low energy indicate signals with sharp transients. The rest of the high-frequency nodes represent noise.
+The data used to train the self-organising map uses 192 signals generated at a sampling rate of \qty{50}{\mega\hertz}, representing both stable and transient cavitation. The signals have noise added to them and are windowed and normalised as described in \figg{\ref{fig:method_flowchart}}. The results are shown in \ref{fig:som}. When the maps are visually similar, their respective features are correlated with each other. This shows that the high energy DWPT nodes tend to have low skewness, kurtosis, and spectral entropy, as expected given the physical interpretations of each. This area represents packet nodes containing fundamental frequencies. The spectral entropy and level entropy are able to find nodes around the high energy area. These represent harmonics which are not easily picked out using average energy alone. The nodes with high frequency and kurtosis, and low energy indicate signals with sharp transients. The rest of the high-frequency nodes represent noise.
 
 Several plots look similar to each other, indicating redundancy in the feature space. Skewness, kurtosis, and crest factor perform similarly, while level entropy (normalised by the energy of the original signal), and spectral entropy are highly correlated.
 
@@ -329,12 +351,14 @@ Overall, the three best features are hand picked as average energy, spectral ent
 
 This method was chosen over PCA which requires the computation of every feature at run time. It is worth noting that the results for self-organising maps is highly inconsistent where the shape of the maps can significantly change depending on the randomly-selected starting points. However, the observed correlations between the features remain similar each time.
 
-\subsection{Analyzing numerical results}
+\subsection{Experimental acoustic emissions}
+\label{sec:analyzing_PCD_data}
 
 
-\subsection{Experimental set up and protocols}
+\subsubsection{Experimental set-up and protocol}
 \label{sec:Exp_setup}
-\subsection{Analyzing experimental PCD data}
+
+\subsubsection{Analyzing PCD data}
 
 
 \section{Summary}
