@@ -482,7 +482,9 @@ def plot_centers(classifying_metrics, centers, label_map=None):
     fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(12, 6))
     for i, metric in enumerate(classifying_metrics):
         yvals = centers[:, i]
-        assert len(yvals) == len(label_map), "each cluster must be labelled"
+        assert label_map is None or len(yvals) == len(
+            label_map
+        ), "each cluster must be labelled"
         ylabel = "Value"
         if "energy" in metric and "log" not in metric:
             yvals = np.log10(yvals)
