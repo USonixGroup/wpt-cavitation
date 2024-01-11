@@ -1,4 +1,4 @@
-from wavelet_transform.utils.extensions import sci_form, fft, plot_log10
+from wavelet_transform.utils.extensions import sci_form, fft, to_dB
 import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
@@ -485,23 +485,26 @@ def plot_centers(classifying_metrics, centers, label_map=None):
         assert label_map is None or len(yvals) == len(
             label_map
         ), "each cluster must be labelled"
-        ylabel = "Value"
+        ylabel = "Magnitude [DL]"
         if "energy" in metric and "log" not in metric:
-            yvals = np.log10(yvals)
-            ylabel = "Value [dB]"
+            yvals = to_dB(yvals)
+            ylabel = "Magnitude [dB]"
 
         if isinstance(label_map, dict):
             xlabel = "Feature"
             xvals = [v for v in dict(sorted(label_map.items())).values()]
+            label_angle = 45
         else:
             xlabel = "Cluster Number"
-            xvals = np.arange(n_clusters)
+            xvals = [str(v) for v in range(n_clusters)]
+            label_angle = 0
 
         ax[i].bar(xvals, yvals, color=colours)
-        ax[i].set_xticklabels(xvals, rotation=45)
         ax[i].set_title(f"{metric.capitalize()}", fontsize=20)
         ax[i].set_xlabel(xlabel)
         ax[i].set_ylabel(ylabel)
+        ax[i].set_xticks(np.arange(len(xvals)))
+        ax[i].set_xticklabels(xvals, rotation=label_angle)
     plt.tight_layout()
     plt.show()
 
@@ -548,7 +551,7 @@ def plot_multiple_centers(
             ]
 
             if "energy" in metric and "log" not in metric:
-                ordered_center_data = plot_log10(ordered_center_data)
+                ordered_center_data = to_dB(ordered_center_data)
 
             # Offset for bars
             offset = bar_width * j
@@ -568,7 +571,7 @@ def plot_multiple_centers(
             np.arange(len(unique_labels)) + bar_width * (n_experiments / 2 - 0.5)
         )
         ax[i].set_xticklabels([i.capitalize() for i in unique_labels])
-        ax[i].set_xlabel("Feature")
+        # ax[i].set_xlabel("Feature")
         ax[i].set_ylabel(ylabel)
         ax[i].set_title(f"{metric.capitalize()}")
 
