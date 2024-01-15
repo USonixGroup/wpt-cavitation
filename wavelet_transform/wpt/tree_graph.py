@@ -24,11 +24,24 @@ class TreeGraph:
     def __init__(self, tr_obj: "Transform"):
         self.tr_obj = tr_obj  # Transform object
 
-    def plot_tree(self, node_size=1500, node_colour="skyblue", freq_threshold=None):
+    def plot_tree(
+        self,
+        node_size=1500,
+        node_colour="skyblue",
+        freq_threshold=None,
+        graph_legend="Graph legend",
+        fig_name=None,
+    ):
         "Plot the tree diagram for the wavelet packet transform."
         self.graph_nodes, self.graph_edges = self._get_nodes_and_edges()
         self._generate_plot(
-            self.graph_nodes, self.graph_edges, node_size, node_colour, freq_threshold
+            self.graph_nodes,
+            self.graph_edges,
+            node_size,
+            node_colour,
+            freq_threshold,
+            graph_legend,
+            fig_name,
         )
 
     # ---------------- Getting Nodes & Edges ----------------
@@ -52,7 +65,14 @@ class TreeGraph:
     # ------------------ Plotting -------------------
 
     def _generate_plot(
-        self, graph_nodes, graph_edges, node_size, node_colour, freq_threshold
+        self,
+        graph_nodes,
+        graph_edges,
+        node_size,
+        node_colour,
+        freq_threshold,
+        graph_legend,
+        fig_name,
     ):
         # Make networkx graph object
         G = nx.DiGraph()
@@ -136,12 +156,14 @@ class TreeGraph:
             plt.legend(
                 handles=legend_patches,
                 loc="upper right",
-                title="Legend",
+                title=graph_legend,
                 title_fontsize=30,
                 fontsize=30,
             )
 
-        plt.show()
+        if fig_name:
+            plt.savefig(fig_name + ".png", format="PNG")
+            plt.savefig(fig_name + ".pdf", format="PDF")
 
     def _get_colours(self, G, node_colour, freq_threshold):
         labels = []

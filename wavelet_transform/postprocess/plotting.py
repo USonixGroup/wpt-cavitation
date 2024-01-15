@@ -5,7 +5,7 @@ import numpy as np
 import plotly.graph_objects as go
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
-FS = 15  # fontsize
+FS = 14  # fontsize
 
 
 def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
@@ -188,17 +188,22 @@ def heisenberg(transform_object, t_end=1):
         node = nodes[j]
         data[i, :] = np.abs(node.data)  # plot absolute values of wavelet coefficients
 
-    graph = ax.imshow(np.log10(data), cmap="turbo", aspect="auto")
-    ax.set_ylabel("Frequency of Subband [Hz]", fontsize=20)
-    ax.set_xlabel("Time [s]", fontsize=20)
-    ax.set_title("DWPT of Signal", fontsize=25)
-
     frequencies = [node.frequency_range for node in nodes]
     if any((freq is None for freq in frequencies)):
         raise ValueError(
             "Check that the frequencies have been calculated ->"
             " transform_obj.calc_frequencies()"
         )
+    graph = ax.imshow(
+        np.log10(data),
+        cmap="turbo",
+        aspect="auto",
+    )
+    ax.set_ylabel("Frequency of Subband [Hz]", fontsize=14)
+    ax.set_xlabel("Time [s]", fontsize=14)
+    ax.set_title("DWPT of Signal", fontsize=18)
+    # ax.set_yscale("log")
+
     y_labels = [
         (sci_form(freq[0], 1), sci_form(freq[1], 1)) for freq in reversed(frequencies)
     ]
@@ -331,6 +336,9 @@ def plot_reconstructions_by_group(
         )
 
     fig.update_layout(
+        width=1000,
+        height=300,
+        font_size=FS,
         title="Reconstructed nodes by group",
         xaxis_title="Time [s]" if t_plot is not None else None,
         yaxis_title="Amplitude",
@@ -407,12 +415,15 @@ def plot_fft_by_group(
         )
 
     fig.update_layout(
+        width=1000,
+        height=300,
+        font_size=FS,
         title="FFT Comparison",
         xaxis_title="Frequency [Hz]"
         if fundamental_freq is None
         else "f / f<sub>0</sub> [DL]",
-        yaxis_title="Amplitude [dB]",
-        legend=dict(title="Clusters"),
+        yaxis=dict(title="Amplitude [dB]", range=[-140, 10]),
+        legend=dict(title="Signal component"),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),
     )
 
@@ -425,7 +436,12 @@ def plot_fft_by_group(
 
 
 def plot_clustering(
-    data_train, centers, labels, title="Clustering Results", label_map=None
+    data_train,
+    centers,
+    labels,
+    metrics_to_plot,
+    title="Clustering Results",
+    label_map=None,
 ):
     # Define data and titles for each subplot
     data_sets = [
@@ -435,40 +451,71 @@ def plot_clustering(
     colours = list(TreeGraph.colour_dict.values())[1:]
 
     # Create separate figures for each subplot
-    for data_scatter, centers_scatter, labels_scatter, title in data_sets:
-        fig = plt.figure(figsize=(20, 20))
-        ax = fig.add_subplot(111, projection="3d")
+    # for data_scatter, centers_scatter, labels_scatter, title in data_sets:
+    #     fig = plt.figure(figsize=(20, 20))
+    #     ax = fig.add_subplot(111, projection="3d")
 
+    #     ax.scatter(
+    #         [point[0] for point in data_scatter],
+    #         [point[1] for point in data_scatter],
+    #         [point[2] for point in data_scatter],
+    #         c=[colours[i] for i in labels_scatter],
+    #     )
+    #     ax.scatter(
+    #         centers_scatter[0, :],
+    #         centers_scatter[1, :],
+    #         centers_scatter[2, :],
+    #         c="red",
+    #         marker="x",
+    #         s=100,
+    #     )
+
+    #     for j, center in enumerate(centers_scatter):
+    #         ax.text(
+    #             center[0],
+    #             center[1],
+    #             center[2],
+    #             get_label(j, label_map),
+    #             color="black",
+    #             fontsize=14,
+    #         )
+
+    #     ax.set_xlabel(data_train.columns[0].capitalize(), fontsize=18)
+    #     ax.set_ylabel(data_train.columns[1].capitalize(), fontsize=18)
+    #     ax.set_zlabel(data_train.columns[2].capitalize(), fontsize=18)
+    #     ax.set_title(title, fontsize=20)
+    px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
+    fig = plt.figure(figsize=(800 * px, 800 * px))
+    ax = fig.add_subplot(111, projection="3d")
+    for center in range(centers.shape[0]):
         ax.scatter(
-            [point[0] for point in data_scatter],
-            [point[1] for point in data_scatter],
-            [point[2] for point in data_scatter],
-            c=[colours[i] for i in labels_scatter],
+            data_train.loc[labels == center, metrics_to_plot[0]],
+            data_train.loc[labels == center, metrics_to_plot[1]],
+            data_train.loc[labels == center, metrics_to_plot[2]],
+            c=colours[center],
         )
         ax.scatter(
-            centers_scatter[:, 0],
-            centers_scatter[:, 1],
-            centers_scatter[:, 2],
+            centers.loc[center, metrics_to_plot[0]],
+            centers.loc[center, metrics_to_plot[1]],
+            centers.loc[center, metrics_to_plot[2]],
             c="red",
             marker="x",
             s=100,
         )
 
-        for j, center in enumerate(centers_scatter):
-            ax.text(
-                center[0],
-                center[1],
-                center[2],
-                get_label(j, label_map),
-                color="black",
-                fontsize=20,
-            )
+        ax.text(
+            centers.loc[center, metrics_to_plot[0]],
+            centers.loc[center, metrics_to_plot[1]],
+            centers.loc[center, metrics_to_plot[2]],
+            get_label(center, label_map),
+            color="black",
+            fontsize=14,
+        )
 
-        ax.set_xlabel(data_train.columns[0].capitalize(), fontsize=25)
-        ax.set_ylabel(data_train.columns[1].capitalize(), fontsize=25)
-        ax.set_zlabel(data_train.columns[2].capitalize(), fontsize=25)
-        ax.set_title(title, fontsize=30)
-
+        ax.set_xlabel(metrics_to_plot[0].capitalize(), fontsize=18)
+        ax.set_ylabel(metrics_to_plot[1].capitalize(), fontsize=18)
+        ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=18)
+        ax.set_title(title, fontsize=20)
     plt.show()
 
     return fig
@@ -479,19 +526,25 @@ def plot_centers(classifying_metrics, centers, label_map=None):
     n_clusters = centers.shape[0]
     colours = list(TreeGraph.colour_dict.values())[1:]
 
-    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(12, 6))
+    px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
+    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(1000 * px, 300 * px))
     for i, metric in enumerate(classifying_metrics):
-        yvals = centers[:, i]
+        yvals = centers[metric]
         assert label_map is None or len(yvals) == len(
             label_map
         ), "each cluster must be labelled"
-        ylabel = "Magnitude [DL]"
+        ylabel = "Amplitude [DL]"
         if "energy" in metric and "log" not in metric:
             yvals = to_dB(yvals)
-            ylabel = "Magnitude [dB]"
+            ylabel = "Amplitude [dB]"
+        if "log" and "energy" in metric:
+            ylabel = "Amplitude [dB]"
+        if "entropy" in metric:
+            yvals = to_dB(yvals)
+            ylabel = "Amplitude [dB]"
 
         if isinstance(label_map, dict):
-            xlabel = "Feature"
+            xlabel = "Signal component"
             xvals = [v for v in dict(sorted(label_map.items())).values()]
             label_angle = 45
         else:
@@ -500,7 +553,7 @@ def plot_centers(classifying_metrics, centers, label_map=None):
             label_angle = 0
 
         ax[i].bar(xvals, yvals, color=colours)
-        ax[i].set_title(f"{metric.capitalize()}", fontsize=20)
+        ax[i].set_title(f"{metric.capitalize()}", fontsize=14)
         ax[i].set_xlabel(xlabel)
         ax[i].set_ylabel(ylabel)
         ax[i].set_xticks(np.arange(len(xvals)))
@@ -530,7 +583,10 @@ def plot_multiple_centers(
     unique_labels = list(set(all_labels))
 
     # Plot each metric on a separate graph
-    fig, ax = plt.subplots(len(unique_metrics), figsize=(12, 3 * len(unique_metrics)))
+    px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
+    fig, ax = plt.subplots(
+        len(unique_metrics), figsize=(1000 * px, 300 * px * len(unique_metrics))
+    )
     for i, metric in enumerate(unique_metrics):
         handles = []
         labels = []
@@ -540,7 +596,8 @@ def plot_multiple_centers(
                 metric_index = classifying_metrics[j].index(metric)
             except ValueError:  # metric was not used in this algorithm
                 continue
-            center_data = center[:, metric_index]
+            print(metric_index)
+            center_data = center[metric]
 
             # Reorder center data by feature labels
             label2index = {v: k for k, v in label_maps[j].items()}
