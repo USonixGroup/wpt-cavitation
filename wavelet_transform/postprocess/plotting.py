@@ -5,10 +5,11 @@ import numpy as np
 import plotly.graph_objects as go
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
-FS = 14  # fontsize
-
-
-def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
+def full_plot(nodes, data, t_plot, 
+              sampling_rate, 
+              title="",
+              font_dict={'family':'Computer Modern Serif','color':'black','size':12},
+              frequencies=None):
     """
     formatted charts for plotting the results from a dwt or dpwt. Combines
     relevant plots including those for the sound wave, frequency content of
@@ -54,7 +55,8 @@ def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
     plt.show()
 
 
-def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
+def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1, 
+               font_dict={'family':'Computer Modern Serif','color':'black','size':12}):
     """
     separately plots the data from a provided list of nodes.
 
@@ -92,8 +94,8 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
             axis.plot(node.data)
 
             # set labels
-            axis.set_xlabel("coefficient number", fontsize=FS)
-            axis.set_ylabel("magnitude", fontsize=FS)
+            axis.set_xlabel("coefficient number", fontdict=font_dict)
+            axis.set_ylabel("magnitude", fontdict=font_dict)
             axis.grid(True)
 
             lower_frequency = node.norm_frequency_range[0] * nyquist_frequency
@@ -108,42 +110,50 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
             Coefficients, {lf}-{uf} Hz
             energy: {sci_form(node.energy)} [section {section_counter} of {n}]
             """
-            axis.set_title(title, fontsize=FS)
+            axis.set_title(title, fontdict=font_dict)
             section_counter += 1
 
 
-def plot_all_final_nodes(nodes, ax, title=""):
+def plot_all_final_nodes(nodes, ax, 
+                         title="",
+                         font_dict={'family':'Computer Modern Serif','color':'black','size':12}):
     "concatenate the data from all of the nodes and plot"
     output = np.array([])
     for node in nodes:
         output = np.concatenate((output, node.data))
     ax.plot(output)
-    ax.set_title(f"Coefficients {title}", fontsize=FS)
-    ax.set_xlabel("Coefficient Number", fontsize=FS)
-    ax.set_ylabel("Coefficient", fontsize=FS)
+    ax.set_title(f"Coefficients {title}", fontdict=font_dict)
+    ax.set_xlabel("Coefficient Number", fontdict=font_dict)
+    ax.set_ylabel("Coefficient", fontdict=font_dict)
     ax.grid(True)
 
 
 def plot_wave(data, t_plot, ax, title=""):
     "plots the data"
     ax.plot(t_plot, data)
-    ax.set_xlabel("Time [s]", fontsize=FS)
-    ax.set_ylabel("Amplitude [mV]", fontsize=FS)
-    ax.set_title(f"Data {title}", fontsize=FS)
+    ax.set_xlabel("Time [s]", fontdict=font_dict)
+    ax.set_ylabel("Amplitude [mV]", fontdict=font_dict)
+    ax.set_title(f"Data {title}", fontdict=font_dict)
     ax.grid(True)
 
 
-def plot_frequencies(frequencies, ax, title=""):
+def plot_frequencies(frequencies, ax, 
+                     title="",
+                    font_dict={'family':'Computer Modern Serif','color':'black','size':12}):
     "creates a histogram of the frequencies present in the synthetic data"
     if frequencies:
         ax.hist(frequencies)
-        ax.set_title(f"Frequency Distribution {title}", fontsize=FS)
-        ax.set_xlabel("Frequency [Hz]", fontsize=FS)
-        ax.set_ylabel("Frequency of frequency", fontsize=FS)
+        ax.set_title(f"Frequency Distribution {title}", fontdict=font_dict)
+        ax.set_xlabel("Frequency [Hz]", fontdict=font_dict)
+        ax.set_ylabel("Frequency of frequency", fontdict=font_dict)
         ax.grid(True)
 
 
-def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
+def plot_energy_vs_freq(transform_obj, 
+                        sampling_rate=None, 
+                        ax=None, 
+                        title="",
+                       font_dict={'family':'Computer Modern Serif','color':'black','size':12}):
     "plot the energy vs frequency for each packet in the last transform level"
     if sampling_rate:
         transform_obj.calc_frequencies(sampling_rate)
@@ -155,17 +165,18 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
         frequencies.append(1 / 2 * (freq_range[0] + freq_range[1]))
     if ax:
         ax.plot(frequencies, energy)
-        ax.set_title(f"Energy vs Subband Frequency {title}", fontsize=FS)
-        ax.set_xlabel("Frequencies [Hz]", fontsize=FS)
-        ax.set_ylabel("Energy (arbitrary)", fontsize=FS)
+        ax.set_title(f"Energy vs Subband Frequency {title}", fontdict=font_dict)
+        ax.set_xlabel("Frequencies [Hz]", fontdict=font_dict)
+        ax.set_ylabel("Energy (arbitrary)", fontdict=font_dict)
     else:
         plt.plot(frequencies, energy)
-        plt.title(f"Energy vs Subband Frequency {title}", fontsize=FS)
-        plt.xlabel("Frequencies [Hz]", fontsize=FS)
-        plt.ylabel("Energy (arbitrary)", fontsize=FS)
+        plt.title(f"Energy vs Subband Frequency {title}", fontdict=font_dict)
+        plt.xlabel("Frequencies [Hz]", fontdict=font_dict)
+        plt.ylabel("Energy (arbitrary)", fontdict=font_dict)
 
 
-def heisenberg(transform_object, t_end=1):
+def heisenberg(transform_object, t_end=1,
+              font_dict={'family':'Computer Modern Serif','color':'black','size':12}):
     """
     calls imshow to create a heisenberg plot of the wavelet packet
 
@@ -199,9 +210,9 @@ def heisenberg(transform_object, t_end=1):
         cmap="turbo",
         aspect="auto",
     )
-    ax.set_ylabel("Frequency of Subband [Hz]", fontsize=14)
-    ax.set_xlabel("Time [s]", fontsize=14)
-    ax.set_title("DWPT of Signal", fontsize=18)
+    ax.set_ylabel("Frequency of Subband [Hz]", fontdict=font_dict)
+    ax.set_xlabel("Time [s]", fontdict=font_dict)
+    ax.set_title("DWPT of Signal", fontdict=font_dict)
     # ax.set_yscale("log")
 
     y_labels = [
@@ -219,8 +230,8 @@ def heisenberg(transform_object, t_end=1):
     ]
     all_x_ticks = [i for i in range(len(x_labels))]
     all_y_ticks = [i for i in range(len(y_labels))]
-    ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=15)
-    ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=15)
+    ax.set_xticks(all_x_ticks, sparse_x_labels, fontdict=font_dict)
+    ax.set_yticks(all_y_ticks, sparse_y_labels, fontdict=font_dict)
 
     fig.tight_layout()
     cbar = fig.colorbar(graph)
@@ -266,6 +277,7 @@ def plot_reconstructions_by_group(
     t_plot=None,
     freq_threshold=None,
     label_map=None,
+    font_dict={'family':'Computer Modern Serif','color':'black','size':12}
 ):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
@@ -338,7 +350,7 @@ def plot_reconstructions_by_group(
     fig.update_layout(
         width=1000,
         height=300,
-        font_size=FS,
+        font=font_dict,
         title="Reconstructed nodes by group",
         xaxis_title="Time [s]" if t_plot is not None else None,
         yaxis_title="Amplitude",
@@ -360,6 +372,7 @@ def plot_fft_by_group(
     fundamental_freq=None,
     freq_threshold=None,
     label_map=None,
+    font_dict={'family':'Computer Modern Serif','color':'black','size':12}
 ):
     """
     Plot FFTs of reconstructed signals and original signal
@@ -417,7 +430,7 @@ def plot_fft_by_group(
     fig.update_layout(
         width=1000,
         height=300,
-        font_size=FS,
+        font=font_dict,
         title="FFT Comparison",
         xaxis_title="Frequency [Hz]"
         if fundamental_freq is None
@@ -441,6 +454,7 @@ def plot_clustering(
     labels,
     metrics_to_plot,
     title="Clustering Results",
+    font_dict={'family':'Computer Modern Serif','color':'black','size':12},
     label_map=None,
 ):
     # Define data and titles for each subplot
@@ -485,7 +499,7 @@ def plot_clustering(
     #     ax.set_zlabel(data_train.columns[2].capitalize(), fontsize=18)
     #     ax.set_title(title, fontsize=20)
     px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
-    fig = plt.figure(figsize=(800 * px, 800 * px))
+    fig = plt.figure(figsize=(600 * px, 600 * px))
     ax = fig.add_subplot(111, projection="3d")
     for center in range(centers.shape[0]):
         ax.scatter(
@@ -512,22 +526,24 @@ def plot_clustering(
             fontsize=14,
         )
 
-        ax.set_xlabel(metrics_to_plot[0].capitalize(), fontsize=18)
-        ax.set_ylabel(metrics_to_plot[1].capitalize(), fontsize=18)
-        ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=18)
-        ax.set_title(title, fontsize=20)
+        ax.set_xlabel(metrics_to_plot[0].capitalize(), fontdict=font_dict)
+        ax.set_ylabel(metrics_to_plot[1].capitalize(), fontdict=font_dict)
+        ax.set_zlabel(metrics_to_plot[2].capitalize(), fontdict=font_dict)
+        ax.set_title(title, fontdict=font_dict)
     plt.show()
 
     return fig
 
 
-def plot_centers(classifying_metrics, centers, label_map=None):
+def plot_centers(classifying_metrics, centers, 
+                 font_dict={'family':'Computer Modern Serif','color':'black','size':12}, 
+                 label_map=None):
     "Plot the clustering centres for one signal"
     n_clusters = centers.shape[0]
     colours = list(TreeGraph.colour_dict.values())[1:]
 
     px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
-    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(1000 * px, 300 * px))
+    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(600 * px, 300 * px))
     for i, metric in enumerate(classifying_metrics):
         yvals = centers[metric]
         assert label_map is None or len(yvals) == len(
@@ -553,9 +569,9 @@ def plot_centers(classifying_metrics, centers, label_map=None):
             label_angle = 0
 
         ax[i].bar(xvals, yvals, color=colours)
-        ax[i].set_title(f"{metric.capitalize()}", fontsize=14)
-        ax[i].set_xlabel(xlabel)
-        ax[i].set_ylabel(ylabel)
+        ax[i].set_title(f"{metric.capitalize()}", fontdict=font_dict)
+        ax[i].set_xlabel(xlabel, fontdict=font_dict)
+        ax[i].set_ylabel(ylabel, fontdict=font_dict)
         ax[i].set_xticks(np.arange(len(xvals)))
         ax[i].set_xticklabels(xvals, rotation=label_angle)
     plt.tight_layout()

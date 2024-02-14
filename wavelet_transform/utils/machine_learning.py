@@ -43,11 +43,22 @@ def train_k_means(
     else:
         # Find optimal numbemr of clusters using silhouette score
         algorithms = []
+        algorithms_export = []
         for no_clusters in range(2, 6):
             kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
             labels = kmeans.fit_predict(data_train_normalised)
             silhouette_score = metrics.silhouette_score(data_train_normalised, labels)
-            algorithms.append((silhouette_score, kmeans, labels))
+            homogeneity = metrics.homogeneity_score(labels,kmeans.labels_)
+            completeness = metrics.completeness_score(labels,kmeans.labels_)
+            vmeasure = metrics.v_measure_score(labels,kmeans.labels_)
+            adjusted_rand_index = metrics.adjusted_rand_score(labels,kmeans.labels_)
+            algorithms.append((silhouette_score,kmeans, labels))
+            algorithms_export.append((silhouette_score,
+                               homogeneity,
+                               completeness,
+                               vmeasure,
+                               adjusted_rand_index,
+                               kmeans, labels))
         i = max(algorithms, key=lambda x: x[0])
         _, kmeans, labels = i
 
@@ -55,11 +66,11 @@ def train_k_means(
     if use_pca is False:
         centers = scaler.inverse_transform(centers)
         centers_df = pd.DataFrame(centers, columns=classifying_metrics)
-
-        return data_train, labels, data_train_normalised, centers_df, scaler, kmeans
+        return data_train, labels, data_train_normalised, centers_df, scaler, kmeans, algorithms_export
+        
     if use_pca is True:
         centers = scaler.inverse_transform(pca.inverse_transform(centers))
-        return data_train, labels, data_train_normalised, centers, scaler, kmeans, pca
+        return data_train, labels, data_train_normalised, centers, scaler, kmeans, pca, algorithms_export
 
 
 def fit_and_evaluate(km, X, labels, name=None, n_runs=5):
@@ -99,6 +110,7 @@ def fit_and_evaluate(km, X, labels, name=None, n_runs=5):
         evaluation_std[score_name] = std_score
     evaluations.append(evaluation)
     evaluations_std.append(evaluation_std)
+    return scores, evaluation
 
 
 def assess_parameter(
