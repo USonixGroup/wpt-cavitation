@@ -31,6 +31,7 @@ class TreeGraph:
         freq_threshold=None,
         graph_legend="Graph legend",
         fig_name=None,
+        display_freq_range_packet = True
     ):
         "Plot the tree diagram for the wavelet packet transform."
         self.graph_nodes, self.graph_edges = self._get_nodes_and_edges()
@@ -42,6 +43,7 @@ class TreeGraph:
             freq_threshold,
             graph_legend,
             fig_name,
+            display_freq_range_packet
         )
 
     # ---------------- Getting Nodes & Edges ----------------
@@ -73,6 +75,7 @@ class TreeGraph:
         freq_threshold,
         graph_legend,
         fig_name,
+        display_freq_range_packet
     ):
         # Make networkx graph object
         G = nx.DiGraph()
@@ -106,32 +109,33 @@ class TreeGraph:
             arrowsize=5,
             verticalalignment="top",
             font_size=20,
-            font_color="red",
+            font_color="black",
             with_labels=True,
             node_size=node_size,
             node_color=node_colour,
             node_shape="s",
             alpha=0.8,
             linewidths=4,
-            width=4,
+            width=5,
             edge_color="green",
             style="solid",
         )
 
         # Display frequency range of each node
-        labels = {
-            node: f"""{getattr(node_attributes[node], "freq_range")}""" for node in G
-        }
+        if display_freq_range_packet:
+            labels = {
+                node: f"""{getattr(node_attributes[node], "freq_range")}""" for node in G
+            }
 
-        offset_pos = {node: (x, y - 20) for node, (x, y) in pos.items()}
-        nx.draw_networkx_labels(
-            G,
-            offset_pos,
-            labels=labels,
-            font_size=10,
-            font_color="black",
-            verticalalignment="top",
-        )
+            offset_pos = {node: (x, y - 20) for node, (x, y) in pos.items()}
+            nx.draw_networkx_labels(
+                G,
+                offset_pos,
+                labels=labels,
+                font_size=10,
+                font_color="black",
+                verticalalignment="top",
+            )
 
         # Add legend for clusters
         if isinstance(node_colour, list):

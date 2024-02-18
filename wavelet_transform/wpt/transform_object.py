@@ -195,6 +195,7 @@ class Transform:
         freq_threshold=None,
         graph_legend="Graph legend",
         fig_name=None,
+        display_freq_range_packet = True,
     ):
         """
         Plot the tree diagram for the wavelet transform.
@@ -214,5 +215,5 @@ class Transform:
             of frequency range above this threshold will not be labeled
         """
         self.tree.plot_tree(
-            node_size, node_colour, freq_threshold, graph_legend, fig_name
+            node_size, node_colour, freq_threshold, graph_legend, fig_name, display_freq_range_packet
         )
