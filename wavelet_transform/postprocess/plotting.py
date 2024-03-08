@@ -10,9 +10,9 @@ FS = 15  # fontsize
 
 def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
     """
-    formatted charts for plotting the results from a dwt or dpwt. Combines
+    Formatted charts for plotting the results from a dwt or dpwt. Combines
     relevant plots including those for the sound wave, frequency content of
-    the sonud wave (using synthetic data package), and plots of the data at
+    the sound wave (using synthetic data package), and plots of the data at
     each node.
 
     Parameters
@@ -167,7 +167,7 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
 
 def heisenberg(transform_object, t_end=1):
     """
-    calls imshow to create a heisenberg plot of the wavelet packet
+    Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes
 
     Parameters
     ----------
@@ -183,16 +183,45 @@ def heisenberg(transform_object, t_end=1):
     fig.set_size_inches(18, 9)
 
     nodes = transform_object.get_leaf_nodes(order="freq")
-    data = np.zeros((len(nodes), len(nodes[0].data)))
-    for i, j in enumerate(range(len(nodes) - 1, -1, -1)):  # maybe reverse
-        node = nodes[j]
-        data[i, :] = np.abs(node.data)  # plot absolute values of wavelet coefficients
+    n_nodes = len(nodes)
+    node_lengths = (len(nodes[i].data) for i in range(n_nodes))
+    len_data = max(node_lengths)
+    data = np.zeros((n_nodes, len_data))
 
+    def repeat_data(data, target_length):
+        """
+        Pad the data for nodes containing too few elements. Fill in remaining
+        elements evenly, starting from the beginning.
+
+        """
+        len_data = len(data)
+
+        # Find length to pad
+        if target_length <= len_data:
+            return data
+        repetitions = target_length // len_data
+        remaining_elements = target_length % len_data
+
+        # Pad data evenly
+        repetitions_per_element = repetitions + (
+            np.arange(len_data) < remaining_elements
+        )
+        padded_data = np.repeat(data, repetitions_per_element)
+
+        return padded_data
+
+    for i, j in enumerate(range(n_nodes - 1, -1, -1)):
+        node_data = nodes[j].data
+        padded_data = repeat_data(node_data, len_data)
+        data[i, :] = np.abs(padded_data)  # plot absolute values of wavelet coefficients
+
+    # Plot graph, set axis labels
     graph = ax.imshow(np.log10(data), cmap="turbo", aspect="auto")
     ax.set_ylabel("Frequency of Subband [Hz]", fontsize=20)
     ax.set_xlabel("Time [s]", fontsize=20)
     ax.set_title("DWPT of Signal", fontsize=25)
 
+    # Generate axis tick labels
     frequencies = [node.frequency_range for node in nodes]
     if any((freq is None for freq in frequencies)):
         raise ValueError(
@@ -206,7 +235,7 @@ def heisenberg(transform_object, t_end=1):
     sparse_y_labels = [
         label if not id % y_space else "" for id, label in enumerate(y_labels)
     ]
-    x_labels = np.linspace(0, t_end, len(node.data))
+    x_labels = np.linspace(0, t_end, len_data)
     x_labels = [sci_form(x, 1) for x in x_labels]
     x_space = int(len(x_labels) / 10)
     sparse_x_labels = [
@@ -214,9 +243,12 @@ def heisenberg(transform_object, t_end=1):
     ]
     all_x_ticks = [i for i in range(len(x_labels))]
     all_y_ticks = [i for i in range(len(y_labels))]
+
+    # Set ticks
     ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=15)
     ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=15)
 
+    # Formatting
     fig.tight_layout()
     cbar = fig.colorbar(graph)
     cbar.set_label(label="Coefficient amplitude", size=20)
@@ -408,9 +440,9 @@ def plot_fft_by_group(
 
     fig.update_layout(
         title="FFT Comparison",
-        xaxis_title="Frequency [Hz]"
-        if fundamental_freq is None
-        else "f / f<sub>0</sub> [DL]",
+        xaxis_title=(
+            "Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]"
+        ),
         yaxis_title="Amplitude [dB]",
         legend=dict(title="Clusters"),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),
@@ -495,13 +527,13 @@ def plot_centers(classifying_metrics, centers, label_map=None):
             xvals = [v for v in dict(sorted(label_map.items())).values()]
         else:
             xlabel = "Cluster Number"
-            xvals = np.arange(n_clusters)
+            xvals = [i for i in range(n_clusters)]
 
         ax[i].bar(xvals, yvals, color=colours)
-        ax[i].set_xticklabels(xvals, rotation=45)
         ax[i].set_title(f"{metric.capitalize()}", fontsize=20)
         ax[i].set_xlabel(xlabel)
         ax[i].set_ylabel(ylabel)
+        ax[i].tick_params(axis="x", rotation=45)
     plt.tight_layout()
     plt.show()
 
@@ -509,8 +541,33 @@ def plot_centers(classifying_metrics, centers, label_map=None):
 
 
 def plot_multiple_centers(
-    classifying_metrics, centers, label_maps, exp_labels=None, bar_width=0.2
+    classifying_metrics,
+    centers,
+    label_maps,
+    exp_labels=None,
+    bar_width=0.2,
+    error_bars=None,
 ):
+    """
+    Plot the results for different sets of 'n' experiments. Input parameters are parallel
+    lists of length 'n' containing information about each experiment.
+
+    Parameters
+    ----------
+    classifying_metrics: list of list
+        A list containing n lists. Each list contains the classifying metrics used in the
+        experiment.
+    centers: list of array
+        Each array contains the clustering centers from each experiment.
+    label_maps: list of dict
+        Dictionaries map cluster number to feature (fundamental, broadband noise, etc.).
+    exp_labels: list of str
+        A list of str names for each experiment.
+    bar_width: int
+        Width of the bars in the bar chart.
+    error_bars: list of array
+        Arrays contain error bar information for each experiment.
+    """
     if any(not isinstance(i, list) for i in [classifying_metrics, centers, label_maps]):
         raise ValueError(
             "all inputs must be lists of lists, arrays, dictionaries respectively"
@@ -538,14 +595,21 @@ def plot_multiple_centers(
             except ValueError:  # metric was not used in this algorithm
                 continue
             center_data = center[:, metric_index]
+            error_data = error_bars[j]
+            error_data = error_data[:, metric_index]
 
             # Reorder center data by feature labels
             label2index = {v: k for k, v in label_maps[j].items()}
 
+            idx = [label2index.get(label, None) for label in unique_labels]
             ordered_center_data = [
-                0 if index is None else center_data[index]
-                for index in (label2index.get(label, None) for label in unique_labels)
+                0 if index is None else center_data[index] for index in idx
             ]
+            yerr = (
+                [0 if index is None else error_data[index] for index in idx]
+                if error_bars is not None
+                else None
+            )
 
             if "energy" in metric and "log" not in metric:
                 ordered_center_data = plot_log10(ordered_center_data)
@@ -556,7 +620,9 @@ def plot_multiple_centers(
             exp_label = str(exp_labels[j]) if exp_labels is not None else str(j)
 
             # Plot bars with offset
-            bar = ax[i].bar(x, ordered_center_data, width=bar_width, label=exp_label)
+            bar = ax[i].bar(
+                x, ordered_center_data, width=bar_width, label=exp_label, yerr=yerr
+            )
             handles.append(bar)
             labels.append(exp_label)
 
@@ -578,3 +644,52 @@ def plot_multiple_centers(
     plt.show()
 
     return fig
+
+
+def get_center_metrics(classifying_metrics, centers, label_maps):
+    """
+    Get the mean and standard deviation for a list of centres. Returns centres and error
+    bars for the plot_multiple_centres function above.
+    """
+
+    # Get unique metrics
+    def get_unique_metrics(metrics):
+        unique_metrics = list(set(i for metrics in metrics for i in metrics))
+        # Check that each input uses the same metrics
+        sorted_metrics = sorted(unique_metrics)
+        if any(sorted(i) != sorted_metrics for i in metrics):
+            raise ValueError("The same metrics must be used for each experiment.")
+        return unique_metrics
+
+    unique_metrics = get_unique_metrics(classifying_metrics)
+
+    # Get unique labels
+    unique_labels = list(set(i for label_map in label_maps for i in label_map.values()))
+
+    def map_indices(target, source):
+        return [source.index(i) for i in target]
+
+    def get_indices(target, mapping):
+        reverse_map = {v: k for k, v in mapping.items()}
+        return [reverse_map.get(i) for i in target if reverse_map.get(i) is not None]
+
+    # Find the average and std of the centres corresponding to each label and metric.
+    centres_sorted = []
+    for centre, label_map, metrics in zip(centers, label_maps, classifying_metrics):
+        label_indices = get_indices(unique_labels, label_map)
+        metric_indices = map_indices(unique_metrics, metrics)
+        centres_for_label = centre[label_indices]
+        centres_sorted.append(centres_for_label[:, metric_indices])
+
+    def apply_func_to_arrays(array_list, f, max_len):
+        array_contents = [
+            f([c[i] for c in array_list if len(c) > i], axis=0) for i in range(max_len)
+        ]
+        return np.array(array_contents)
+
+    centres_avg = apply_func_to_arrays(centres_sorted, np.mean, len(unique_labels))
+    centres_std = apply_func_to_arrays(centres_sorted, np.std, len(unique_labels))
+
+    label_map = {k: v for k, v in enumerate(unique_labels)}
+
+    return centres_avg, centres_std, unique_metrics, label_map
