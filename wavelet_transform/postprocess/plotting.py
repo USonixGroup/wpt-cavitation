@@ -713,6 +713,17 @@ def get_center_metrics(classifying_metrics, centers, label_maps):
     """
     Get the mean and standard deviation for a list of centres. Returns centres and error
     bars for the plot_multiple_centres function above.
+
+    Parameters
+    ----------
+    Parameters are parallel lists containing data from different experiments.
+    classifying_metrics: list of list
+        list of lists containing strings correspending to the classifying metrics used
+        in the experiment.
+    centers: list of array
+        list of numpy arrays containing the centers from clustering
+    label_maps: list of dict
+        list of dictionaries mapping cluster number to label
     """
 
     # Get unique metrics
