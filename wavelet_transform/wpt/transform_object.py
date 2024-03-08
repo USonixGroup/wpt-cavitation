@@ -188,7 +188,14 @@ class Transform:
 
     # ---------------- Plot Tree Diagram ---------------
 
-    def plot_tree(self, node_size=1500, node_colour="skyblue", freq_threshold=None):
+    def plot_tree(
+        self,
+        node_size=1500,
+        node_colour="skyblue",
+        freq_threshold=None,
+        graph_legend="Graph legend",
+        fig_name=None,
+    ):
         """
         Plot the tree diagram for the wavelet transform.
 
@@ -206,4 +213,6 @@ class Transform:
             the frequency threshold for leaf nodes to be labeled. Nodes with upper bound
             of frequency range above this threshold will not be labeled
         """
-        self.tree.plot_tree(node_size, node_colour, freq_threshold)
+        self.tree.plot_tree(
+            node_size, node_colour, freq_threshold, graph_legend, fig_name
+        )
