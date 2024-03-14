@@ -100,6 +100,7 @@ def dataset4(dataset):
     files = [
         f"../PCD measurements for WPT paper-09Dec2023/C{i}{file_id}.txt" for i in (1, 2)
     ]
+    print("loaded files are: ", files)
     dfb = [pd.read_csv(file, sep=",", header=None) for file in files]
 
     return {f"c{i+1}": extract_data(df) for i, df in enumerate(dfb)}
