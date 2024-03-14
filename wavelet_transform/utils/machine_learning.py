@@ -54,8 +54,9 @@ def train_k_means(
     centers = kmeans.cluster_centers_
     if use_pca is False:
         centers = scaler.inverse_transform(centers)
+        centers_df = pd.DataFrame(centers, columns=classifying_metrics)
 
-        return data_train, labels, data_train_normalised, centers, scaler, kmeans
+        return data_train, labels, data_train_normalised, centers_df, scaler, kmeans
     if use_pca is True:
         centers = scaler.inverse_transform(pca.inverse_transform(centers))
         return data_train, labels, data_train_normalised, centers, scaler, kmeans, pca
