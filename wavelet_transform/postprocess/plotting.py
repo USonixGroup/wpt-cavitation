@@ -165,7 +165,7 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
         plt.ylabel("Energy (arbitrary)", fontsize=FS)
 
 
-def heisenberg(transform_object, t_end=1):
+def heisenberg(transform_object, t_end=1, max_freq=np.infty):
     """
     Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes
 
@@ -183,6 +183,15 @@ def heisenberg(transform_object, t_end=1):
     fig.set_size_inches(18, 9)
 
     nodes = transform_object.get_leaf_nodes(order="freq")
+
+    if any((not node.is_freq_calculated() for node in nodes)):
+        raise ValueError(
+            "Check that the frequencies have been calculated ->"
+            " transform_obj.calc_frequencies()"
+        )
+
+    nodes = [node for node in nodes if node.frequency_range[0] < max_freq]
+
     n_nodes = len(nodes)
     node_lengths = (len(nodes[i].data) for i in range(n_nodes))
     len_data = max(node_lengths)
@@ -222,24 +231,20 @@ def heisenberg(transform_object, t_end=1):
     ax.set_title("DWPT of Signal", fontsize=25)
 
     # Generate axis tick labels
-    frequencies = [node.frequency_range for node in nodes]
-    if any((freq is None for freq in frequencies)):
-        raise ValueError(
-            "Check that the frequencies have been calculated ->"
-            " transform_obj.calc_frequencies()"
-        )
+    frequencies = [1 / 2 * sum(node.numeric_freq_range) for node in nodes]
     graph = ax.imshow(
         np.log10(data),
         cmap="turbo",
         aspect="auto",
     )
-    ax.set_ylabel("Frequency of Subband [Hz]", fontsize=14)
-    ax.set_xlabel("Time [s]", fontsize=14)
-    ax.set_title("DWPT of Signal", fontsize=18)
+    ax.set_ylabel("Frequency of Subband [Hz]", fontsize=18)
+    ax.set_xlabel("Time [s]", fontsize=18)
+    ax.set_title("DWPT of Signal", fontsize=20)
     # ax.set_yscale("log")
 
     y_labels = [
-        (sci_form(freq[0], 1), sci_form(freq[1], 1)) for freq in reversed(frequencies)
+        sci_form(freq, 1)  # (sci_form(freq[0], 1), sci_form(freq[1], 1))
+        for freq in reversed(frequencies)
     ]
     y_space = max(len(frequencies) // 16, 1)
     sparse_y_labels = [
@@ -264,6 +269,7 @@ def heisenberg(transform_object, t_end=1):
     cbar.set_label(label="Coefficient amplitude", size=20)
 
     plt.show()
+    return fig
 
 
 # ---------------- Plot Reconstructed Data & FFTs ---------------
@@ -480,50 +486,11 @@ def plot_clustering(
     title="Clustering Results",
     label_map=None,
 ):
-    # Define data and titles for each subplot
-    # data_sets = [
-    #     (data_train.values.tolist(), centers, labels, title),
-    #     # (data_train.values.tolist(), centers_pca, labels_pca, "PCA Data")
-    # ]
     colours = list(TreeGraph.colour_dict.values())[1:]
 
-    # Create separate figures for each subplot
-    # for data_scatter, centers_scatter, labels_scatter, title in data_sets:
-    #     fig = plt.figure(figsize=(20, 20))
-    #     ax = fig.add_subplot(111, projection="3d")
-
-    #     ax.scatter(
-    #         [point[0] for point in data_scatter],
-    #         [point[1] for point in data_scatter],
-    #         [point[2] for point in data_scatter],
-    #         c=[colours[i] for i in labels_scatter],
-    #     )
-    #     ax.scatter(
-    #         centers_scatter[0, :],
-    #         centers_scatter[1, :],
-    #         centers_scatter[2, :],
-    #         c="red",
-    #         marker="x",
-    #         s=100,
-    #     )
-
-    #     for j, center in enumerate(centers_scatter):
-    #         ax.text(
-    #             center[0],
-    #             center[1],
-    #             center[2],
-    #             get_label(j, label_map),
-    #             color="black",
-    #             fontsize=14,
-    #         )
-
-    #     ax.set_xlabel(data_train.columns[0].capitalize(), fontsize=18)
-    #     ax.set_ylabel(data_train.columns[1].capitalize(), fontsize=18)
-    #     ax.set_zlabel(data_train.columns[2].capitalize(), fontsize=18)
-    #     ax.set_title(title, fontsize=20)
     px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
-    fig = plt.figure(figsize=(800 * px, 800 * px))
-    ax = fig.add_subplot(111, projection="3d")
+    fig = plt.figure(figsize=(1500 * px, 800 * px))
+    ax = fig.add_subplot(projection="3d")
     for center in range(centers.shape[0]):
         ax.scatter(
             data_train.loc[labels == center, metrics_to_plot[0]],
@@ -553,6 +520,8 @@ def plot_clustering(
         ax.set_ylabel(metrics_to_plot[1].capitalize(), fontsize=18)
         ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=18)
         ax.set_title(title, fontsize=20)
+    ax.set_box_aspect(None, zoom=0.92)
+    fig.tight_layout()
     plt.show()
 
     return fig
@@ -564,7 +533,7 @@ def plot_centers(classifying_metrics, centers, label_map=None):
     colours = list(TreeGraph.colour_dict.values())[1:]
 
     px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
-    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(1000 * px, 300 * px))
+    fig, ax = plt.subplots(1, len(classifying_metrics), figsize=(1500 * px, 500 * px))
     for i, metric in enumerate(classifying_metrics):
         yvals = centers[metric]
         assert label_map is None or len(yvals) == len(
