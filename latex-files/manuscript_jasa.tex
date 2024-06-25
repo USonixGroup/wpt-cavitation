@@ -362,7 +362,83 @@ This method was chosen over PCA which requires the computation of every feature 
 \label{sec:Exp_setup}
 
 \subsubsection{Analyzing PCD data}
+Two experiments are assessed. The first experiment uses low-intensity sonication at 80 Pa while the second one uses 280 Pa. The data for the low-intensity experiment is shown in \figg{\ref{fig:80_1_data}}. The data is then fed through the algorithm. The wavelet transform is asymmetric, uses symmetric padding, and enforces decomposition levels between 6-10. The k-means algorithm selects between 3-5 clusters based on the silhouette score and uses the classifying metrics: average energy, kurtosis, log average energy, and spectral entropy. The results from the wavelet transform are presented in a heisenberg plot in \figg{\ref{fig:80_1_heisenberg}}. The heisenberg plot shows a higher energy band around the fundamental and in the middle of the windowed signal, as expected. 
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.5in]{./figs/80_1_data}
+\caption{Preprocessed data and corresponding FFT for low-intensity ultrasound data.}
+\label{fig:80_1_data}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=4in]{./figs/heisenberg_80_1}
+\caption{Heisenberg plot of the wavelet transform.}
+\label{fig:80_1_heisenberg}
+\end{figure}
+
+The clustering results are shown in \figg{\ref{fig:80_1_clustering}}, \figg{\ref{fig:80_1_metrics}}, and \figg{\ref{fig:80_1_fft}}. The effect of including spectral entropy is not shown in the 3d plot but allows for the nodes labelled as  harmonics to be separated more consistently from the noise. \figg{\ref{fig:80_1_fft}} shows that the algorithm is able to separate the fundamental frequency from the rest of the lower frequencies. \figg{\ref{fig:80_1_fft_zoom}} shows the inability of the algorithm to separate measurement noise and broadband. These are selected based on their level of kurtosis but the results are not as expected.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=5in, trim=10cm 0cm 0cm 0cm, clip]{./figs/clustering_80_1}
+\caption{Clustering results for k-means.}
+\label{fig:80_1_clustering}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.5in]{./figs/sig_components_metrics_80_1}
+\caption{Signal component metrics measured at cluster centres.}
+\label{fig:80_1_metrics}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.5in, trim=0cm 6cm 0cm 0cm]{./figs/fft_rec_centers_80_1}
+\caption{FFT of reconstructed nodes.}
+\label{fig:80_1_fft}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.5in, trim=0cm 5cm 0cm 0cm, clip]{./figs/fft_rec_centers_80_1_zoom}
+\caption{Zoomed out FFT of reconstructed nodes.}
+\label{fig:80_1_fft_zoom}
+\end{figure}
+
+The data for the second experiment is shown in \figg{\ref{fig:280_1_data}}. The higher intensity produces a prominent harmonic at $2f_0$ and a sub-harmonic at $1/2 f_0$. The heisenberg plot is shown in \figg{\ref{fig:280_1_heisenberg}}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.5in]{./figs/280_1_data}
+\caption{High-intensity ultrasound data.}
+\label{fig:280_1_data}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.5in]{./figs/heisenberg_280_1}
+\caption{Heisenberg plot of wavelet transform at high-intensity.}
+\label{fig:280_1_heisenberg}
+\end{figure}
+
+The results are shown in \figg{\ref{fig:280_1_fft}} and \figg{\ref{fig:280_1_fft_metrics}}. The FFT plot shows that the algorithm is able to separate the harmonics and subharmonics from the fundamental frequency but unable to separate the harmonics from the low level noise.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.5in, trim=0cm 5cm 0cm 0cm, clip]{./figs/fft_rec_centers_280_1}
+\caption{FFT of reconstructed nodes (high-intensity).}
+\label{fig:280_1_fft}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=3.5in]{./figs/sig_components_metrics_280_1}
+\caption{Signal component metrics measured at cluster centres (high-intensity).}
+\label{fig:280_1_metrics}
+\end{figure}
 
 \section{Summary}
 \label{sec:summary}
