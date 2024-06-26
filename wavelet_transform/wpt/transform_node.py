@@ -122,6 +122,9 @@ class Node(NodeBase):
         range_to_use = self.frequency_range or self.norm_frequency_range
         return tuple(i for i in range_to_use)
 
+    def is_freq_calculated(self):
+        return self.frequency_range is not None
+
 
 class BaseNode(Node):
     """
