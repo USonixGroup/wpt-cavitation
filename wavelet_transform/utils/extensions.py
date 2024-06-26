@@ -4,17 +4,25 @@ from wavelet_transform.test.synthetic_data import find_time_indices
 
 
 def sci_form(number, dp=3):
-    "returns a string of the scientific form of a number"
-    e_power = 0
-    if number == 0:
-        return f"{number}"
-    while number >= 10:
-        number /= 10
-        e_power += 1
-    while number < 1:
-        number *= 10
-        e_power -= 1
-    return f"{round(number,dp)}e{e_power}"
+    """
+    Returns a string of the scientific form of a number
+    """
+    return f"{number:.{dp}e}"
+
+
+def eng_form_plot(number, power, dp=3):
+    """
+    Returns converts the number to scientific form A*10*(power)
+    and returns A.
+    """
+    assert isinstance(power, int)
+    sci_form_number = sci_form(number, dp)
+    n, p = sci_form_number.split("e")
+    n, p = float(n), float(p)
+
+    inc = np.sign(power - p)
+    n /= 10**inc
+    return f"{n:.{dp}f}"
 
 
 def to_list(x, *, convert_to_float=None):
