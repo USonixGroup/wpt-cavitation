@@ -43,7 +43,7 @@ def train_k_means(
     else:
         # Find optimal numbemr of clusters using silhouette score
         algorithms = []
-        for no_clusters in range(2, 6):
+        for no_clusters in range(3, 6):
             kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
             labels = kmeans.fit_predict(data_train_normalised)
             silhouette_score = metrics.silhouette_score(data_train_normalised, labels)
@@ -63,6 +63,7 @@ def train_k_means(
 
 
 def fit_and_evaluate(km, X, labels, name=None, n_runs=5):
+    "Example code from scikit learn"
     name = km.__class__.__name__ if name is None else name
 
     train_times = []
