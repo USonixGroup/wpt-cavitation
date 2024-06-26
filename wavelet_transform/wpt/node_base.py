@@ -100,14 +100,14 @@ class NodeBase:
             lower_bound += diff / 2
         return lower_bound, upper_bound
 
-    def calc_freq(self, sampling_rate):
-        "converts the normalised frequency range to an actual freuqency range"
+    def set_frequency_range(self, sampling_rate):
+        "Converts the normalised frequency range to an actual freuqency range"
         nyquist_frequency = sampling_rate / 2
         self.sampling_rate = sampling_rate
         frequency_range = tuple(
             [bound * nyquist_frequency for bound in self.norm_frequency_range]
         )
-        return frequency_range
+        self.frequency_range = frequency_range
 
     # -------------- Finding Nodes ----------------
 
