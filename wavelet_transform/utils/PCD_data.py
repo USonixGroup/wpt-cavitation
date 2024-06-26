@@ -81,7 +81,7 @@ def dataset2(dataset):
 def dataset3(dataset):
     exp_number = add_0s(dataset, 2)  # dataset represents experiment number
     file = (
-        "../PCD data - 2MHz FUS - 16 Nov 2023/C4pcdNovial000" + str(exp_number) + ".txt"
+        "../PCD data - 2MHz FUS - 16 Nov 2023/C2pcdNovial000" + str(exp_number) + ".txt"
     )
     dfb = pd.read_csv(file, sep=",", header=None)
 
