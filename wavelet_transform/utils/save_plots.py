@@ -8,7 +8,7 @@ RELATIVE_PATH = "../../../notebooks/figures"
 FOLDER_PATH = os.path.abspath(os.path.join(FILE_PATH, RELATIVE_PATH))
 
 
-def save_figure(figure, file_name, file_format="pdf"):
+def save_figure(figure, file_name):
     """
     Save a figure with a file_name to the figures folder in notebooks.
 
@@ -16,15 +16,13 @@ def save_figure(figure, file_name, file_format="pdf"):
     """
 
     if isinstance(figure, plt.Figure):
-        file_path = get_path(file_name, "." + file_format)
+        file_path = get_path(file_name, ".pdf")
         with PdfPages(file_path) as pdf:
             pdf.savefig(figure)
 
     elif isinstance(figure, go.Figure):
         file_path = get_path(file_name, ".html")
         figure.write_html(file_path)
-        file_path_with_format = get_path(file_name, "." + file_format)
-        figure.write_image(file_path_with_format)
 
     else:
         raise ValueError("figure has to be a plt.Figure or go.Figure")
