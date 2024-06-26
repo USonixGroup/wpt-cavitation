@@ -1,11 +1,13 @@
-from wavelet_transform.utils.extensions import sci_form, fft, to_dB
+from wavelet_transform.utils.extensions import sci_form, fft, to_dB, eng_form_plot
 import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
+from scipy.interpolate import interp1d
+
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
-FS = 14  # fontsize
+FS = 18  # fontsize
 
 
 def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
@@ -56,7 +58,7 @@ def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
 
 def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
     """
-    separately plots the data from a provided list of nodes.
+    Separately plots the data from a provided list of nodes.
 
     Parameters
     ----------
@@ -113,7 +115,7 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
 
 
 def plot_all_final_nodes(nodes, ax, title=""):
-    "concatenate the data from all of the nodes and plot"
+    "Concatenate the data from all of the nodes and plot"
     output = np.array([])
     for node in nodes:
         output = np.concatenate((output, node.data))
@@ -125,7 +127,7 @@ def plot_all_final_nodes(nodes, ax, title=""):
 
 
 def plot_wave(data, t_plot, ax, title=""):
-    "plots the data"
+    "Plots the data"
     ax.plot(t_plot, data)
     ax.set_xlabel("Time [s]", fontsize=FS)
     ax.set_ylabel("Amplitude [mV]", fontsize=FS)
@@ -134,7 +136,7 @@ def plot_wave(data, t_plot, ax, title=""):
 
 
 def plot_frequencies(frequencies, ax, title=""):
-    "creates a histogram of the frequencies present in the synthetic data"
+    "Creates a histogram of the frequencies present in the synthetic data"
     if frequencies:
         ax.hist(frequencies)
         ax.set_title(f"Frequency Distribution {title}", fontsize=FS)
@@ -144,7 +146,7 @@ def plot_frequencies(frequencies, ax, title=""):
 
 
 def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
-    "plot the energy vs frequency for each packet in the last transform level"
+    "Plot the energy vs frequency for each packet in the last transform level"
     if sampling_rate:
         transform_obj.calc_frequencies(sampling_rate)
     nodes = transform_obj.get_level(order="freq")
@@ -165,9 +167,9 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
         plt.ylabel("Energy (arbitrary)", fontsize=FS)
 
 
-def heisenberg(transform_object, t_end=1, max_freq=np.infty):
+def heisenberg(transform_object, t_end=1, max_freq=np.infty, padding="interpolate"):
     """
-    Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes
+    Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes.
 
     Parameters
     ----------
@@ -175,14 +177,17 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty):
         contains data from the transform to be plotted
     t_end: float
         the time the signal ends at
-    x_tick_space: int
-        formats the x axis such that the ticks are more spread out
+    max_freq: float
+        the maximum frequency to plot
+    padding: str
+        can be set to "interpolate" or "repeat" to interpolate time series data
+        or just repeat it when dealing with packets of different levels.
     """
 
     fig, ax = plt.subplots()
     fig.set_size_inches(18, 9)
 
-    nodes = transform_object.get_leaf_nodes(order="freq")
+    nodes = transform_object.get_leaf_nodes(order="freq", freq_threshold=max_freq)
 
     if any((not node.is_freq_calculated() for node in nodes)):
         raise ValueError(
@@ -190,39 +195,30 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty):
             " transform_obj.calc_frequencies()"
         )
 
-    nodes = [node for node in nodes if node.frequency_range[0] < max_freq]
-
     n_nodes = len(nodes)
     node_lengths = (len(nodes[i].data) for i in range(n_nodes))
     len_data = max(node_lengths)
-    data = np.zeros((n_nodes, len_data))
 
-    def repeat_data(data, target_length):
-        """
-        Pad the data for nodes containing too few elements. Fill in remaining
-        elements evenly, starting from the beginning.
+    # Find which nodes to plot in each row
+    i = 0
+    max_level = transform_object.max_level()
+    nodes_per_row = []
+    for node in nodes:
+        for _ in range(int(2 ** (max_level - node.level))):
+            nodes_per_row.append(node)
+            i += 1
 
-        """
-        len_data = len(data)
-
-        # Find length to pad
-        if target_length <= len_data:
-            return data
-        repetitions = target_length // len_data
-        remaining_elements = target_length % len_data
-
-        # Pad data evenly
-        repetitions_per_element = repetitions + (
-            np.arange(len_data) < remaining_elements
-        )
-        padded_data = np.repeat(data, repetitions_per_element)
-
-        return padded_data
-
-    for i, j in enumerate(range(n_nodes - 1, -1, -1)):
-        node_data = nodes[j].data
-        padded_data = repeat_data(node_data, len_data)
-        data[i, :] = np.abs(padded_data)  # plot absolute values of wavelet coefficients
+    pad_func = None
+    if padding == "interpolate":
+        pad_func = interpolate_data
+    elif padding == "repeat":
+        pad_func = repeat_data
+    # Add node data to a matrix
+    data = np.zeros((len(nodes_per_row), len_data))
+    for i, node in enumerate(reversed(nodes_per_row)):
+        node_data = node.data
+        padded_data = pad_func(node_data, len_data)
+        data[i, :] = np.abs(padded_data)  # plot abs values of wavelet coefficients
 
     # Plot graph, set axis labels
     graph = ax.imshow(np.log10(data), cmap="turbo", aspect="auto")
@@ -231,19 +227,19 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty):
     ax.set_title("DWPT of Signal", fontsize=25)
 
     # Generate axis tick labels
-    frequencies = [1 / 2 * sum(node.numeric_freq_range) for node in nodes]
+    frequencies = [1 / 2 * sum(node.numeric_freq_range) for node in nodes_per_row]
     graph = ax.imshow(
         np.log10(data),
         cmap="turbo",
         aspect="auto",
     )
-    ax.set_ylabel("Frequency of Subband [Hz]", fontsize=18)
-    ax.set_xlabel("Time [s]", fontsize=18)
-    ax.set_title("DWPT of Signal", fontsize=20)
+    ax.set_ylabel("Frequency of Subband [MHz]", fontsize=FS)
+    ax.set_xlabel("Time [$\mu s$]", fontsize=FS)
+    ax.set_title("DWPT of Signal", fontsize=FS)
     # ax.set_yscale("log")
 
     y_labels = [
-        sci_form(freq, 1)  # (sci_form(freq[0], 1), sci_form(freq[1], 1))
+        eng_form_plot(freq, 6, 1)  # (sci_form(freq[0], 1), sci_form(freq[1], 1))
         for freq in reversed(frequencies)
     ]
     y_space = max(len(frequencies) // 16, 1)
@@ -251,7 +247,7 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty):
         label if not id % y_space else "" for id, label in enumerate(y_labels)
     ]
     x_labels = np.linspace(0, t_end, len_data)
-    x_labels = [sci_form(x, 1) for x in x_labels]
+    x_labels = [eng_form_plot(x, -6, 1) for x in x_labels]
     x_space = int(len(x_labels) / 10)
     sparse_x_labels = [
         label if id % x_space == 0 else "" for id, label in enumerate(x_labels)
@@ -266,10 +262,42 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty):
     # Formatting
     fig.tight_layout()
     cbar = fig.colorbar(graph)
-    cbar.set_label(label="Coefficient amplitude", size=20)
+    cbar.set_label(label="Coefficient amplitude [dB]", size=20)
 
     plt.show()
     return fig
+
+
+def repeat_data(data, target_length):
+    """
+    Pad the data for nodes containing too few elements. Fill in remaining
+    elements evenly, starting from the beginning.
+
+    """
+    len_data = len(data)
+
+    # Find length to pad
+    if target_length <= len_data:
+        return data
+    repetitions = target_length // len_data
+    remaining_elements = target_length % len_data
+
+    # Pad data evenly
+    repetitions_per_element = repetitions + (np.arange(len_data) < remaining_elements)
+    padded_data = np.repeat(data, repetitions_per_element)
+
+    return padded_data
+
+
+def interpolate_data(data, length):
+    "Interpolate data to desired length"
+    original_time = np.arange(len(data))
+    new_time = np.linspace(0, len(data) - 1, length)
+
+    interp_func = interp1d(original_time, data, kind="linear")  # 'linear' interpolation
+    interpolated_signal = interp_func(new_time)
+
+    return interpolated_signal
 
 
 # ---------------- Plot Reconstructed Data & FFTs ---------------
@@ -296,7 +324,7 @@ def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
         tr_obj.get_leaf_nodes(freq_threshold=freq_threshold), labels
     ):  # natural order
         rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
-        i = assignment
+        i = assignment  # shorten name for readability
         reconstructions[i] = reconstructions[i] + rec_signal
 
     return reconstructions
@@ -352,8 +380,10 @@ def plot_reconstructions_by_group(
         xvals = np.arange(data_len)
     elif isinstance(t_plot, (list, np.ndarray)):
         xvals = t_plot
+        xvals *= 10**6  # get time in microseconds
     elif isinstance(t_plot, (float, int)):
         xvals = np.arange(0, data_len / t_plot, 1 / t_plot)
+        xvals *= 10**6  # get time in microseconds
 
     fig.add_trace(
         go.Scatter(
@@ -383,11 +413,13 @@ def plot_reconstructions_by_group(
         height=300,
         font_size=FS,
         title="Reconstructed nodes by group",
-        xaxis_title="Time [s]" if t_plot is not None else None,
+        xaxis_title="Time [&mu;s]" if t_plot is not None else None,
         yaxis_title="Amplitude",
-        legend=dict(title="Clusters"),
+        legend=dict(title="Clusters", font=dict(size=FS)),
+        plot_bgcolor="white",
     )
-
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgrey")
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="lightgrey")
     fig.show()
 
     return fig
@@ -405,7 +437,7 @@ def plot_fft_by_group(
     label_map=None,
 ):
     """
-    Plot FFTs of reconstructed signals and original signal
+    Plot FFTs of reconstructed signals and original signal.
 
     Paramters (incomplete)
     ---------
@@ -466,9 +498,12 @@ def plot_fft_by_group(
             "Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]"
         ),
         yaxis=dict(title="Amplitude [dB]", range=[-140, 10]),
-        legend=dict(title="Signal component"),
+        legend=dict(title="Signal component", font=dict(size=FS)),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),
+        plot_bgcolor="white",
     )
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgrey")
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="lightgrey")
 
     fig.show()
 
