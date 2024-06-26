@@ -113,7 +113,10 @@ class Transform:
         return full_level_nodes
 
     def get_leaf_nodes(self, order="natural", freq_threshold=None):
-        "Get the leaf nodes in the tree. Ordered by frequency."
+        """
+        Get the leaf nodes in the tree. Ordered by frequency.
+        Frequency threshold is the normalised frequency threshold.
+        """
         leaf_nodes = [
             node
             for level in self.levels
@@ -167,7 +170,7 @@ class Transform:
         self.sampling_rate = sampling_rate
         for level in self.levels:
             for node in self.levels[level]:
-                node.frequency_range = node.calc_freq(self.sampling_rate)
+                node.set_frequency_range(self.sampling_rate)
 
     def total_energy(self, level=None):
         "Return the total energy of all nodes in a level. Max level by default."
