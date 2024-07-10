@@ -10,6 +10,7 @@ def dwpt(
     *,
     min_entropy=False,
     min_level=0,
+    freq_threshold=np.inf,
 ):
     """
     Packet transform. Returns a transform object containing node objects
@@ -35,7 +36,7 @@ def dwpt(
 
     Returns
     -------
-    transform_object: an object containing the results from the transform
+    transform: an object containing the results from the transform
     """
 
     if max_level is None:
@@ -48,58 +49,66 @@ def dwpt(
 
     # Create approximamtion and detail nodes for each node in the last level
     if min_entropy is False:
-        transform_object = _dwpt(data, max_level, wavelet, mode)
+        transform = _dwpt(data, max_level, wavelet, mode, freq_threshold)
 
     # Minimum entropy decomposition
     elif min_entropy is True:
-        transform_object = _min_entropy_dwpt(data, max_level, wavelet, mode, min_level)
+        transform = _min_entropy_dwpt(
+            data, max_level, wavelet, mode, min_level, freq_threshold
+        )
 
     else:
         raise ValueError("min_entropy: bool")
 
-    assert transform_object.get_level(
+    assert transform.get_level(
         1
     ), "transform has no decompositions, try setting a minimum level"
 
-    transform_object.min_level = min_level
-    return transform_object
+    transform.min_level = min_level
+    return transform
 
 
-def _dwpt(data, max_level, wavelet, mode):
-    transform_object = Transform(data, wavelet, mode)  # create wavelet object
-
+def _dwpt(data, max_level, wavelet, mode, freq_threshold):
+    transform = Transform(data, wavelet, mode)  # create wavelet object
+    create_node = transform.create_node
     for level in range(max_level):
-        for node in transform_object.get_level(level):
+        for node in transform.get_level(level):
             # Create nodes
-            transform_object.create_node(node, "a")
-            transform_object.create_node(node, "d")
-    return transform_object
+            node1 = create_node(node, "a")
+            node2 = create_node(node, "d")
+            if node1.norm_frequency_range[0] < freq_threshold:
+                transform.add_node(node1)
+            if node2.norm_frequency_range[0] < freq_threshold:
+                transform.add_node(node2)
+    return transform
 
 
-def _min_entropy_dwpt(data, max_level, wavelet, mode, min_level):
+def _min_entropy_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold):
     if not isinstance(min_level, int):
         raise ValueError("min_level must be an integer")
 
-    transform_object = Transform(data, wavelet, mode)
-    transform_object.min_entropy = True
+    transform = Transform(data, wavelet, mode)
+    transform.min_entropy = True
     for level in range(max_level):
-        for node in transform_object.get_level(level):
+        for node in transform.get_level(level):
             # If a node has 0 entropy, it does not need to be further decomposed
             if node.entropy == 0:
                 continue
             # Create nodes from parent node
-            node1 = transform_object.create_node(node, "a", add_node=False)
-            node2 = transform_object.create_node(node, "d", add_node=False)
+            node1 = transform.create_node(node, "a")
+            node2 = transform.create_node(node, "d")
             # Check if the entropy has decreased
             entropy = node1.level_entropy + node2.level_entropy
 
             # Perform decomposition with a given minimum level.
             if (node.level_entropy > entropy) or (level in range(min_level)):
                 # Add nodes if they have lower combined entropy than their parent
-                transform_object.add_node(node1)
-                transform_object.add_node(node2)
+                if node1.norm_frequency_range[0] < freq_threshold:
+                    transform.add_node(node1)
+                if node2.norm_frequency_range[0] < freq_threshold:
+                    transform.add_node(node2)
 
-    return transform_object
+    return transform
 
 
 def dwt(data, max_level, wavelet="haar", mode="symmetric"):
@@ -119,23 +128,23 @@ def dwt(data, max_level, wavelet="haar", mode="symmetric"):
 
     Returns
     -------
-    transform_object: an object containing the results from the transform
+    transform: an object containing the results from the transform
     """
     max_level_check(data, max_level)
 
     if isinstance(data, list):
         data = np.array(data)
 
-    transform_object = Transform(data, wavelet, mode)
+    transform = Transform(data, wavelet, mode)
 
     for level in range(max_level):
         # get approx node in the last level
-        node = transform_object.get_level(level)[0]
+        node = transform.get_level(level)[0]
         # store in output array for next level
-        transform_object.create_node(node, "a")
-        transform_object.create_node(node, "d")
+        transform.create_node(node, "a")
+        transform.create_node(node, "d")
 
-    return transform_object
+    return transform
 
 
 def max_level_check(data, level):
