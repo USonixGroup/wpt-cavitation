@@ -167,7 +167,13 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
         plt.ylabel("Energy (arbitrary)", fontsize=FS)
 
 
-def heisenberg(transform_object, t_end=1, max_freq=np.infty, padding="interpolate"):
+def heisenberg(
+    transform_object,
+    t_end=1,
+    max_freq=np.infty,
+    padding="interpolate",
+    use_log_scale=True,
+):
     """
     Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes.
 
@@ -182,7 +188,14 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty, padding="interpolat
     padding: str
         can be set to "interpolate" or "repeat" to interpolate time series data
         or just repeat it when dealing with packets of different levels.
+    use_log_scale: bool
+        set to True to use log10 scale for plot.
     """
+    if not isinstance(use_log_scale, bool):
+        raise ValueError("use_log_scale must be bool")
+
+    if padding not in ["interpolate", "repeat"]:
+        raise ValueError("padding must be 'interpolate' or 'repeat'")
 
     fig, ax = plt.subplots()
     fig.set_size_inches(18, 9)
@@ -229,12 +242,12 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty, padding="interpolat
     # Generate axis tick labels
     frequencies = [1 / 2 * sum(node.numeric_freq_range) for node in nodes_per_row]
     graph = ax.imshow(
-        np.log10(data),
+        data if use_log_scale is False else np.log10(data),
         cmap="turbo",
         aspect="auto",
     )
     ax.set_ylabel("Frequency of Subband [MHz]", fontsize=FS)
-    ax.set_xlabel("Time [$\mu s$]", fontsize=FS)
+    ax.set_xlabel("Time [$\mu s$]", fontsize=FS)  # noqa
     ax.set_title("DWPT of Signal", fontsize=FS)
     # ax.set_yscale("log")
 
@@ -246,12 +259,14 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty, padding="interpolat
     sparse_y_labels = [
         label if not id % y_space else "" for id, label in enumerate(y_labels)
     ]
+    sparse_y_labels = _unrepeat(sparse_y_labels)
     x_labels = np.linspace(0, t_end, len_data)
     x_labels = [eng_form_plot(x, -6, 1) for x in x_labels]
     x_space = int(len(x_labels) / 10)
     sparse_x_labels = [
         label if id % x_space == 0 else "" for id, label in enumerate(x_labels)
     ]
+    sparse_x_labels = sparse_x_labels
     all_x_ticks = [i for i in range(len(x_labels))]
     all_y_ticks = [i for i in range(len(y_labels))]
 
@@ -266,6 +281,31 @@ def heisenberg(transform_object, t_end=1, max_freq=np.infty, padding="interpolat
 
     plt.show()
     return fig
+
+
+def _unrepeat(array):
+    x = ""
+    indices = []
+    count = 1
+    for i in range(len(array)):
+        y = array[i]
+        if y == "" and i != len(array) - 1:
+            continue
+        if y == x:
+            count += 1
+            indices.append(i)
+        else:
+            if count > 1:
+                index = int(sum(indices) / len(indices))
+                for n in range(indices[0], indices[-1] + 1):
+                    if n != index:
+                        array[n] = ""
+                    else:
+                        array[n] = x
+            count = 1
+            indices = [i]
+            x = y
+    return array
 
 
 def repeat_data(data, target_length):
@@ -520,19 +560,50 @@ def plot_clustering(
     metrics_to_plot,
     title="Clustering Results",
     label_map=None,
+    levels=None,
 ):
     colours = list(TreeGraph.colour_dict.values())[1:]
 
     px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
     fig = plt.figure(figsize=(1500 * px, 800 * px))
     ax = fig.add_subplot(projection="3d")
+
+    # Get level markers
+    if levels is not None:
+        if not isinstance(levels, list):
+            raise ValueError("levels must be a list")
+        if len(levels) != data_train.shape[0]:
+            raise ValueError("Number of levels doesn't match number of nodes")
+        unique_levels = sorted(set(levels))
+        level_markers = _get_level_markers()
+        if len(unique_levels) > len(level_markers):
+            raise ValueError(
+                f"too many unique levels ({len(unique_levels)}), \
+                max supported ({len(level_markers)})"
+            )
+        max_level = max(unique_levels)
+        level_markers = {max_level - k: v for k, v in level_markers.items()}
+    else:
+        level_markers = {0: "o"}
+        levels = [0 for _ in range(data_train.shape[0])]
+        unique_levels = [0]
+
+    # Make scatter plots
+    legend_elements = []
     for center in range(centers.shape[0]):
-        ax.scatter(
-            data_train.loc[labels == center, metrics_to_plot[0]],
-            data_train.loc[labels == center, metrics_to_plot[1]],
-            data_train.loc[labels == center, metrics_to_plot[2]],
-            c=colours[center],
-        )
+        for level in unique_levels:  # iterate  through level markers
+            mask = (labels == center) & (np.array(levels) == level)
+            scatter = ax.scatter(
+                data_train.loc[mask, metrics_to_plot[0]],
+                data_train.loc[mask, metrics_to_plot[1]],
+                data_train.loc[mask, metrics_to_plot[2]],
+                c=colours[center],
+                marker=level_markers[level],
+                label=f"{level}",
+            )
+            if center == 0:
+                legend_elements.append(scatter)
+
         ax.scatter(
             centers.loc[center, metrics_to_plot[0]],
             centers.loc[center, metrics_to_plot[1]],
@@ -556,10 +627,23 @@ def plot_clustering(
         ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=18)
         ax.set_title(title, fontsize=20)
     ax.set_box_aspect(None, zoom=0.92)
+    ax.legend(handles=legend_elements, title="Node level")
     fig.tight_layout()
     plt.show()
 
     return fig
+
+
+def _get_level_markers():
+    level_markers = {
+        0: "o",
+        1: "+",
+        2: "^",
+        3: "D",
+        4: "s",
+        5: "*",
+    }
+    return level_markers
 
 
 def plot_centers(classifying_metrics, centers, label_map=None):
