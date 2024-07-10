@@ -121,7 +121,10 @@ class Transform:
             node
             for level in self.levels
             for node in self.get_level(level)  # gather nodes with no children
-            if 2 * node.node_number not in self.node_numbers(level + 1)
+            if (
+                2 * node.node_number not in self.node_numbers(level + 1)
+                and 2 * node.node_number + 1 not in self.node_numbers(level + 1)
+            )
         ]
         if freq_threshold is not None:
             leaf_nodes = [
@@ -138,7 +141,7 @@ class Transform:
         "Generator for node numbers"
         return (node.node_number for node in self.get_level(level))
 
-    def create_node(self, parent, a_d, add_node=True):
+    def create_node(self, parent, a_d):
         """
         Creates a node object, adds it to list of nodes if add_node is true.
         add_node allows for further logic to be implemented in the transform
@@ -146,8 +149,6 @@ class Transform:
         """
         # Initialise node object
         node = Node(parent, a_d, self)
-        if add_node is True:
-            self.add_node(node)
         return node
 
     def add_node(self, node: Node):
