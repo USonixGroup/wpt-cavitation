@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as sc
 
-from wavelet_transform.utils.extensions import fft, psd
+from wavelet_transform.utils.extensions import psd
 
 
 def crest_factor(array):
