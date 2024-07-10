@@ -120,7 +120,8 @@ class TreeGraph:
 
         # Display frequency range of each node
         labels = {
-            node: f"""{getattr(node_attributes[node], "freq_range")}""" for node in G
+            node: f"""{getattr(node_attributes[node], "norm_freq_range")}"""
+            for node in G
         }
 
         offset_pos = {node: (x, y - 20) for node, (x, y) in pos.items()}
