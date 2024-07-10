@@ -309,7 +309,7 @@ def generate_training_data(
     min_entropy=False,
     min_level=0,
     include_tr_obj=False,
-    freq_threshold=None,
+    freq_threshold=np.inf,
 ):
     """
     Generate training data for clustering using the wavelet packet transform. Statistical
@@ -348,13 +348,18 @@ def generate_training_data(
     """
     # DWPT
     tr_obj = wpt.dwpt(
-        data, levels, wavelet, mode, min_entropy=min_entropy, min_level=min_level
+        data,
+        levels,
+        wavelet,
+        mode,
+        min_entropy=min_entropy,
+        min_level=min_level,
+        freq_threshold=freq_threshold,
     )
 
     wpt_df = tr_obj.info(levels, order="natural", leaf_nodes=min_entropy)
 
-    if freq_threshold is not None:
-        wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
+    wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
     # Return the transform object if specified
     if include_tr_obj is True:
         return wpt_df, tr_obj
