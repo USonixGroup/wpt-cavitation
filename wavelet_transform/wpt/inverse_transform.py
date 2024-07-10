@@ -110,7 +110,7 @@ def packet_nodes_for_rec(transform_object: Transform, level, **kwargs):
 
     Keyword Arguments
     -----------------
-    See self.find_nodes()
+    See transform_object.find_nodes()
 
 
     Returns
@@ -144,7 +144,9 @@ class InverseTransform:
     def inv_dwt(self, levels, **kwargs):
         return inv_dwt(self.transform_object, levels, **kwargs)
 
-    def info(self, level=None, order="natural", leaf_nodes=False):
+    def info(
+        self, level=None, order="natural", leaf_nodes=False, freq_threshold=np.inf
+    ):
         """
         Perform the inverse transform on each node then calculate statistical measures on each.
 
@@ -155,7 +157,10 @@ class InverseTransform:
         order: str
             "natural" or "freq" (see Transform.get_level())
         leaf_nodes: bool
-        display info about the leaf nodes of the transform
+            display info about the leaf nodes of the transform
+        freq_threshold: float
+            between 0-1. Represents the maximum normalised frequency to include
+            in the dataframe.
 
         Returns
         -------
@@ -181,6 +186,8 @@ class InverseTransform:
         for node in nodes:
             assert isinstance(node, Node)
             # Calculate inverse transform
+            if node.norm_frequency_range[1] > freq_threshold:
+                continue
             inverse = inv_dwpt(tr_obj, node.level, nodes=node)
             info_data.append(
                 {
