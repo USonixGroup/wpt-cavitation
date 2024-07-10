@@ -107,8 +107,8 @@ def time_array(duration=None, sampling_rate=None, time=None):
 
 def noise(standard_deviation, duration=None, sampling_rate=None, time=None):
     """
-    creates and array of noise with the same dimensions as the synthetic data
-    can be specified using either an array of time to fit noise into or can
+    Creates and array of noise with the same dimensions as the synthetic data.
+    Can be specified using either an array of time to fit noise into or can
     accept the sampling rate and duration used to generate the signal.
     """
     t = time_array(duration, sampling_rate, time)
