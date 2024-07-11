@@ -627,7 +627,7 @@ def plot_clustering(
         ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=18)
         ax.set_title(title, fontsize=20)
     ax.set_box_aspect(None, zoom=0.92)
-    if levels is not None:
+    if not all(i == 0 for i in levels):
         ax.legend(handles=legend_elements, title="Node level")
     fig.tight_layout()
     plt.show()
