@@ -120,7 +120,7 @@ class TreeGraph:
 
         # Display frequency range of each node
         labels = {
-            node: f"""{getattr(node_attributes[node], "norm_freq_range")}"""
+            node: f"""{getattr(node_attributes[node], "norm_frequency_range")}"""
             for node in G
         }
 
