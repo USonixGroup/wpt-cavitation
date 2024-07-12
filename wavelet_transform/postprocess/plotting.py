@@ -233,23 +233,19 @@ def heisenberg(
         padded_data = pad_func(node_data, len_data)
         data[i, :] = np.abs(padded_data)  # plot abs values of wavelet coefficients
 
-    # Plot graph, set axis labels
-    graph = ax.imshow(np.log10(data), cmap="turbo", aspect="auto")
-    ax.set_ylabel("Frequency of Subband [Hz]", fontsize=20)
-    ax.set_xlabel("Time [s]", fontsize=20)
-    ax.set_title("DWPT of Signal", fontsize=25)
-
-    # Generate axis tick labels
+    # Plot graph
     frequencies = [1 / 2 * sum(node.numeric_freq_range) for node in nodes_per_row]
     graph = ax.imshow(
         data if use_log_scale is False else np.log10(data),
         cmap="turbo",
         aspect="auto",
     )
-    ax.set_ylabel("Frequency of Subband [MHz]", fontsize=FS)
-    ax.set_xlabel("Time [$\mu s$]", fontsize=FS)  # noqa
-    ax.set_title("DWPT of Signal", fontsize=FS)
+    ax.set_ylabel("Frequency of Subband [MHz]", fontsize=30)
+    ax.set_xlabel("Time [$\mu s$]", fontsize=30)  # noqa
+    ax.set_title("DWPT of Signal", fontsize=30)
     # ax.set_yscale("log")
+
+    # Generate exis tick labels
 
     y_labels = [
         eng_form_plot(freq, 6, 1)  # (sci_form(freq[0], 1), sci_form(freq[1], 1))
@@ -271,13 +267,14 @@ def heisenberg(
     all_y_ticks = [i for i in range(len(y_labels))]
 
     # Set ticks
-    ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=15)
-    ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=15)
+    ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=25)
+    ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=25)
 
     # Formatting
     fig.tight_layout()
     cbar = fig.colorbar(graph)
-    cbar.set_label(label="Coefficient amplitude [dB]", size=20)
+    cbar.ax.tick_params(labelsize=20)
+    cbar.set_label(label="Coefficient amplitude [dB]", size=25)
 
     plt.show()
     return fig
@@ -377,6 +374,7 @@ def plot_reconstructions_by_group(
     t_plot=None,
     freq_threshold=None,
     label_map=None,
+    fig_height=350,
 ):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
@@ -450,7 +448,7 @@ def plot_reconstructions_by_group(
 
     fig.update_layout(
         width=1000,
-        height=300,
+        height=fig_height,
         font_size=FS,
         title="Reconstructed nodes by group",
         xaxis_title="Time [&mu;s]" if t_plot is not None else None,
@@ -475,6 +473,7 @@ def plot_fft_by_group(
     fundamental_freq=None,
     freq_threshold=None,
     label_map=None,
+    fig_height=350,
 ):
     """
     Plot FFTs of reconstructed signals and original signal.
@@ -531,7 +530,7 @@ def plot_fft_by_group(
 
     fig.update_layout(
         width=1000,
-        height=300,
+        height=fig_height,
         font_size=FS,
         title="FFT Comparison",
         xaxis_title=(
@@ -679,10 +678,11 @@ def plot_centers(classifying_metrics, centers, label_map=None):
             label_angle = 0
 
         ax[i].bar(xvals, yvals, color=colours)
-        ax[i].set_title(f"{metric.capitalize()}", fontsize=20)
-        ax[i].set_xlabel(xlabel)
-        ax[i].set_ylabel(ylabel)
+        ax[i].set_title(f"{metric.capitalize()}", fontsize=25)
+        ax[i].set_xlabel(xlabel, fontsize=20)
+        ax[i].set_ylabel(ylabel, fontsize=20)
         ax[i].tick_params(axis="x", rotation=label_angle)
+        ax[i].tick_params(labelsize=15)
     plt.tight_layout()
     plt.show()
 
