@@ -6,6 +6,8 @@ import numpy as np
 from networkx.drawing.nx_agraph import graphviz_layout
 import networkx as nx
 
+from wavelet_transform.utils.extensions import sci_form
+
 if TYPE_CHECKING:
     from wavelet_transform.wpt.transform_object import Transform
 
@@ -31,9 +33,14 @@ class TreeGraph:
         freq_threshold=None,
         graph_legend="Graph legend",
         fig_name=None,
+        **kwargs,
     ):
         "Plot the tree diagram for the wavelet packet transform."
-        self.graph_nodes, self.graph_edges = self._get_nodes_and_edges()
+        order = kwargs.get("order", "natural")
+        sampling_rate = kwargs.get("sampling_rate")
+        show_frequency = kwargs.get("show_frequency", False)
+
+        self.graph_nodes, self.graph_edges = self._get_nodes_and_edges(order)
         self._generate_plot(
             self.graph_nodes,
             self.graph_edges,
@@ -42,17 +49,19 @@ class TreeGraph:
             freq_threshold,
             graph_legend,
             fig_name,
+            sampling_rate,
+            show_frequency,
         )
 
     # ---------------- Getting Nodes & Edges ----------------
 
-    def _get_nodes_and_edges(self):
+    def _get_nodes_and_edges(self, order):
         "Get nodes and edges."
         graph_nodes = []
         graph_edges = []
 
         for i in range(self.tr_obj.max_level(), -1, -1):
-            for node in reversed(self.tr_obj.get_level(i, order="natural")):
+            for node in reversed(self.tr_obj.get_level(i, order=order)):
                 node_number = node.node_number
                 graph_nodes.append(((i, node_number), {"node": node}))
                 graph_edges.append(((i, node_number), (i - 1, node_number // 2)))
@@ -73,6 +82,8 @@ class TreeGraph:
         freq_threshold,
         graph_legend,
         fig_name,
+        sampling_rate=None,
+        show_frequency=False,
     ):
         # Make networkx graph object
         G = nx.DiGraph()
@@ -105,7 +116,7 @@ class TreeGraph:
             ax=ax,
             arrowsize=5,
             verticalalignment="top",
-            font_size=20,
+            font_size=35,
             font_color="red",
             with_labels=True,
             node_size=node_size,
@@ -119,17 +130,24 @@ class TreeGraph:
         )
 
         # Display frequency range of each node
+        sampling_rate = 1 if sampling_rate is None else sampling_rate
         labels = {
-            node: f"""{getattr(node_attributes[node], "norm_frequency_range")}"""
+            node: tuple(
+                sci_form(i * sampling_rate, 1)
+                for i in getattr(node_attributes[node], "norm_frequency_range")
+            )
             for node in G
         }
+
+        if show_frequency is False:
+            labels = {}
 
         offset_pos = {node: (x, y - 20) for node, (x, y) in pos.items()}
         nx.draw_networkx_labels(
             G,
             offset_pos,
             labels=labels,
-            font_size=10,
+            font_size=20,
             font_color="black",
             verticalalignment="top",
         )
@@ -158,8 +176,8 @@ class TreeGraph:
                 handles=legend_patches,
                 loc="upper right",
                 title=graph_legend,
-                title_fontsize=30,
-                fontsize=30,
+                title_fontsize=40,
+                fontsize=40,
             )
 
         if fig_name:
