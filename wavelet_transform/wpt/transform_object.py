@@ -91,6 +91,8 @@ class Transform:
         nodes: list
             list of nodes in selected level
         """
+        if order not in ["natural", "freq"]:
+            raise ValueError("order must be 'nutaral' or 'freq")
         level = self.max_level() if level is None else level
         if order == "natural":
             return self.levels.get(level, [])
@@ -199,6 +201,7 @@ class Transform:
         freq_threshold=None,
         graph_legend="Graph legend",
         fig_name=None,
+        **kwargs
     ):
         """
         Plot the tree diagram for the wavelet transform.
@@ -216,7 +219,15 @@ class Transform:
         freq_threshold: float
             the frequency threshold for leaf nodes to be labeled. Nodes with upper bound
             of frequency range above this threshold will not be labeled
+
+        keyword arguments
+        -----------------
+        sampling_rate: float
+            supply the sampling rate to calculate frequencies for nodes. Will plot
+            normalised frequencies otherwise.
+        order: str
+            "natural" or "freq" to order the tree in natural or freuqency order
         """
         self.tree.plot_tree(
-            node_size, node_colour, freq_threshold, graph_legend, fig_name
+            node_size, node_colour, freq_threshold, graph_legend, fig_name, **kwargs
         )
