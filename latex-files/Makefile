@@ -7,7 +7,7 @@
 
 LaTeXSources= $(wildcard *.tex *.bib) JASA.cls
 
-.PHONY: all clean superclean test
+.PHONY: all clean superclean force
 all: manuscript_jasa.pdf
 
 
@@ -26,6 +26,4 @@ clean:
 superclean: clean
 	-@rm *.pdf *.ps
 
-rootclean: clean superclean
-	-@rm $(TestCases) $(TestCases:.pdf=.tex)
-
+force: all
