@@ -52,8 +52,8 @@ class minScaler:
 def train_k_means(
     wpt_df,
     classifying_metrics,
+    no_clusters,
     *,
-    no_clusters=None,
     use_pca=False,
     kmeans_params=None,
     scale_data=True,
@@ -69,7 +69,7 @@ def train_k_means(
         dataframe with columns containing potential classifying metrics
     classifying_metrics: list of str
         list of classifying metrics to index wpt_df with.
-    no_clusters: int or None
+    no_clusters: int or tuple
         The number of clusters to use. specify None to automatically choose the best number of
         clusters using the silhouette score.
     use_pca: bool
@@ -98,19 +98,21 @@ def train_k_means(
         pca = PCA(n_components=3)
         data_train_normalised = pca.fit_transform(data_train_normalised)
 
-    if no_clusters is not None:
+    if isinstance(no_clusters, int):
         kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
         labels = kmeans.fit_predict(data_train_normalised)
-    else:
+    elif isinstance(no_clusters, tuple):
         # Find optimal numbemr of clusters using silhouette score
         algorithms = []
-        for no_clusters in range(3, 6):
+        for no_clusters in range(*no_clusters):
             kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
             labels = kmeans.fit_predict(data_train_normalised)
             silhouette_score = metrics.silhouette_score(data_train_normalised, labels)
             algorithms.append((silhouette_score, kmeans, labels))
         i = max(algorithms, key=lambda x: x[0])
         _, kmeans, labels = i
+    else:
+        raise ValueError("no_clusters must be an int or tuple")
 
     centers = kmeans.cluster_centers_
     if use_pca is False:
