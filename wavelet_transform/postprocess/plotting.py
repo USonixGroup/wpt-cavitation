@@ -270,11 +270,16 @@ def heisenberg(
     ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=25)
     ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=25)
 
-    # Formatting
+    # Formatting"
+    cbar_label = (
+        "Coefficient amplitude [dB]"
+        if use_log_scale is True
+        else "Coefficient amplitude"
+    )
     fig.tight_layout()
     cbar = fig.colorbar(graph)
     cbar.ax.tick_params(labelsize=20)
-    cbar.set_label(label="Coefficient amplitude [dB]", size=25)
+    cbar.set_label(label=cbar_label, size=25)
 
     plt.show()
     return fig
@@ -351,8 +356,9 @@ def get_label(label_no, label_map):
         raise ValueError("label_map must be a dictionary of label_no: label")
 
 
-def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
+def get_reconstructions_by_group(tr_obj, labels, freq_threshold):
     signal_length = len(tr_obj.data)
+    n_clusters = len(set(labels))
     # List reconstructions by group
     reconstructions = [np.zeros(signal_length) for _ in range(n_clusters)]
 
@@ -370,7 +376,6 @@ def get_reconstructions_by_group(tr_obj, labels, n_clusters, freq_threshold):
 def plot_reconstructions_by_group(
     transform_object,
     labels,
-    no_clusters,
     t_plot=None,
     freq_threshold=None,
     label_map=None,
@@ -404,11 +409,10 @@ def plot_reconstructions_by_group(
     fig: plotly.graph_objects.Figure
         The Plotly figure object.
     """
-    if no_clusters is None:
-        no_clusters = len(set(labels))
+    n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, no_clusters, freq_threshold
+        transform_object, labels, freq_threshold
     )
 
     fig = go.Figure()
@@ -417,7 +421,7 @@ def plot_reconstructions_by_group(
     if t_plot is None:
         xvals = np.arange(data_len)
     elif isinstance(t_plot, (list, np.ndarray)):
-        xvals = t_plot
+        xvals = t_plot.copy()
         xvals *= 10**6  # get time in microseconds
     elif isinstance(t_plot, (float, int)):
         xvals = np.arange(0, data_len / t_plot, 1 / t_plot)
@@ -435,7 +439,7 @@ def plot_reconstructions_by_group(
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
 
     # Iterate through clusters
-    for i in range(no_clusters):
+    for i in range(n_clusters):
         fig.add_trace(
             go.Scatter(
                 x=xvals,
@@ -466,7 +470,6 @@ def plot_reconstructions_by_group(
 def plot_fft_by_group(
     transform_object,
     labels,
-    no_clusters,
     sampling_rate,
     clusters=None,
     xlim=None,
@@ -474,6 +477,7 @@ def plot_fft_by_group(
     freq_threshold=None,
     label_map=None,
     fig_height=350,
+    plot_full_reconstruction=False,
 ):
     """
     Plot FFTs of reconstructed signals and original signal.
@@ -486,11 +490,10 @@ def plot_fft_by_group(
     if isinstance(clusters, int):
         clusters = [clusters]
 
-    if no_clusters is None:
-        no_clusters = len(set(labels))
+    n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, no_clusters, freq_threshold
+        transform_object, labels, freq_threshold
     )
 
     fig = go.Figure()
@@ -512,7 +515,7 @@ def plot_fft_by_group(
 
     # Plot FFTs
     if clusters is None:
-        clusters = range(no_clusters)
+        clusters = range(n_clusters)
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
 
@@ -525,6 +528,17 @@ def plot_fft_by_group(
                 mode="lines",
                 name=get_label(i, label_map),
                 line=dict(color=colours[i]),
+            )
+        )
+
+    if plot_full_reconstruction is True:
+        fig.add_trace(
+            go.Scatter(
+                x=freq,
+                y=20 * np.log10(np.abs(fft(sum(reconstructions)))),
+                mode="lines",
+                name="full reconstruction",
+                line=dict(dash="dot", color="blue"),
             )
         )
 
@@ -564,7 +578,7 @@ def plot_clustering(
     colours = list(TreeGraph.colour_dict.values())[1:]
 
     px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
-    fig = plt.figure(figsize=(1500 * px, 800 * px))
+    fig = plt.figure(figsize=(1300 * px, 800 * px))
     ax = fig.add_subplot(projection="3d")
 
     # Get level markers
@@ -682,7 +696,7 @@ def plot_centers(classifying_metrics, centers, label_map=None):
         ax[i].set_xlabel(xlabel, fontsize=20)
         ax[i].set_ylabel(ylabel, fontsize=20)
         ax[i].tick_params(axis="x", rotation=label_angle)
-        ax[i].tick_params(labelsize=15)
+        ax[i].tick_params(labelsize=20)
     plt.tight_layout()
     plt.show()
 
