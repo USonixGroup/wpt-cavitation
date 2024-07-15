@@ -187,9 +187,13 @@ class TreeGraph:
     def _get_colours(self, G, node_colour, freq_threshold):
         labels = []
         leaf_nodes = self.tr_obj.get_leaf_nodes(freq_threshold=freq_threshold)
+
         i = 0
-        for node in G:
-            if nx.get_node_attributes(G, "node")[node] in leaf_nodes:
+        nodes = [node for node in G]
+        node_attributes = nx.get_node_attributes(G, "node")
+
+        for node in nodes:
+            if node_attributes[node] in leaf_nodes:
                 labels.append(node_colour[i])
                 i += 1
             else:
