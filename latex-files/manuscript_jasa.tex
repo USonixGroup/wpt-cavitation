@@ -362,11 +362,13 @@ This method was chosen over PCA which requires the computation of every feature 
 \label{sec:Exp_setup}
 
 \subsubsection{Analyzing PCD data}
-Two experiments are assessed. The first experiment uses low-intensity sonication at 80 Pa while the second one uses 280 Pa. The data for the low-intensity experiment is shown in \figg{\ref{fig:80_1_data}}. The data is then fed through the algorithm. The wavelet transform is asymmetric, uses symmetric padding, and enforces decomposition levels between 6-10. The k-means algorithm selects between 3-5 clusters based on the silhouette score and uses the classifying metrics: average energy, kurtosis, log average energy, and spectral entropy. The results from the wavelet transform are presented in a heisenberg plot in \figg{\ref{fig:80_1_heisenberg}}. The heisenberg plot shows a higher energy band around the fundamental and in the middle of the windowed signal, as expected. 
+Two experiments are assessed. The first experiment uses low-intensity sonication at 80 mVpp while the second one uses 280 mVpp. These results were generated for the paper published by Haqshenas et al. \cite{haqshenas2015multi}. The data is then fed through the algorithm. The wavelet transform uses minimum entropy decomposition, the Daubechies 10 wavelet, symmetric padding, and enforces decomposition levels between 6-12. The k-means algorithm selects between 3-5 clusters based on the silhouette score and uses the classifying metrics: average energy, kurtosis, log average energy, and spectral entropy. The frequency threshold is set to 7 MHz and any nodes with a frequency range above that are disregarded.
+
+The data for the low-intensity experiment is plotted in \figg{\ref{fig:80_1_data}}. The results from the wavelet transform are presented in a heisenberg plot in \figg{\ref{fig:80_1_heisenberg}}. The heisenberg plot shows a higher energy band around the fundamental and in the middle of the windowed signal, as expected. It also demonstrates the trade-off between frequency and time resolution. The minimum entropy decomposition algorithm tends to achieve a finer frequency resolution around higher energy parts of the frequency spectrum i.e. at the fundamental frequency.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=3.5in]{./figs/80_1_data}
+\includegraphics[width=3.8in]{./figs/80_1_data}
 \caption{Preprocessed data and corresponding FFT for low-intensity ultrasound data.}
 \label{fig:80_1_data}
 \end{figure}
@@ -374,71 +376,73 @@ Two experiments are assessed. The first experiment uses low-intensity sonication
 \begin{figure}[h]
 \centering
 \includegraphics[width=4in]{./figs/heisenberg_80_1}
-\caption{Heisenberg plot of the wavelet transform.}
+\caption{Heisenberg plot of the wavelet transform at 80 mVpp.}
 \label{fig:80_1_heisenberg}
 \end{figure}
 
-The clustering results are shown in \figg{\ref{fig:80_1_clustering}}, \figg{\ref{fig:80_1_metrics}}, and \figg{\ref{fig:80_1_fft}}. The effect of including spectral entropy is not shown in the 3d plot but allows for the nodes labelled as  harmonics to be separated more consistently from the noise. \figg{\ref{fig:80_1_fft}} shows that the algorithm is able to separate the fundamental frequency from the rest of the lower frequencies. \figg{\ref{fig:80_1_fft_zoom}} shows the inability of the algorithm to separate measurement noise and broadband. These are selected based on their level of kurtosis but the results are not as expected.
+The clustering results for the experiment ran at 80 mVpp are shown in \figg{\ref{fig:80_1_clustering}}. The algorithms chooses 4 clusters which have been labelled manually according to the positions of the clustering centres. The fundamental is the high-energy node that has been singled out by the algorithm, measurement noise (labeled as noise) and broadband noise has low energy and high spectral density, and harmonics are characterised by a low spectral entropy. \figg{\ref{fig:80_1_metrics}} plots the positions of the cluster centres. This shows that measurement and broadband noise are separated by their difference in log average energy. \figg{\ref{fig:80_1_fft}} shows how the signal is split up in the frequency domain. Each cluster of nodes is reconstructed and the fft is taken for each of them. The algorithm is able to separate the fundamental frequency from the rest of the lower frequencies. The single node representing the fundamental frequency produces three peaks on the spectrum, as most nodes do when they are reconstructed. This leads to some artifacts at around 0.5 and 1.8 MHz. These artifacts are cancelled out by neighbouring nodes. The broadband and noise are separated as expected while the cluster labelled as harmonics has a similar shape to the fundamental, indicating that, because there are no prominent harmonics in this signal, the algorithm instead finds nodes where some of the energy leaked out from the fundamental.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=5in, trim=10cm 0cm 0cm 0cm, clip]{./figs/clustering_80_1}
-\caption{Clustering results for k-means.}
+\caption{Clustering results for k-means at 80 mVpp.}
 \label{fig:80_1_clustering}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=3.5in]{./figs/sig_components_metrics_80_1}
-\caption{Signal component metrics measured at cluster centres.}
+\caption{Signal component metrics measured at cluster centres at 80 mVpp.}
 \label{fig:80_1_metrics}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=3.5in, trim=0cm 6cm 0cm 0cm]{./figs/fft_rec_centers_80_1}
-\caption{FFT of reconstructed nodes.}
+\includegraphics[width=4.5in, trim=0cm 6cm 0cm 0cm]{./figs/fft_rec_centers_80_1}
+\caption{FFT of reconstructed nodes at 80 mVpp.}
 \label{fig:80_1_fft}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=3.5in, trim=0cm 5cm 0cm 0cm, clip]{./figs/fft_rec_centers_80_1_zoom}
-\caption{Zoomed out FFT of reconstructed nodes.}
-\label{fig:80_1_fft_zoom}
-\end{figure}
-
-The data for the second experiment is shown in \figg{\ref{fig:280_1_data}}. The higher intensity produces a prominent harmonic at $2f_0$ and a sub-harmonic at $1/2 f_0$. The heisenberg plot is shown in \figg{\ref{fig:280_1_heisenberg}}.
+The data for the experiment at 280 mVpp is plotted in \figg{\ref{fig:280_1_data}}. The higher intensity produces a prominent harmonic at $2f_0$ and a sub-harmonic at $1/2 f_0$. The heisenberg plot is shown in \figg{\ref{fig:280_1_heisenberg}}.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=3.5in]{./figs/280_1_data}
-\caption{High-intensity ultrasound data.}
+\includegraphics[width=4in]{./figs/280_1_data}
+\caption{High-intensity ultrasound data at 280 mVpp.}
 \label{fig:280_1_data}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=3.5in]{./figs/heisenberg_280_1}
-\caption{Heisenberg plot of wavelet transform at high-intensity.}
+\includegraphics[width=4in]{./figs/heisenberg_280_1}
+\caption{Heisenberg plot of wavelet transform at high-intensity at 280 mVpp.}
 \label{fig:280_1_heisenberg}
 \end{figure}
 
-The results are shown in \figg{\ref{fig:280_1_fft}} and \figg{\ref{fig:280_1_fft_metrics}}. The FFT plot shows that the algorithm is able to separate the harmonics and subharmonics from the fundamental frequency but unable to separate the harmonics from the low level noise.
+The results are shown in \figg{\ref{fig:280_1_fft}} and \figg{\ref{fig:280_1_fft_metrics}}. These plots show that the algorithm is able to separate the harmonics and subharmonics from the fundamental frequency but unable to separate the harmonics from the low level noise. The algorithm finds three clusters this time, and they were manually labelled as measurement noise, broadband \& harmonics, and fundamental frequency. The algorithm is once again able to distinguish between the fundamental frequency, low frequency noise, and high frequency noise but is unable to separate the harmonics and sub-harmonics from the noise. This is because the harmonics and other low-frequency components share similar log average energy. Removing log average energy results in the results shown in \figg{\ref{fig:280_1_fft_alt}}. Where the harmonics and fundamental are better separated but the measurement and broadband noises are combined.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=3.5in, trim=0cm 5cm 0cm 0cm, clip]{./figs/fft_rec_centers_280_1}
-\caption{FFT of reconstructed nodes (high-intensity).}
+\includegraphics[width=4.2in, trim=0cm 5cm 0cm 0cm]{./figs/fft_rec_centers_280_1}
+\caption{FFT of reconstructed nodes (high-intensity) at 280 mVpp.}
 \label{fig:280_1_fft}
 \end{figure}
 
 \begin{figure}[h]
 \centering
+\includegraphics[width=4.2in, trim=0cm 5cm 0cm 0cm]{./figs/fft_rec_centers_280_1_alt}
+\caption{FFT of reconstructed nodes (high-intensity) at 280 mVpp without using log average energy.}
+\label{fig:280_1_fft_alt}
+\end{figure}
+
+\begin{figure}[h]
+\centering
 \includegraphics[width=3.5in]{./figs/sig_components_metrics_280_1}
-\caption{Signal component metrics measured at cluster centres (high-intensity).}
+\caption{Signal component metrics measured at cluster centres (high-intensity) at 280 mVpp. Clusters stand for measurement noise, broadband noise \& harmonics, and fundamental frequency.}
 \label{fig:280_1_metrics}
 \end{figure}
+
+The algorithm is consistently able to extract and categorise the fundamental frequency of the signal. However, it struggles with separating harmonics, broadband noise, and measurement noise.
 
 \section{Summary}
 \label{sec:summary}
