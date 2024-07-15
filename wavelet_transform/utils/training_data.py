@@ -357,7 +357,7 @@ def generate_training_data(
         freq_threshold=freq_threshold,
     )
 
-    wpt_df = tr_obj.info(levels, order="natural", leaf_nodes=min_entropy)
+    wpt_df = tr_obj.info(levels, order="natural", leaf_nodes=True)
 
     wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
     # Return the transform object if specified
