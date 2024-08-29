@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
 from scipy.interpolate import interp1d
-
+from itertools import cycle
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
 FS = 18  # fontsize
@@ -420,7 +420,8 @@ def plot_reconstructions_by_group(
     data_len = len(transform_object.data)
     if t_plot is None:
         xvals = np.arange(data_len)
-    elif isinstance(t_plot, (list, np.ndarray)):
+    elif isinstance(t_plot, (np.ndarray)):
+        data_len = len(t_plot)
         xvals = t_plot.copy()
         xvals *= 10**6  # get time in microseconds
     elif isinstance(t_plot, (float, int)):
@@ -430,23 +431,25 @@ def plot_reconstructions_by_group(
     fig.add_trace(
         go.Scatter(
             x=xvals,
-            y=transform_object.data,
+            y=transform_object.data[0:data_len],
             mode="lines",
             name="Original signal",
         )
     )
-
+    
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+    lines = ['dot', 'dashdot', 'solid','dot', 'dash',  'longdash','longdashdot']
+    linestyles = cycle(lines)
 
     # Iterate through clusters
     for i in range(n_clusters):
         fig.add_trace(
             go.Scatter(
                 x=xvals,
-                y=reconstructions[i],
+                y=reconstructions[i][0:data_len],
                 mode="lines",
                 name=get_label(i, label_map),
-                line=dict(color=colours[i]),
+                line=dict(color=colours[i], dash=next(linestyles)),
             )
         )
 
@@ -457,11 +460,12 @@ def plot_reconstructions_by_group(
         title="Reconstructed nodes by group",
         xaxis_title="Time [&mu;s]" if t_plot is not None else None,
         yaxis_title="Amplitude",
-        legend=dict(title="Clusters", font=dict(size=FS)),
+        legend=dict(title="Clusters", traceorder='normal',font=dict(size=FS)),
         plot_bgcolor="white",
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgrey")
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="lightgrey")
+    
+    fig.update_xaxes(mirror=True,ticks='outside',showline=True, linecolor='black', gridcolor="lightgrey")
+    fig.update_yaxes(mirror=True,ticks='outside',showline=True, linecolor='black', gridcolor="lightgrey")
     fig.show()
 
     return fig
@@ -518,6 +522,8 @@ def plot_fft_by_group(
         clusters = range(n_clusters)
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+    lines = ['dot', 'dashdot', 'solid','dot', 'dash',  'longdash','longdashdot']
+    linestyles = cycle(lines)
 
     for i in clusters:
         fft_rec = fft(reconstructions[i])
@@ -527,7 +533,7 @@ def plot_fft_by_group(
                 y=20 * np.log10(np.abs(fft_rec)),
                 mode="lines",
                 name=get_label(i, label_map),
-                line=dict(color=colours[i]),
+                line=dict(color=colours[i], dash=next(linestyles)),
             )
         )
 
@@ -551,13 +557,13 @@ def plot_fft_by_group(
             "Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]"
         ),
         yaxis=dict(title="Amplitude [dB]", range=[-140, 10]),
-        legend=dict(title="Signal component", font=dict(size=FS)),
+        legend=dict(title="Signal component", traceorder='normal',font=dict(size=FS)),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),
         plot_bgcolor="white",
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="lightgrey")
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="lightgrey")
 
+    fig.update_xaxes(mirror=True,ticks='outside',showline=True, linecolor='black', gridcolor="lightgrey")
+    fig.update_yaxes(mirror=True,ticks='outside',showline=True, linecolor='black', gridcolor="lightgrey")
     fig.show()
 
     return fig
