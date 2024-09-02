@@ -173,6 +173,7 @@ def heisenberg(
     max_freq=np.infty,
     padding="interpolate",
     use_log_scale=True,
+    title = "DWPT of Signal"
 ):
     """
     Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes.
@@ -190,6 +191,8 @@ def heisenberg(
         or just repeat it when dealing with packets of different levels.
     use_log_scale: bool
         set to True to use log10 scale for plot.
+    title_arg: str
+        figure title
     """
     if not isinstance(use_log_scale, bool):
         raise ValueError("use_log_scale must be bool")
@@ -242,7 +245,7 @@ def heisenberg(
     )
     ax.set_ylabel("Frequency of Subband [MHz]", fontsize=30)
     ax.set_xlabel("Time [$\mu s$]", fontsize=30)  # noqa
-    ax.set_title("DWPT of Signal", fontsize=30)
+    ax.set_title(title, fontsize=30)
     # ax.set_yscale("log")
 
     # Generate exis tick labels
@@ -376,9 +379,10 @@ def get_reconstructions_by_group(tr_obj, labels, freq_threshold):
 def plot_reconstructions_by_group(
     transform_object,
     labels,
-    t_plot=None,
-    freq_threshold=None,
-    label_map=None,
+    t_plot = None,
+    freq_threshold = None,
+    label_map = None,
+    title = "Reconstructed nodes by group",
     fig_height=350,
 ):
     """
@@ -457,7 +461,7 @@ def plot_reconstructions_by_group(
         width=1000,
         height=fig_height,
         font_size=FS,
-        title="Reconstructed nodes by group",
+        title=title,
         xaxis_title="Time [&mu;s]" if t_plot is not None else None,
         yaxis_title="Amplitude",
         legend=dict(title="Clusters", traceorder='normal',font=dict(size=FS)),
@@ -480,6 +484,7 @@ def plot_fft_by_group(
     fundamental_freq=None,
     freq_threshold=None,
     label_map=None,
+    title = "FFT comparison",
     fig_height=350,
     plot_full_reconstruction=False,
 ):
@@ -552,7 +557,7 @@ def plot_fft_by_group(
         width=1000,
         height=fig_height,
         font_size=FS,
-        title="FFT Comparison",
+        title=title,
         xaxis_title=(
             "Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]"
         ),
