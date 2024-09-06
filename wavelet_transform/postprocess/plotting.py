@@ -195,6 +195,10 @@ def heisenberg(
         set to True to use log10 scale for plot.
     title_arg: str
         figure title
+    vmax: float
+        the maximum value displayed in the colorbar
+    vmin: float
+        the minimum value displayed in the colorbar
     """
     if not isinstance(use_log_scale, bool):
         raise ValueError("use_log_scale must be bool")
