@@ -170,10 +170,12 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
 def heisenberg(
     transform_object,
     t_end=1,
-    max_freq=np.inf,
+    max_freq=1,
     padding="interpolate",
     use_log_scale=True,
-    title = "DWPT of Signal"
+    title="DWPT of Signal",
+    vmin=None,
+    vmax=None,
 ):
     """
     Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes.
@@ -185,7 +187,7 @@ def heisenberg(
     t_end: float
         the time the signal ends at
     max_freq: float
-        the maximum frequency to plot
+        the maximum frequency to plot (normalised by nyquist)
     padding: str
         can be set to "interpolate" or "repeat" to interpolate time series data
         or just repeat it when dealing with packets of different levels.
@@ -193,6 +195,10 @@ def heisenberg(
         set to True to use log10 scale for plot.
     title_arg: str
         figure title
+    vmax: float
+        the maximum value displayed in the colorbar
+    vmin: float
+        the minimum value displayed in the colorbar
     """
     if not isinstance(use_log_scale, bool):
         raise ValueError("use_log_scale must be bool")
@@ -242,13 +248,15 @@ def heisenberg(
         data if use_log_scale is False else np.log10(data),
         cmap="turbo",
         aspect="auto",
+        vmin=vmin,
+        vmax=vmax,
     )
     ax.set_ylabel("Frequency of Subband [MHz]", fontsize=30)
-    ax.set_xlabel("Time [$\\mu s$]", fontsize=30)  # noqa
+    ax.set_xlabel("Time [$\mu s$]", fontsize=30)  # noqa
     ax.set_title(title, fontsize=30)
     # ax.set_yscale("log")
 
-    # Generate exis tick labels
+    # Generate axis tick labels
 
     y_labels = [
         eng_form_plot(freq, 6, 1)  # (sci_form(freq[0], 1), sci_form(freq[1], 1))
@@ -273,7 +281,7 @@ def heisenberg(
     ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=25)
     ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=25)
 
-    # Formatting"
+    # Formatting
     cbar_label = (
         "Coefficient amplitude [dB]"
         if use_log_scale is True
@@ -289,6 +297,7 @@ def heisenberg(
 
 
 def _unrepeat(array):
+    "Remove repeated axis tick labels"
     x = ""
     indices = []
     count = 1
@@ -379,10 +388,10 @@ def get_reconstructions_by_group(tr_obj, labels, freq_threshold):
 def plot_reconstructions_by_group(
     transform_object,
     labels,
-    t_plot = None,
-    freq_threshold = None,
-    label_map = None,
-    title = "Reconstructed nodes by group",
+    t_plot=None,
+    freq_threshold=None,
+    label_map=None,
+    title="Reconstructed nodes by group",
     fig_height=350,
 ):
     """
@@ -440,9 +449,9 @@ def plot_reconstructions_by_group(
             name="Original signal",
         )
     )
-    
+
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ['dot', 'dashdot', 'solid','dot', 'dash',  'longdash','longdashdot']
+    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
     linestyles = cycle(lines)
 
     # Iterate through clusters
@@ -464,12 +473,24 @@ def plot_reconstructions_by_group(
         title=title,
         xaxis_title="Time [&mu;s]" if t_plot is not None else None,
         yaxis_title="Amplitude",
-        legend=dict(title="Clusters", traceorder='normal',font=dict(size=FS)),
+        legend=dict(title="Clusters", traceorder="normal", font=dict(size=FS)),
         plot_bgcolor="white",
     )
-    
-    fig.update_xaxes(mirror=True,ticks='outside',showline=True, linecolor='black', gridcolor="lightgrey")
-    fig.update_yaxes(mirror=True,ticks='outside',showline=True, linecolor='black', gridcolor="lightgrey")
+
+    fig.update_xaxes(
+        mirror=True,
+        ticks="outside",
+        showline=True,
+        linecolor="black",
+        gridcolor="lightgrey",
+    )
+    fig.update_yaxes(
+        mirror=True,
+        ticks="outside",
+        showline=True,
+        linecolor="black",
+        gridcolor="lightgrey",
+    )
     fig.show()
 
     return fig
@@ -484,7 +505,7 @@ def plot_fft_by_group(
     fundamental_freq=None,
     freq_threshold=None,
     label_map=None,
-    title = "FFT comparison",
+    title="FFT comparison",
     fig_height=350,
     plot_full_reconstruction=False,
 ):
@@ -527,7 +548,7 @@ def plot_fft_by_group(
         clusters = range(n_clusters)
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ['dot', 'dashdot', 'solid','dot', 'dash',  'longdash','longdashdot']
+    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
     linestyles = cycle(lines)
 
     for i in clusters:
@@ -562,13 +583,25 @@ def plot_fft_by_group(
             "Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]"
         ),
         yaxis=dict(title="Amplitude [dB]", range=[-140, 10]),
-        legend=dict(title="Signal component", traceorder='normal',font=dict(size=FS)),
+        legend=dict(title="Signal component", traceorder="normal", font=dict(size=FS)),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),
         plot_bgcolor="white",
     )
 
-    fig.update_xaxes(mirror=True,ticks='outside',showline=True, linecolor='black', gridcolor="lightgrey")
-    fig.update_yaxes(mirror=True,ticks='outside',showline=True, linecolor='black', gridcolor="lightgrey")
+    fig.update_xaxes(
+        mirror=True,
+        ticks="outside",
+        showline=True,
+        linecolor="black",
+        gridcolor="lightgrey",
+    )
+    fig.update_yaxes(
+        mirror=True,
+        ticks="outside",
+        showline=True,
+        linecolor="black",
+        gridcolor="lightgrey",
+    )
     fig.show()
 
     return fig
@@ -685,9 +718,8 @@ def plot_centers(classifying_metrics, centers, label_map=None):
         ), "each cluster must be labelled"
         ylabel = "Amplitude [DL]"
         if "energy" in metric:
-            # yvals = to_dB(yvals)
             ylabel = "Amplitude"
-        if "log" in metric and "energy" in metric:
+        if ("log" in metric) and ("energy" in metric):
             ylabel = "Amplitude [dB]"
         if "entropy" in metric:
             yvals = to_dB(yvals)
@@ -804,7 +836,9 @@ def plot_multiple_centers(
             labels.append(exp_label)
 
         # Formatting
-        ylabel = "Amplitude [dB]" if "energy" in metric and "log" not in metric else "Value"
+        ylabel = (
+            "Amplitude [dB]" if "energy" in metric and "log" not in metric else "Value"
+        )
 
         n_experiments = len(classifying_metrics)
         ax[i].set_xticks(
