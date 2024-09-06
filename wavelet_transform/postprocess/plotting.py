@@ -170,7 +170,7 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
 def heisenberg(
     transform_object,
     t_end=1,
-    max_freq=np.infty,
+    max_freq=np.inf,
     padding="interpolate",
     use_log_scale=True,
     title = "DWPT of Signal"
@@ -244,7 +244,7 @@ def heisenberg(
         aspect="auto",
     )
     ax.set_ylabel("Frequency of Subband [MHz]", fontsize=30)
-    ax.set_xlabel("Time [$\mu s$]", fontsize=30)  # noqa
+    ax.set_xlabel("Time [$\\mu s$]", fontsize=30)  # noqa
     ax.set_title(title, fontsize=30)
     # ax.set_yscale("log")
 
@@ -684,10 +684,10 @@ def plot_centers(classifying_metrics, centers, label_map=None):
             label_map
         ), "each cluster must be labelled"
         ylabel = "Amplitude [DL]"
-        if "energy" in metric and "log" not in metric:
-            yvals = to_dB(yvals)
-            ylabel = "Amplitude [dB]"
-        if "log" and "energy" in metric:
+        if "energy" in metric:
+            # yvals = to_dB(yvals)
+            ylabel = "Amplitude"
+        if "log" in metric and "energy" in metric:
             ylabel = "Amplitude [dB]"
         if "entropy" in metric:
             yvals = to_dB(yvals)
@@ -804,7 +804,7 @@ def plot_multiple_centers(
             labels.append(exp_label)
 
         # Formatting
-        ylabel = "Value [dB]" if "energy" in metric and "log" not in metric else "Value"
+        ylabel = "Amplitude [dB]" if "energy" in metric and "log" not in metric else "Value"
 
         n_experiments = len(classifying_metrics)
         ax[i].set_xticks(
