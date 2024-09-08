@@ -194,6 +194,39 @@ class BubbleDynamics(object):
             "phase_shift": self.phase_shift,
         }
 
+    def add_pac_wave(
+        self,
+        frequency,
+        pac,
+        time_delay,
+        pulse_width,
+        phase_initial,
+        phase_shift,
+        no_harmonics,
+    ):
+        """
+        Add an additional sine wave pulse to the input pressure for the model.
+
+        Parameters
+        ----------
+
+
+        """
+        omega = 2 * np.pi * frequency
+        tau = omega * self.time
+        tau_delay = omega * time_delay
+        npulse_width = omega * pulse_width
+        npac = pac / self.medium_parameters["p0"]
+
+        npac_wave = np.zeros(tau.shape)
+        for i in range(1, no_harmonics + 1):
+            npac_tmp = np.sin(i * (tau - phase_initial) + phase_shift) / i
+            npac_wave = npac_wave + npac_tmp
+        npac_wave = (
+            npac_wave * npac * np.exp(-(((tau - tau_delay) / npulse_width) ** 2))
+        )
+        self.npac_wave += npac_wave
+
     def solver(self):
         """
         Solving a spherical bubble dynamics and determines the radiated pressure in an unbounded medium using Gilmore Akulichev model.
