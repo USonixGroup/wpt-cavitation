@@ -257,28 +257,28 @@ The proposed algorithm is outlined in Fig. \ref{fig:method_flowchart}. The PCD d
 \begin{figure}
 	\begin{center}
 		\begin{tikzpicture}[node distance=2cm]
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										
 			% Define nodes
 			\node (signal) [startstop] {Signals};
 			\node (preprocess) [process, right of=signal, xshift=2cm] {Detrending and normalization};
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													  
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										  
 			\node (dwpt) [process, below of=preprocess] {DWPT (Shannon entropy minimization)};
 			\node (feature_extraction) [process, below of=signal] {Extract statistical features (self-organizing maps)}; 
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													  
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										  
 			\node (standardize) [process, below of=feature_extraction] {Standardize the data};
 			\node (kmeans) [process, below of=dwpt] {\km clustering (silhouette score)};
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										
 			\node (results) [startstop, below of=kmeans] {Clustering results};
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													   
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										   
 			% Define edges
 			\draw [arrow] (signal) -- (preprocess);
 			\draw [arrow] (preprocess) -- (dwpt);
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													  
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										  
 			\draw [arrow] (dwpt) -- (feature_extraction);
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													  
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										  
 			\draw [arrow] (feature_extraction) -- (standardize);
 			\draw [arrow] (standardize) -- (kmeans);
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																													
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																										
 			\draw [arrow] (kmeans) -- (results);
 		\end{tikzpicture}
 	\end{center}
@@ -463,9 +463,9 @@ The spectra of the PCD data are shown in Fig. \ref{fig:fft_pcd_data}. The result
 
 \begin{figure}[tb]
 	\centering
-	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/heisenberg_80.pdf}}%
+	\subcaptionbox{}{\includegraphics[trim= 0 0 70 70,clip, width=0.5\textwidth]{./figs/heisenberg_80_1_2.pdf}}%
 	\hfill
-	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/heisenberg_280.pdf}}%		
+	\subcaptionbox{}{\includegraphics[trim= 0 0 70 70,clip, width=0.5\textwidth]{./figs/heisenberg_280_1_2.pdf}}%		
 	\caption{Heisenberg plot of the DWPT transform; a) D1 data, b) D2 data.}
 	\label{fig:heisenberg_pcd_data}
 \end{figure}
@@ -474,25 +474,25 @@ The clustering results for the D1 experiment are shown in Fig. \ref{fig:cluster_
 
 \begin{figure}[tb]
 	\centering
-	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/sig_rec_centroids_80_1_2centers.pdf}}%
+	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/sig_rec_centers_truncated_80_1_2.pdf}}%
 	\hfill
-	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/spectrum_rec_centroids_80_1_2centers.pdf}}
+	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/fft_rec_centers_80_1_2.pdf}}
 	\\
-	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/sig_rec_centroids_280_1_2centers.pdf}}
+	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/sig_rec_centers_truncated_280_1_2.pdf}}
 	\hfill
-	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/spectrum_rec_centroids_280_1_2centers.pdf}}
+	\subcaptionbox{}{\includegraphics[trim= 0 0 0 70,clip, width=0.45\textwidth]{./figs/fft_rec_centers_280_1_2.pdf}}
 	\label{fig:rec_pcd_data_2centers}
 \end{figure}
 
 \begin{figure}[tb]
 	\centering
-	\subcaptionbox{}{\includegraphics[trim= 190 0 190 0,clip, width=0.45\textwidth]{./figs/clustering_80_1_3to6_centers.pdf}}%
+	\subcaptionbox{}{\includegraphics[trim= 190 0 190 0,clip, width=0.45\textwidth]{./figs/clustering_80_1_(3,6).pdf}}%
 	\hfill
-	\subcaptionbox{}{\includegraphics[trim= 190 0 190 0,clip, width=0.45\textwidth]{./figs/clustering_280_1_3to6_centers.pdf}}%		
+	\subcaptionbox{}{\includegraphics[trim= 190 0 190 0,clip, width=0.45\textwidth]{./figs/clustering_280_1_(3,6).pdf}}%		
 	\\
-	\subcaptionbox{}{\includegraphics[trim= 15 40 10 0,clip, width=0.45\textwidth]{./figs/sig_components_metrics_80_1_3to6_centers.pdf}}%
+	\subcaptionbox{}{\includegraphics[trim= 15 40 10 0,clip, width=0.45\textwidth]{./figs/sig_components_metrics_80_1_(3,6).pdf}}%
 	\hfill
-	\subcaptionbox{}{\includegraphics[trim= 15 40 10 0,clip, width=0.45\textwidth]{./figs/sig_components_metrics_280_1_3to6_centers.pdf}}%		
+	\subcaptionbox{}{\includegraphics[trim= 15 40 10 0,clip, width=0.45\textwidth]{./figs/sig_components_metrics_280_1_(3,6).pdf}}%		
 	\caption{Clustering of DWPT leaves using the selected metrics. Three out of four metrics are chosen for visualization. a) D1 data, b) D2 data.}
 	\label{fig:cluster_pcd_data}
 \end{figure}
@@ -508,13 +508,13 @@ Figures \ref{fig:280_1_fft} and \ref{fig:280_1_fft_metrics} show that the algori
 
 \begin{figure}[tb]
 	\centering
-	\subcaptionbox{}{\includegraphics[trim= 10 0 10 0,clip, width=0.45\textwidth]{./figs/sig_rec_centroids_80_1_3to6_centers.pdf}}%
+	\subcaptionbox{}{\includegraphics[trim= 0 0 10 0,clip, width=0.45\textwidth]{./figs/sig_rec_centers_truncated_80_1_(3,6).pdf}}%
 	\hfill
-	\subcaptionbox{}{\includegraphics[trim= 10 0 10 0,clip, width=0.45\textwidth]{./figs/sig_rec_centroids_280_1_3to6_centers.pdf}}%		
+	\subcaptionbox{}{\includegraphics[trim= 0 0 10 0,clip, width=0.45\textwidth]{./figs/fft_rec_centers_80_1_(3,6).pdf}}%		
 	\\
-	\subcaptionbox{}{\includegraphics[trim= 15 40 10 0,clip, width=0.45\textwidth]{./figs/sig_components_metrics_80_1_3to6_centers.pdf}}%
+	\subcaptionbox{}{\includegraphics[trim= 0 0 10 0,clip, width=0.45\textwidth]{./figs/sig_rec_centers_truncated_280_1_(3,6).pdf}}%
 	\hfill
-	\subcaptionbox{}{\includegraphics[trim= 15 40 10 0,clip, width=0.45\textwidth]{./figs/sig_components_metrics_280_1_3to6_centers.pdf}}%		
+	\subcaptionbox{}{\includegraphics[trim= 0 0 10 0,clip, width=0.45\textwidth]{./figs/fft_rec_centers_280_1_(3,6).pdf}}%		
 	\caption{Clustering of DWPT leaves using the selected metrics. Three out of four metrics are chosen for visualization. a) D1 data, b) D2 data.}
 	\label{fig:rec_pcd_data}
 \end{figure}
@@ -548,7 +548,7 @@ This paper presents a novel approach developed for analyzing PCD data by cluster
 %=======================================================
 \section{References}
 \bibliography{references}
-%%When uploading your files to Editorial Manager,  include both the .bib and the appropriate .bst file (for author/year reference style: jasaauthoryear2.bst; for numerical style: jasanum2.bst). Both the .bib and .bst should be uploaded as the “Manuscript (TeX or Word only)” item type.
+%%When uploading your files to Editorial Manager,  include both the .bib and the appropriate .bst file (for author/year reference style: jasaauthoryear2.bst; for numerical style: jasanum2.bst). Both the .bib and .bst should be uploaded as the “Manuscript (TeX or Word only)��� item type.
 	
 	
 %=======================================================
