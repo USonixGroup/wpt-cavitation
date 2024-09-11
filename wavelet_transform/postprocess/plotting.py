@@ -253,8 +253,8 @@ def heisenberg(
         vmin=vmin,
         vmax=vmax,
     )
-    ax.set_ylabel("$F_c$ [MHz]", fontsize=fsize)
-    ax.set_xlabel("t [$\mu s$]", fontsize=fsize)  # noqa
+    ax.set_ylabel("$f_c$ [MHz]", fontsize=fsize)
+    ax.set_xlabel("t [$\mathrm{\mu s}$]", fontsize=fsize)  # noqa
     ax.set_title(title, fontsize=fsize)
     # ax.set_yscale("log")
 

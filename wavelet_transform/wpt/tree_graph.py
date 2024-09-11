@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
-from networkx.drawing.nx_agraph import graphviz_layout
+from networkx.drawing.nx_agraph import graphviz_layout, write_dot
 import networkx as nx
 
 from wavelet_transform.utils.extensions import sci_form
@@ -52,6 +52,8 @@ class TreeGraph:
             sampling_rate,
             show_frequency,
         )
+        
+
 
     # ---------------- Getting Nodes & Edges ----------------
 
@@ -156,7 +158,7 @@ class TreeGraph:
         if isinstance(node_colour, list):
             # Create legend labels
             legend_labels = dict(
-                (i, f"Cluster {i}") for i in range(len(node_colour) + 1)
+                (i, f"Cl {i}") for i in range(len(node_colour) + 1)
             )
             legend_labels[-1] = "Unclassified"
 
@@ -180,9 +182,13 @@ class TreeGraph:
                 fontsize=40,
             )
 
+        self.Graph = G
+        self.Graph_pydot = nx.nx_pydot.to_pydot(G)
         if fig_name:
             plt.savefig(fig_name + ".png", format="PNG")
             plt.savefig(fig_name + ".pdf", format="PDF")
+            write_dot(G, fig_name + ".dot")
+            
 
     def _get_colours(self, G, node_colour, freq_threshold):
         labels = []
