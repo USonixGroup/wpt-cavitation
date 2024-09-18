@@ -10,52 +10,6 @@ from wavelet_transform.wpt.tree_graph import TreeGraph
 FS = 18  # fontsize
 
 
-def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
-    """
-    Formatted charts for plotting the results from a dwt or dpwt. Combines
-    relevant plots including those for the sound wave, frequency content of
-    the sound wave (using synthetic data package), and plots of the data at
-    each node.
-
-    Parameters
-    ----------
-    nodes: list
-        list of node objects
-    data: array_like
-        an array of the data from the sound wave
-    t_plot: array_like
-        the time array to plot the data against
-    nyquist_frequency: float
-        1/2*sampling rate
-    frequencies: list
-        list of floats containing the frequencies of the synthetic sound wave
-        for the historgram
-    """
-    # plot data
-    fig_1, ax_1 = plt.subplots()
-    plot_wave(data, t_plot, ax_1, title)
-
-    # plot transform coefficients all at once
-    if frequencies:  # plot a histogram of frequency content in data as well
-        fig_2, ax_2 = plt.subplots(2)
-        plot_all_final_nodes(nodes, ax_2[0], title)
-        plot_frequencies(frequencies, ax_2[1], title)
-    else:
-        fig_2, ax_2 = plt.subplots()
-        plot_all_final_nodes(nodes, ax_2, title)
-
-    # plot each node separately.
-    rows = round(len(nodes) / 2)
-    fig_3, ax_3 = plt.subplots(rows, 2)
-    fig_3.set_size_inches(12, 3 * rows)
-    plot_nodes(nodes, ax_3, sampling_rate, rows, columns=2)
-
-    fig_1.tight_layout()
-    fig_2.tight_layout()
-    fig_3.tight_layout()
-    plt.show()
-
-
 def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
     """
     Separately plots the data from a provided list of nodes.
@@ -648,7 +602,8 @@ def plot_clustering(
     # Make scatter plots
     legend_elements = []
     for center in range(centers.shape[0]):
-        for level in unique_levels:  # iterate  through level markers
+        # Plot data
+        for level in unique_levels:  # iterate through level markers
             mask = (labels == center) & (np.array(levels) == level)
             scatter = ax.scatter(
                 data_train.loc[mask, metrics_to_plot[0]],
@@ -661,6 +616,7 @@ def plot_clustering(
             if center == 0:
                 legend_elements.append(scatter)
 
+        # Plot centres
         ax.scatter(
             centers.loc[center, metrics_to_plot[0]],
             centers.loc[center, metrics_to_plot[1]],
@@ -913,3 +869,33 @@ def get_center_metrics(classifying_metrics, centers, label_maps):
     label_map = {k: v for k, v in enumerate(unique_labels)}
 
     return centres_avg, centres_std, unique_metrics, label_map
+
+
+def relabel(labels, centers, metric, ascending=False):
+    """
+    Relabels cluster numbers based on a given metric.
+
+    Parameters
+    ----------
+    labels: arraylike
+        the corresponding labels to each entry in the training data
+    centers: pd.df
+        the centres from clustering
+    metric: string
+        the name of the metric in centres used to order them
+    ascending: bool
+        whether to sort by ascending
+
+    Returns
+    -------
+    ordered_centers: pd.df
+        clustering centres ordered by given metric
+    ordered_labels: list
+        labels ordered by centre metric
+    """
+
+    ordered_centers = centers.sort_values(by=metric, ascending=ascending)
+    center_mapping = {k: v for v, k in enumerate(ordered_centers.index.tolist())}
+    ordered_labels = np.array([center_mapping[i] for i in labels])
+    ordered_centers = ordered_centers.reset_index()
+    return ordered_centers, ordered_labels
