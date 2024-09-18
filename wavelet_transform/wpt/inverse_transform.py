@@ -144,9 +144,7 @@ class InverseTransform:
     def inv_dwt(self, levels, **kwargs):
         return inv_dwt(self.transform_object, levels, **kwargs)
 
-    def info(
-        self, level=None, order="natural", leaf_nodes=False, freq_threshold=np.inf
-    ):
+    def info(self, level=None, order="natural", leaf_nodes=False, freq_threshold=1):
         """
         Perform the inverse transform on each node then calculate statistical measures on each.
 

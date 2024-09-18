@@ -10,7 +10,7 @@ def dwpt(
     *,
     min_entropy=False,
     min_level=0,
-    freq_threshold=np.inf,
+    freq_threshold=1,
 ):
     """
     Packet transform. Returns a transform object containing node objects
@@ -32,7 +32,7 @@ def dwpt(
         set to True to perform the minimum entropy decomposition
     min_level: int
         force the minimum entropy decomposition to decompose the signal to a certain level.
-        this is 0 by default.
+        this is 0 by default. Has no effect if min_entropy is False.
 
     Returns
     -------

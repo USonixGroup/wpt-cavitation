@@ -309,7 +309,7 @@ def generate_training_data(
     min_entropy=False,
     min_level=0,
     include_tr_obj=False,
-    freq_threshold=np.inf,
+    freq_threshold=1,
 ):
     """
     Generate training data for clustering using the wavelet packet transform. Statistical
