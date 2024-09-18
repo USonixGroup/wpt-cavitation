@@ -5,17 +5,17 @@
 
 # The target definitions are a bit of a lazy shortcut (we *could generate each of the intermediate files with specific rules only when we need to) but it works and it's short.
 
-LaTeXSources= $(wildcard *.tex *.bib) JASA.cls
+LaTeXSources= $(wildcard *.tex *.bib) revtex4-2.cls
 
 .PHONY: all clean superclean force
 all: manuscript_jasa.pdf
 
 
 manuscript_jasa.pdf: $(LaTeXSources)
-	pdflatex --halt-on-error $(basename $@).tex
+	pdflatex $(basename $@).tex
 	bibtex $(basename $@)
-	pdflatex --halt-on-error $(basename $@).tex
-	pdflatex --halt-on-error $(basename $@).tex
+	pdflatex $(basename $@).tex
+	pdflatex $(basename $@).tex
 #	dvips -P pdf $(basename $@).dvi
 #	ps2pdf $(basename $@).ps
 

@@ -7,8 +7,9 @@ from scipy.interpolate import interp1d
 from itertools import cycle
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
-FS = 18  # fontsize
-
+fsize = 20  # font size
+tick_size = 16 # tick size
+cl_label_fsize = 14 # clusters labels font size
 
 def full_plot(nodes, data, t_plot, sampling_rate, title="", frequencies=None):
     """
@@ -94,8 +95,8 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
             axis.plot(node.data)
 
             # set labels
-            axis.set_xlabel("coefficient number", fontsize=FS)
-            axis.set_ylabel("magnitude", fontsize=FS)
+            axis.set_xlabel("coefficient number", fontsize=fsize)
+            axis.set_ylabel("magnitude", fontsize=fsize)
             axis.grid(True)
 
             lower_frequency = node.norm_frequency_range[0] * nyquist_frequency
@@ -110,7 +111,7 @@ def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
             Coefficients, {lf}-{uf} Hz
             energy: {sci_form(node.energy)} [section {section_counter} of {n}]
             """
-            axis.set_title(title, fontsize=FS)
+            axis.set_title(title, fontsize=fsize)
             section_counter += 1
 
 
@@ -120,18 +121,18 @@ def plot_all_final_nodes(nodes, ax, title=""):
     for node in nodes:
         output = np.concatenate((output, node.data))
     ax.plot(output)
-    ax.set_title(f"Coefficients {title}", fontsize=FS)
-    ax.set_xlabel("Coefficient Number", fontsize=FS)
-    ax.set_ylabel("Coefficient", fontsize=FS)
+    ax.set_title(f"Coefficients {title}", fontsize=fsize)
+    ax.set_xlabel("Coefficient Number", fontsize=fsize)
+    ax.set_ylabel("Coefficient", fontsize=fsize)
     ax.grid(True)
 
 
 def plot_wave(data, t_plot, ax, title=""):
     "Plots the data"
     ax.plot(t_plot, data)
-    ax.set_xlabel("Time [s]", fontsize=FS)
-    ax.set_ylabel("Amplitude [mV]", fontsize=FS)
-    ax.set_title(f"Data {title}", fontsize=FS)
+    ax.set_xlabel("Time [s]", fontsize=fsize)
+    ax.set_ylabel("Amplitude [mV]", fontsize=fsize)
+    ax.set_title(f"Data {title}", fontsize=fsize)
     ax.grid(True)
 
 
@@ -139,9 +140,9 @@ def plot_frequencies(frequencies, ax, title=""):
     "Creates a histogram of the frequencies present in the synthetic data"
     if frequencies:
         ax.hist(frequencies)
-        ax.set_title(f"Frequency Distribution {title}", fontsize=FS)
-        ax.set_xlabel("Frequency [Hz]", fontsize=FS)
-        ax.set_ylabel("Frequency of frequency", fontsize=FS)
+        ax.set_title(f"Frequency Distribution {title}", fontsize=fsize)
+        ax.set_xlabel("Frequency [Hz]", fontsize=fsize)
+        ax.set_ylabel("Frequency of frequency", fontsize=fsize)
         ax.grid(True)
 
 
@@ -157,14 +158,14 @@ def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
         frequencies.append(1 / 2 * (freq_range[0] + freq_range[1]))
     if ax:
         ax.plot(frequencies, energy)
-        ax.set_title(f"Energy vs Subband Frequency {title}", fontsize=FS)
-        ax.set_xlabel("Frequencies [Hz]", fontsize=FS)
-        ax.set_ylabel("Energy (arbitrary)", fontsize=FS)
+        ax.set_title(f"Energy vs Subband Frequency {title}", fontsize=fsize)
+        ax.set_xlabel("Frequencies [Hz]", fontsize=fsize)
+        ax.set_ylabel("Energy (arbitrary)", fontsize=fsize)
     else:
         plt.plot(frequencies, energy)
-        plt.title(f"Energy vs Subband Frequency {title}", fontsize=FS)
-        plt.xlabel("Frequencies [Hz]", fontsize=FS)
-        plt.ylabel("Energy (arbitrary)", fontsize=FS)
+        plt.title(f"Energy vs Subband Frequency {title}", fontsize=fsize)
+        plt.xlabel("Frequencies [Hz]", fontsize=fsize)
+        plt.ylabel("Energy (arbitrary)", fontsize=fsize)
 
 
 def heisenberg(
@@ -173,9 +174,10 @@ def heisenberg(
     max_freq=1,
     padding="interpolate",
     use_log_scale=True,
-    title="DWPT of Signal",
+    title="DWPT of signal",
     vmin=None,
     vmax=None,
+    color_map = 'seismic'
 ):
     """
     Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes.
@@ -246,14 +248,14 @@ def heisenberg(
     frequencies = [1 / 2 * sum(node.numeric_freq_range) for node in nodes_per_row]
     graph = ax.imshow(
         data if use_log_scale is False else np.log10(data),
-        cmap="turbo",
+        cmap=color_map,
         aspect="auto",
         vmin=vmin,
         vmax=vmax,
     )
-    ax.set_ylabel("Frequency of Subband [MHz]", fontsize=30)
-    ax.set_xlabel("Time [$\mu s$]", fontsize=30)  # noqa
-    ax.set_title(title, fontsize=30)
+    ax.set_ylabel("$f_c$ [MHz]", fontsize=fsize)
+    ax.set_xlabel("t [$\mathrm{\mu s}$]", fontsize=fsize)  # noqa
+    ax.set_title(title, fontsize=fsize)
     # ax.set_yscale("log")
 
     # Generate axis tick labels
@@ -278,19 +280,19 @@ def heisenberg(
     all_y_ticks = [i for i in range(len(y_labels))]
 
     # Set ticks
-    ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=25)
-    ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=25)
+    ax.set_xticks(all_x_ticks, sparse_x_labels, fontsize=tick_size)
+    ax.set_yticks(all_y_ticks, sparse_y_labels, fontsize=tick_size)
 
     # Formatting
     cbar_label = (
-        "Coefficient amplitude [dB]"
+        "Amplitude of DWPT coeffs [dB]"
         if use_log_scale is True
-        else "Coefficient amplitude"
+        else "Amplitude of DWPT coeffs"
     )
     fig.tight_layout()
-    cbar = fig.colorbar(graph)
-    cbar.ax.tick_params(labelsize=20)
-    cbar.set_label(label=cbar_label, size=25)
+    cbar = fig.colorbar(graph, pad=0.01)
+    cbar.ax.tick_params(labelsize=tick_size)
+    cbar.set_label(label=cbar_label, size=fsize)
 
     plt.show()
     return fig
@@ -392,7 +394,7 @@ def plot_reconstructions_by_group(
     freq_threshold=None,
     label_map=None,
     title="Reconstructed nodes by group",
-    fig_height=350,
+    fig_height=400,
 ):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
@@ -409,9 +411,9 @@ def plot_reconstructions_by_group(
     no_clusters: int
         the number of clusters used. If set to None, the number of clusters will be
         derived from the number of unique elements in the list of labels.
-    t_plot: array-like, float, int
+    t_plot: dict, array-like, float, int
         time array for plotting. if this is a float or int, it will be assumed to represent the
-        sampling rate
+        sampling rate in sample/s. if it is an array, it is assumed it is time array in s. if it is a dict, the key of the dict is used for the label and the value MUST be an array for the axis.
     freq_threshold: float, optional
         frequency threshold for reconstruction
     label_map: dict int: str
@@ -428,19 +430,27 @@ def plot_reconstructions_by_group(
         transform_object, labels, freq_threshold
     )
 
+
     fig = go.Figure()
 
     data_len = len(transform_object.data)
     if t_plot is None:
         xvals = np.arange(data_len)
+        x_label = ['x']
     elif isinstance(t_plot, (np.ndarray)):
         data_len = len(t_plot)
         xvals = t_plot.copy()
         xvals *= 10**6  # get time in microseconds
+        x_label = "t [&mu;s]"
     elif isinstance(t_plot, (float, int)):
         xvals = np.arange(0, data_len / t_plot, 1 / t_plot)
         xvals *= 10**6  # get time in microseconds
-
+        x_label = "t [&mu;s]"
+    elif isinstance(t_plot, dict):
+        x_label = list(t_plot.keys())[0]
+        xvals = list(t_plot.values())[0]
+        data_len = len(xvals)
+        
     fig.add_trace(
         go.Scatter(
             x=xvals,
@@ -469,11 +479,11 @@ def plot_reconstructions_by_group(
     fig.update_layout(
         width=1000,
         height=fig_height,
-        font_size=FS,
+        font_size=fsize,
         title=title,
-        xaxis_title="Time [&mu;s]" if t_plot is not None else None,
+        xaxis_title=x_label,
         yaxis_title="Amplitude",
-        legend=dict(title="Clusters", traceorder="normal", font=dict(size=FS)),
+        legend=dict(title="", traceorder="normal", font=dict(size=fsize)),
         plot_bgcolor="white",
     )
 
@@ -506,7 +516,7 @@ def plot_fft_by_group(
     freq_threshold=None,
     label_map=None,
     title="FFT comparison",
-    fig_height=350,
+    fig_height=400,
     plot_full_reconstruction=False,
 ):
     """
@@ -577,13 +587,13 @@ def plot_fft_by_group(
     fig.update_layout(
         width=1000,
         height=fig_height,
-        font_size=FS,
+        font_size=fsize,
         title=title,
         xaxis_title=(
             "Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]"
         ),
         yaxis=dict(title="Amplitude [dB]", range=[-140, 10]),
-        legend=dict(title="Signal component", traceorder="normal", font=dict(size=FS)),
+        legend=dict(title="", traceorder="normal", font=dict(size=fsize)),
         xaxis=dict(range=[0, xlim] if xlim is not None else None),
         plot_bgcolor="white",
     )
@@ -615,7 +625,7 @@ def plot_clustering(
     centers,
     labels,
     metrics_to_plot,
-    title="Clustering Results",
+    title="Clustering results",
     label_map=None,
     levels=None,
 ):
@@ -676,13 +686,29 @@ def plot_clustering(
             centers.loc[center, metrics_to_plot[2]],
             get_label(center, label_map),
             color="black",
-            fontsize=14,
+            fontsize=cl_label_fsize,
         )
 
-        ax.set_xlabel(metrics_to_plot[0].capitalize(), fontsize=18)
-        ax.set_ylabel(metrics_to_plot[1].capitalize(), fontsize=18)
-        ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=18)
-        ax.set_title(title, fontsize=20)
+        ax.set_xlabel(metrics_to_plot[0].capitalize(), fontsize=fsize)
+        ax.set_ylabel(metrics_to_plot[1].capitalize(), fontsize=fsize)
+        ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=fsize)
+        ax.set_title(title, fontsize=fsize)
+
+    # a2s = lambda xarray: ["%.2f" % x for x in xarray]
+    # x_ticks = np.linspace(min(centers[metrics_to_plot[0]]), 10*max(centers[metrics_to_plot[0]]),10)
+    # y_ticks = np.linspace(min(centers[metrics_to_plot[1]]), 10*max(centers[metrics_to_plot[1]]),10)
+    # z_ticks = np.linspace(min(centers[metrics_to_plot[2]]), max(centers[metrics_to_plot[2]]),10)
+    # ax.set_xticks(x_ticks,a2s(x_ticks),fontsize=tick_size)
+    # ax.set_yticks(y_ticks,a2s(y_ticks),fontsize=tick_size)
+    # ax.set_zticks(z_ticks,a2s(z_ticks),fontsize=tick_size) 
+    ax.xaxis.pane.fill = False
+    ax.yaxis.pane.fill = False
+    ax.zaxis.pane.fill = False
+    
+    # Now set color to white (or whatever is "invisible")
+    ax.xaxis.pane.set_edgecolor('w')
+    ax.yaxis.pane.set_edgecolor('w')
+    ax.zaxis.pane.set_edgecolor('w')
     ax.set_box_aspect(None, zoom=0.92)
     if not all(i == 0 for i in levels):
         ax.legend(handles=legend_elements, title="Node level")
@@ -730,16 +756,16 @@ def plot_centers(classifying_metrics, centers, label_map=None):
             xvals = [v for v in dict(sorted(label_map.items())).values()]
             label_angle = 45
         else:
-            xlabel = "Cluster Number"
+            xlabel = "Cluster number"
             xvals = [i for i in range(n_clusters)]
             label_angle = 0
 
         ax[i].bar(xvals, yvals, color=colours)
-        ax[i].set_title(f"{metric.capitalize()}", fontsize=25)
-        ax[i].set_xlabel(xlabel, fontsize=20)
-        ax[i].set_ylabel(ylabel, fontsize=20)
+        ax[i].set_title(f"{metric.capitalize()}", fontsize=fsize)
+        ax[i].set_xlabel(xlabel, fontsize=fsize)
+        ax[i].set_ylabel(ylabel, fontsize=fsize)
         ax[i].tick_params(axis="x", rotation=label_angle)
-        ax[i].tick_params(labelsize=20)
+        ax[i].tick_params(labelsize=tick_size)
     plt.tight_layout()
     plt.show()
 
