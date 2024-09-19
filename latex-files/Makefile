@@ -12,10 +12,10 @@ all: manuscript_jasa.pdf
 
 
 manuscript_jasa.pdf: $(LaTeXSources)
-	pdflatex --halt-on-error $(basename $@).tex
-	bibtex $(basename $@)
-	pdflatex --halt-on-error $(basename $@).tex
-	pdflatex --halt-on-error $(basename $@).tex
+	pdflatex $(basename $@).tex
+	bibtex $(basename $@).aux
+	pdflatex $(basename $@).tex
+	pdflatex $(basename $@).tex
 #	dvips -P pdf $(basename $@).dvi
 #	ps2pdf $(basename $@).ps
 
