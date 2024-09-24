@@ -349,6 +349,7 @@ def plot_reconstructions_by_group(
     label_map=None,
     title="Reconstructed nodes by group",
     fig_height=400,
+    fig_width=1000,
 ):
     """
     Reconstruct each node from the level of transform used to train the clustering algorithm
@@ -431,7 +432,7 @@ def plot_reconstructions_by_group(
         )
 
     fig.update_layout(
-        width=1000,
+        width=fig_width,
         height=fig_height,
         font_size=fsize,
         title=title,
@@ -471,6 +472,7 @@ def plot_fft_by_group(
     label_map=None,
     title="FFT comparison",
     fig_height=400,
+    fig_width=1000,
     plot_full_reconstruction=False,
 ):
     """
@@ -539,7 +541,7 @@ def plot_fft_by_group(
         )
 
     fig.update_layout(
-        width=1000,
+        width=fig_width,
         height=fig_height,
         font_size=fsize,
         title=title,
@@ -686,7 +688,7 @@ def _get_level_markers():
     return level_markers
 
 
-def plot_centers(classifying_metrics, centers, label_map=None):
+def plot_centers(classifying_metrics, centers, label_map=None, xlabel_user=None):
     "Plot the clustering centres for one signal"
     n_clusters = centers.shape[0]
     colours = list(TreeGraph.colour_dict.values())[1:]
@@ -707,10 +709,14 @@ def plot_centers(classifying_metrics, centers, label_map=None):
             yvals = to_dB(yvals)
             ylabel = "Amplitude [dB]"
 
-        if isinstance(label_map, dict):
-            xlabel = "Signal component"
+        if isinstance(label_map, dict) and xlabel_user==None:
+            xlabel = "signal component"
             xvals = [v for v in dict(sorted(label_map.items())).values()]
             label_angle = 45
+        elif isinstance(label_map, dict) and isinstance(xlabel_user,str):
+            xlabel = xlabel_user
+            xvals = [v for v in dict(sorted(label_map.items())).values()]
+            label_angle = 0
         else:
             xlabel = "Cluster number"
             xvals = [i for i in range(n_clusters)]

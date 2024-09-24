@@ -158,7 +158,7 @@ class TreeGraph:
         if isinstance(node_colour, list):
             # Create legend labels
             legend_labels = dict(
-                (i, f"Cl {i}") for i in range(len(node_colour) + 1)
+                (i, f"Cluster {i}") for i in range(len(node_colour) + 1)
             )
             legend_labels[-1] = "Unclassified"
 
