@@ -46,7 +46,7 @@
 \email{zcemauy@ucl.ac.uk}
 
 \begin{abstract}
-Acoustic emissions from cavitating bubbles contain complex information in the time and frequency domains. Passive cavitation detectors are used to measure these emissions. By processing this data, it becomes possible to extract cavitation features including broadband emissions, harmonics, sub- and ultra-harmonics. This allows monitoring cavitation which has diverse industrial applications. This paper presents a novel approach that utilizes the wavelet packet transform, statistical metrics and \km clustering to detect and classify these features in acoustic emissions. These findings enable us to quantitatively separate the stable and transient features of acoustic cavitation. This method was validated on acoustic emissions obtained by solving a single bubble dynamics (Gilmore-Akulichev model) and subsequently tested on experimental data from biomedical ultrasound applications.
+	Acoustic emissions from cavitating bubbles contain complex information in the time and frequency domains. Passive cavitation detectors are used to measure these emissions. By processing this data, it becomes possible to extract cavitation features including broadband emissions, harmonics, sub- and ultra-harmonics. This allows monitoring cavitation which has diverse industrial applications. This paper presents a novel approach that utilizes the wavelet packet transform, statistical metrics and \km clustering to detect and classify these features in acoustic emissions. These findings enable us to quantitatively separate the stable and transient features of acoustic cavitation. This method was validated on acoustic emissions obtained by solving a single bubble dynamics (Gilmore-Akulichev model) and subsequently tested on experimental data from biomedical ultrasound applications.
 \end{abstract}
 
 \maketitle
@@ -55,7 +55,7 @@ Acoustic emissions from cavitating bubbles contain complex information in the ti
 
 %% before appendix (optional) and bibliography:
 \begin{acknowledgements}
-This research was supported by ...
+	This research was supported by ...
 \end{acknowledgements}
 
 \section{Introduction}
@@ -96,30 +96,30 @@ Wavelet packet bases were developed to effectively decompose a piecewise smooth 
 In fast orthogonal discrete wavelet transform (DWT), a bank of conjugate mirror filters and downsampling (by a factor of 2) are used to decompose a signal $x[n]$ of length $N=2^{n_0}$ into a cascade of coarser approximations $a_j[n]$ and finer details $d_j[n]$ at a scale $j$ \cite{mallat2009}
 
 \begin{equation}
-  \begin{aligned}  
-    \label{eq:dwt-decomp}
-    a_{j+1}[n] ~&=~ \sum_{m=0}^{M-1} h[m]a_j[m-2n]  \\
-    d_{j+1}[n] ~&=~ \sum_{m=0}^{M-1} g[m]a_j[m-2n] 
-  \end{aligned}
+	\begin{aligned}  
+		\label{eq:dwt-decomp}
+		a_{j+1}[n] ~ & =~ \sum_{m=0}^{M-1} h[m]a_j[m-2n] \\
+		d_{j+1}[n] ~ & =~ \sum_{m=0}^{M-1} g[m]a_j[m-2n] 
+	\end{aligned}
 \end{equation}
 
 
 \noindent where $a_0[n] = x[n]$, $h[m]$ and $g[m]$ are the impulse responses of the filters corresponding to the scaling and wavelet bases functions and are related as follows
 
 \begin{align}  
-  \label{eq:dwt-filters}
-  g[m]~=~(-1)^{1-m} h[1-m]
+	\label{eq:dwt-filters}   
+	g[m]~=~(-1)^{1-m} h[1-m] 
 \end{align}
 
 \noindent $g[m]$ and $h[m]$ can be viewed as transfer functions of low- and high-pass filters, respectively, with length $M$. Thus, approximations and details represent the amplitudes of low- and high- frequency components, respectively, of the decomposed signal. In \eq{\ref{eq:dwt-decomp}}, the approximations ($a_j$) are only divided to low- and high-frequency components. Instead, we can iteratively split both approximation ($a_j$) and detail ($d_j$) at each scale, usually represented in a binary tree. This increases the computational complexity of discrete wavelet packet transform (DWPT) to $O(Nlog_2(N))$ compared to $O(N)$ for DWT.
 \noindent Any node of the binary tree includes a packet of wavelet transformed component, i.e., the coefficients of filtered signal at a frequency subband, and is labeled by tuple $(j,k)$ where $j$ is the scale number (the depth of the node in the tree) and $k$ is the number of nodes that are on its left at the same scale (position of a node at a given depth). A schematic diagram of discrete wavelet packet transform using a bank of filters is shown in \figg{\ref{fig:dwpt_filter_bank}}.  
 
 \begin{figure}
-  \begin{center}
-    \includegraphics[width=3in]{./figs/dwpt_filter_bank.png}
-  \end{center}
-  \caption{The DWPT implemented as a filter bank}
-  \label{fig:dwpt_filter_bank}
+	\begin{center}
+		\includegraphics[width=3in]{./figs/dwpt_filter_bank.png}
+	\end{center}
+	\caption{The DWPT implemented as a filter bank}
+	\label{fig:dwpt_filter_bank}
 \end{figure}
 
 
@@ -144,15 +144,15 @@ The packets can be separately reconstructed into signals which combine to form t
 To extract the signatures of inertial and stable cavitations at each subband, we will characterise the DWPT coefficients of nodes at the final (deepest) scale by the following statistical metrics: energy, kurtosis, crest factor, skewness, entropy and the logarithms of energy. The energy of a packet is a measure of how much the signal is concentrated within that subband, calculated as follows
 
 \begin{align}
-  \label{eq:energy}
-  E_{j,k} = \sum_{n=1}^{N_{j,k}} x_{j,k}[n]^2 
+	\label{eq:energy}                           
+	E_{j,k} = \sum_{n=1}^{N_{j,k}} x_{j,k}[n]^2 
 \end{align}
 
 \noindent where $x_{j,k}[n]$ are coefficients in a subband $(j,k)$ and $N_{j,k}$ is the number of coefficients in the subband. Note that using orthogonal wavelet bases for DWPT preserves the energy of the signal. Hence, the sum of the energy of all nodes in the final scale equals to the energy of the time series signal. The average energy of the coefficients in a node is defined as
 
 \begin{align}
-  \label{eq:avg_energy}
-  \bar{E}_{j,k} = \dfrac{1}{N_{j,k}} E_{j,k}
+	\label{eq:avg_energy}                      
+	\bar{E}_{j,k} = \dfrac{1}{N_{j,k}} E_{j,k} 
 \end{align}
 
 \noindent where $E_{j,k}$ is the energy of the coefficients in a subband $(j,k)$ and $N_{j,k}$ is the number of coefficients in the subband.
@@ -160,8 +160,8 @@ To extract the signatures of inertial and stable cavitations at each subband, we
 To better distinguish fundamental, sub- and ultra-harmonics, we also use the log-energy metric, i.e., $LE_{j,k}~=~ \log{E_{j,k}}$. To measure the energy distribution of a subband - compared to other subbands, we use Shannon entropy which is defined as
 
 \begin{align}
-  \label{eq:entropy}
-  S_{j,k} = -\sum_{n=1}^{N_{j,k}} \dfrac{x_{j,k}[n]^2}{E_{j,k}} ~ \log{\dfrac{x_{j,k}[n]^2}{E_{j,k}}} 
+	\label{eq:entropy}                                                                                  
+	S_{j,k} = -\sum_{n=1}^{N_{j,k}} \dfrac{x_{j,k}[n]^2}{E_{j,k}} ~ \log{\dfrac{x_{j,k}[n]^2}{E_{j,k}}} 
 \end{align}
 
 \noindent where $E_{0,0}$ is the total energy of the signal. 
@@ -169,8 +169,8 @@ To better distinguish fundamental, sub- and ultra-harmonics, we also use the log
 Level entropy is a variation on the calculation of entropy given by
 
 \begin{align}
-  \label{eq:level_entropy}
-  S'_{j,k} = -\sum_{n=1}^{N_{j,k}} \dfrac{x_{j,k}[n]^2}{E_{0,0}} ~ \log{\dfrac{x_{j,k}[n]^2}{E_{0,0}}} 
+	\label{eq:level_entropy}                                                                             
+	S'_{j,k} = -\sum_{n=1}^{N_{j,k}} \dfrac{x_{j,k}[n]^2}{E_{0,0}} ~ \log{\dfrac{x_{j,k}[n]^2}{E_{0,0}}} 
 \end{align}
 
 \noindent We will use level entropy to also obtain the minimum entropy decomposition.
@@ -180,8 +180,8 @@ The spectral entropy is a measure of the complexity of the distribution in the F
 Kurtosis is a measure of how often outliers occur in a signal. It is viewed as a metric for detecting transient cavitation. Kurtosis is calculated using the following relationship
 
 \begin{align}
-  \label{eq:kurtosis}
-  K_{j,k} = \dfrac{1}{n\sigma_{j,k}^4} \sum_{n=1}^{N_{j,k}}(x_{j,k}[n]-\overline{x}_{j,k})^4 
+	\label{eq:kurtosis}                                                                        
+	K_{j,k} = \dfrac{1}{n\sigma_{j,k}^4} \sum_{n=1}^{N_{j,k}}(x_{j,k}[n]-\overline{x}_{j,k})^4 
 \end{align}
 
 \noindent where $\overline{x}_{j,k}$ and $\sigma_{j,k}$ are the mean and standard deviation of the coefficients of the node $(j,k)$.
@@ -189,8 +189,8 @@ Kurtosis is a measure of how often outliers occur in a signal. It is viewed as a
 Skewness measures the extent to which a distribution is asymmetrical. It is given by
 
 \begin{align}
-	\label{eq:skewness}
-Sk_{j,k} = \dfrac{1}{n\sigma_{j,k}^3} \sum_{n=1}^{N_{j,k}}(x_{j,k}[n]-\overline{x}_{j,k})^3
+	\label{eq:skewness}                                                                         
+	Sk_{j,k} = \dfrac{1}{n\sigma_{j,k}^3} \sum_{n=1}^{N_{j,k}}(x_{j,k}[n]-\overline{x}_{j,k})^3 
 \end{align}
 
 \noindent The absolute value of the skewness of the coefficients is expected to be larger in magnitude when the signal has transient components.
@@ -198,8 +198,8 @@ Sk_{j,k} = \dfrac{1}{n\sigma_{j,k}^3} \sum_{n=1}^{N_{j,k}}(x_{j,k}[n]-\overline{
 The crest factor is the ratio between the peak value and the mean of the signal, indicating how extreme the peaks are in the signal. It is obtained by
 
 \begin{align}
-  \label{eq:crest_factor}
-  C_{j,k} = \dfrac{{\max{(\left\lvert x_{j,k}[n] \right\rvert )}}^2}{x_{rms}^2}
+	\label{eq:crest_factor}                                                       
+	C_{j,k} = \dfrac{{\max{(\left\lvert x_{j,k}[n] \right\rvert )}}^2}{x_{rms}^2} 
 \end{align}
 \noindent where $x_{rms}$ is the root-mean-square of $x_{j,k}[n]$.
 
@@ -210,8 +210,8 @@ A feature matrix of these statistical metrics of all subbands is formed. The nex
 \km splits a dataset comprised of $n$ observations, each with a number of features, into $k$ clusters. The aim of the algorithm is to minimise the total loss measured as the sum of the Euclidean distances between the centroid of the cluster and each point assigned to it (see \eq{\ref{eq:kmeans}}). To do this, the cluster centroids are initiated randomly and each data point is assigned to the nearest cluster. The clusters are iteratively re-allocated to minimise the loss function.
 
 \begin{align}
-  \Theta = \sum_{i=1}^{n}{\sum_{j=1}^{k}{\rho^{(i,j)} \lVert x^{(i)} - \mu^{(j)} \rVert^2}}
-  \label{eq:kmeans}
+	\Theta = \sum_{i=1}^{n}{\sum_{j=1}^{k}{\rho^{(i,j)} \lVert x^{(i)} - \mu^{(j)} \rVert^2}} 
+	\label{eq:kmeans}                                                                         
 \end{align}
 
 \noindent where $\Theta$ is the distortion (loss) function, $\rho$ is the assignment of the data point $i$ to cluster $j$, and $x$ and $\mu$ are the data point and cluster centroid respectively.
@@ -221,7 +221,7 @@ A feature matrix of these statistical metrics of all subbands is formed. The nex
 Another issue of the \km algorithm is that the number of clusters $k$ must be specified before training. This presents a challenge in this scenario where the number of clusters is expected to vary depending on the type of cavitation that occurs. For example, a signal comprised of a sine wave and noise, representing a measurement of stable cavitation, will results in nodes which fall into two clusters: those representing noise, and those representing the fundamental frequency. Once harmonics and transients are added to the signal, more clusters could be formed. Therefore, the algorithm must adapt to the number of clusters that exist in the data.  Several techniques have been developed for choosing the optimal number of clusters \cite{schubert2022stop, yuan2019research}. Here, we will use the silhouette score to to automate the selection of $k$. The silhouette score is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation), ranging from -1 to 1, where a high value indicates that the object is well matched to its own cluster and poorly matched to neighbouring clusters. The silhouette score is easy to implement and works well for small datasets. \cite{shahapure2020cluster}. It is given by
 
 \begin{align}
-  s = \frac{b-a}{\max(a,b)}\label{eq:silhouette_score}
+	s = \frac{b-a}{\max(a,b)}\label{eq:silhouette_score} 
 \end{align}
 
 \noindent where $b$ is the mean distance between a point and the points in the nearest cluster $a$ is the mean distance between the point and all other points in the same cluster. The nearest cluster is found by finding the cluster centre that is closest the the point. The metric used to select $k$ is the average silhouette score for every point in the dataset. We will iteratively change $k$ to maximise the silhouette score.
@@ -235,35 +235,35 @@ Another issue of the \km algorithm is that the number of clusters $k$ must be sp
 The proposed algorithm is outlined in \figg{\ref{fig:method_flowchart}}. The PCD data were normalised by taking off the mean and dividing by the standard deviation. Next, the DWPT was applied to the signal, decomposing it into frequency subbands using the minimum entropy decomposition algorithm and the statistical metrics were calculated at the leaf nodes. The nodes with frequency higher than a specified frequency were left out. These metrics were normalised using a standard scalar, fitting each set of statistical metrics to a standard Guassian distribution to ensure that their difference in scale does not affect clustering. Each node, now represented as a set of features calculated from their coefficients, was fed into the \km algorithm for to be clustered. We only need to specify the wavelet family and the order of the wavelet function. The depth of decomposition and the number of clusters was determined automatically.
 
 \begin{figure}
-\begin{center}
-\begin{tikzpicture}[node distance=2cm]
-
-   % Define nodes
-   \node (signal) [startstop] {Signals};
-   \node (preprocess) [process, right of=signal, xshift=2cm] {Detrending and normalisation};
-  
-   \node (dwpt) [process, below of=preprocess] {DWPT (Shannon entropy minimisation)};
-   \node (feature_extraction) [process, below of=signal] {Extract statistical features (self-organising maps)}; 
-  
-   \node (standardise) [process, below of=feature_extraction] {Standardise the data};
-   \node (kmeans) [process, below of=dwpt] {\km clustering (silhouette score)};
-
-   \node (results) [startstop, below of=kmeans] {Clustering results};
-   
-   % Define edges
-   \draw [arrow] (signal) -- (preprocess);
-   \draw [arrow] (preprocess) -- (dwpt);
-  
-   \draw [arrow] (dwpt) -- (feature_extraction);
-  
-   \draw [arrow] (feature_extraction) -- (standardise);
-   \draw [arrow] (standardise) -- (kmeans);
-
-   \draw [arrow] (kmeans) -- (results);
-\end{tikzpicture}
-\end{center}
-\caption{Flowchart of proposed method}
-\label{fig:method_flowchart}
+	\begin{center}
+		\begin{tikzpicture}[node distance=2cm]
+						
+			% Define nodes
+			\node (signal) [startstop] {Signals};
+			\node (preprocess) [process, right of=signal, xshift=2cm] {Detrending and normalisation};
+						  
+			\node (dwpt) [process, below of=preprocess] {DWPT (Shannon entropy minimisation)};
+			\node (feature_extraction) [process, below of=signal] {Extract statistical features (self-organising maps)}; 
+						  
+			\node (standardise) [process, below of=feature_extraction] {Standardise the data};
+			\node (kmeans) [process, below of=dwpt] {\km clustering (silhouette score)};
+						
+			\node (results) [startstop, below of=kmeans] {Clustering results};
+						   
+			% Define edges
+			\draw [arrow] (signal) -- (preprocess);
+			\draw [arrow] (preprocess) -- (dwpt);
+						  
+			\draw [arrow] (dwpt) -- (feature_extraction);
+						  
+			\draw [arrow] (feature_extraction) -- (standardise);
+			\draw [arrow] (standardise) -- (kmeans);
+						
+			\draw [arrow] (kmeans) -- (results);
+		\end{tikzpicture}
+	\end{center}
+	\caption{Flowchart of proposed method}
+	\label{fig:method_flowchart}
 \end{figure}
 
 \subsection{\km parameters}
@@ -274,53 +274,53 @@ The k-means algorithm was run with Lloyd's algorithm described in section \ref{s
 Gilmore's model describes the dynamics of a spherical bubble in a compressible liquid, undergoing symmetric oscillations due to acoustic excitations. The model has been validated against experimental data and widely used for studying acoustic cavitation.\cite{lauterborn2010} The Gilmore equation is expressed as follows \cite{gilmore1952}
 
 \begin{align}
-  \label{eq:gilmore}
-  & R \ddot{R}\left(1~-~\dfrac{\dot{R}}{C}\right) ~+~ \dfrac{3}{2}{\dot{R}}^2 \left(1~-~\dfrac{\dot{R}}{3C}\right) ~=~ \nonumber \\
-  & H\left(1~+~\dfrac{\dot{R}}{C}\right)  ~+~ \dfrac{R \dot{H}}{C}\left(1~-~\dfrac{\dot{R}}{C}\right)
+	\label{eq:gilmore}
+	  & R \ddot{R}\left(1~-~\dfrac{\dot{R}}{C}\right) ~+~ \dfrac{3}{2}{\dot{R}}^2 \left(1~-~\dfrac{\dot{R}}{3C}\right) ~=~ \nonumber \\
+	  & H\left(1~+~\dfrac{\dot{R}}{C}\right)  ~+~ \dfrac{R \dot{H}}{C}\left(1~-~\dfrac{\dot{R}}{C}\right)                            
 \end{align}
 
 \noindent where $R$ is the instantaneous bubble radius, $C$ and $H$ are the speed of sound in the liquid at the bubble wall, and the enthalpy difference in the liquid at the bubble wall (at pressure $P(R)$) and at infinity (at $P_\infty$), respectively. Time derivatives are designated by dots. Pressure at infinity is the sum of the static reference pressure $P_0$ and the acoustic pressure $P_{ac}(t)$, i.e., $P_\infty(t)=P_0~+~P_{ac}(t)$. Gilmore's model implicitly assumes that the acoustic pressure is applied instantaneously and uniformly around the bubble without specifying a source location in the liquid. Thus, the liquid density and speed of sound at infinity are taken at the static reference state, denoted by $\rho_0$ and $c_0$, respectively, below. $C$ and $H$ are calculated using the following equations
 
 \begin{align}
-  \label{eq:wavespeed}
-	C ~=~ \sqrt{c_0^2~+~(n-1)H}
+	\label{eq:wavespeed}        
+	C ~=~ \sqrt{c_0^2~+~(n-1)H} 
 \end{align}
 
 \begin{align}
-  \label{eq:enthalpy}
-  H ~=~ \dfrac{n A^{1/n}}{(n-1)\rho_0}  &\left[ \left(P(R) ~+~ B\right)^{\left(1-1/n\right)} ~ - \right. \nonumber \\
-  & \left. \left(P_\infty(t) ~+~ B\right)^{\left(1-1/n\right)} \right]
+	\label{eq:enthalpy}
+	H ~=~ \dfrac{n A^{1/n}}{(n-1)\rho_0} & \left[ \left(P(R) ~+~ B\right)^{\left(1-1/n\right)} ~ - \right. \nonumber \\
+	                                     & \left. \left(P_\infty(t) ~+~ B\right)^{\left(1-1/n\right)} \right]        
 \end{align}
 
 \noindent where $A, B,~\mathrm{and}~n$ are constants in the Tait's equation of state which are obtained experimentally. The time derivative of the enthalpy in the liquid at the bubble wall becomes
 
 \begin{align}
-  \label{eq:enthalpy_dot}
-  \dot{H} ~=~ \dfrac{A^{1/n}}{\rho_0}  &\left[ \dot{P}(R)\left(P(R) ~+~ B\right)^{-1/n} ~ - \right. \nonumber \\
-  & \left. \dot{P}_{ac}(t) \left(P_\infty(t) ~+~ B\right)^{-1/n} \right].
+	\label{eq:enthalpy_dot}
+	\dot{H} ~=~ \dfrac{A^{1/n}}{\rho_0} & \left[ \dot{P}(R)\left(P(R) ~+~ B\right)^{-1/n} ~ - \right. \nonumber \\
+	                                    & \left. \dot{P}_{ac}(t) \left(P_\infty(t) ~+~ B\right)^{-1/n} \right]. 
 \end{align}
 
 \noindent Note that $\dot{P}_\infty(t)=\dot{P}_{ac}(t)$. $P(R)$ is calculated using a modified Laplace equation
 
 \begin{align}
-  \label{eq:pressure_at_R}
-  P(R)~=~ \left(P_0~+~\frac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\gamma}~-~\dfrac{2\sigma}{R}~-~\dfrac{4\mu \dot{R}}{R}
+	\label{eq:pressure_at_R}                                                                                                            
+	P(R)~=~ \left(P_0~+~\frac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\gamma}~-~\dfrac{2\sigma}{R}~-~\dfrac{4\mu \dot{R}}{R} 
 \end{align}
 
 \noindent where $R_0$ is the initial bubble radius, $\gamma$, $\mu$ and $\sigma$ are the adiabatic index (ratio of specific heats), dynamic viscosity, and surface tension, respectively. Finally, taking the time derivative of the above equation, we arrive at
 
 \begin{align}
-  \label{eq:pressure_at_R_dot}
-  \dot{P}(R)~=~ & -3\gamma\dfrac{\dot{R}}{R} \left(P_0~+~\dfrac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\gamma}~+~ \nonumber \\
-  & \dfrac{\dot{R}}{R}\dfrac{2\sigma}{R}~+~4\mu \left(\dfrac{\dot{R}}{R}\right)^2~-~\dfrac{4\mu \ddot{R}}{R}.
+	\label{eq:pressure_at_R_dot}
+	\dot{P}(R)~=~ & -3\gamma\dfrac{\dot{R}}{R} \left(P_0~+~\dfrac{2\sigma}{R_0}\right) \left(\dfrac{R_0}{R}\right)^{3\gamma}~+~ \nonumber \\
+	              & \dfrac{\dot{R}}{R}\dfrac{2\sigma}{R}~+~4\mu \left(\dfrac{\dot{R}}{R}\right)^2~-~\dfrac{4\mu \ddot{R}}{R}.             
 \end{align}
 
 \noindent Eqs. \ref{eq:wavespeed}-\ref{eq:pressure_at_R_dot} are used to numerically solve the Gilmore equation \eq{\ref{eq:gilmore}}. The radiated pressure in the liquid is then given by the Akulichev formula
 
 \begin{align}
-\label{eq:akulichev}
-  P_{r}(t)= & A \left(\dfrac{2}{n+1} ~ + ~\dfrac{n-1}{n+1} \left( 1 + \dfrac{n+1}{r c_0^2 } G \right)^{1/2} \right)^{2n/(n-1)} \nonumber \\
-  & ~ - ~ B
+	\label{eq:akulichev}
+	P_{r}(t)= & A \left(\dfrac{2}{n+1} ~ + ~\dfrac{n-1}{n+1} \left( 1 + \dfrac{n+1}{r c_0^2 } G \right)^{1/2} \right)^{2n/(n-1)} \nonumber \\
+	          & ~ - ~ B                                                                                                                    
 \end{align}
 
 \noindent where $r$ is the distance from the centre of the bubble, and $G=R(H ~+~ 0.5\dot{R}^2)$. This equation assumes that acoustic emissions from an oscillating bubble propagate as outward traveling spherical waves. The Gilmore--Akulichev model was nondimensionalized and solved numerically using a stiff ODE solver for different sonication conditions. The implementation is included in the project's GitHub repository. \cite{wpt-cavitation2024} The implementation and numerical results were verified against published results for identical parameters. White Gaussian noise with the signal-to-noise ratio of 20 \unit{\decibel} was added to the calculated pressures to simulate the measurement noise. 
@@ -345,11 +345,11 @@ Several plots look similar to each other, indicating redundancy in the feature s
 Overall, the three best features are hand picked as average energy, spectral entropy, and kurtosis as they are useful for separating nodes representing fundamentals, harmonics, and noise.
 
 \begin{figure}
-\begin{center}
-\includegraphics[width=3.5in]{./figs/SOMs}
-\end{center}
-\caption{Self organising maps results where the nodes are arranged in a rectangle of aspect ratio 1.5. Each feature has its own plot to show its relationship with other features. The data was generated using a minimum entropy decomposition of data generated using the Gilmore-Akulichev model. The minimum and maximum levels of decomposition are 5 and 10 respectively. The db10 wavelet is used.}
-\label{fig:som}
+	\begin{center}
+		\includegraphics[width=3.5in]{./figs/SOMs}
+	\end{center}
+	\caption{Self organising maps results where the nodes are arranged in a rectangle of aspect ratio 1.5. Each feature has its own plot to show its relationship with other features. The data was generated using a minimum entropy decomposition of data generated using the Gilmore-Akulichev model. The minimum and maximum levels of decomposition are 5 and 10 respectively. The db10 wavelet is used.}
+	\label{fig:som}
 \end{figure}
 
 This method was chosen over PCA which requires the computation of every feature at run time. It is worth noting that the results for self-organising maps is highly inconsistent where the shape of the maps can significantly change depending on the randomly-selected starting points. However, the observed correlations between the features remain similar each time.
@@ -368,79 +368,79 @@ Two experiments are assessed. The first experiment uses low-intensity sonication
 The data for the low-intensity experiment is plotted in \figg{\ref{fig:80_1_data}}. The results from the wavelet transform are presented in a heisenberg plot in \figg{\ref{fig:80_1_heisenberg}}. The heisenberg plot shows a higher energy band around the fundamental and in the middle of the windowed signal, as expected. It also demonstrates the trade-off between frequency and time resolution. The minimum entropy decomposition algorithm tends to achieve a finer frequency resolution around higher energy parts of the frequency spectrum i.e. at the fundamental frequency.
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=3.8in]{./figs/80_1_data}
-\caption{Preprocessed data and corresponding FFT for low-intensity ultrasound data.}
-\label{fig:80_1_data}
+	\centering
+	\includegraphics[width=3.8in]{./figs/80_1_data}
+	\caption{Preprocessed data and corresponding FFT for low-intensity ultrasound data.}
+	\label{fig:80_1_data}
 \end{figure}
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=4in]{./figs/heisenberg_80_1}
-\caption{Heisenberg plot of the wavelet transform at 80 mVpp.}
-\label{fig:80_1_heisenberg}
+	\centering
+	\includegraphics[width=4in]{./figs/heisenberg_80_1}
+	\caption{Heisenberg plot of the wavelet transform at 80 mVpp.}
+	\label{fig:80_1_heisenberg}
 \end{figure}
 
 The clustering results for the experiment ran at 80 mVpp are shown in \figg{\ref{fig:80_1_clustering}}. The algorithms chooses 4 clusters which have been labelled manually according to the positions of the clustering centres. The fundamental is the high-energy node that has been singled out by the algorithm, measurement noise (labeled as noise) and broadband noise has low energy and high spectral density, and harmonics are characterised by a low spectral entropy. \figg{\ref{fig:80_1_metrics}} plots the positions of the cluster centres. This shows that measurement and broadband noise are separated by their difference in log average energy. \figg{\ref{fig:80_1_fft}} shows how the signal is split up in the frequency domain. Each cluster of nodes is reconstructed and the fft is taken for each of them. The algorithm is able to separate the fundamental frequency from the rest of the lower frequencies. The single node representing the fundamental frequency produces three peaks on the spectrum, as most nodes do when they are reconstructed. This leads to some artifacts at around 0.5 and 1.8 MHz. These artifacts are cancelled out by neighbouring nodes. The broadband and noise are separated as expected while the cluster labelled as harmonics has a similar shape to the fundamental, indicating that, because there are no prominent harmonics in this signal, the algorithm instead finds nodes where some of the energy leaked out from the fundamental.
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=5in, trim=10cm 0cm 0cm 0cm, clip]{./figs/clustering_80_1}
-\caption{Clustering results for k-means at 80 mVpp.}
-\label{fig:80_1_clustering}
+	\centering
+	\includegraphics[width=5in, trim=10cm 0cm 0cm 0cm, clip]{./figs/clustering_80_1}
+	\caption{Clustering results for k-means at 80 mVpp.}
+	\label{fig:80_1_clustering}
 \end{figure}
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=3.5in]{./figs/sig_components_metrics_80_1}
-\caption{Signal component metrics measured at cluster centres at 80 mVpp.}
-\label{fig:80_1_metrics}
+	\centering
+	\includegraphics[width=3.5in]{./figs/sig_components_metrics_80_1}
+	\caption{Signal component metrics measured at cluster centres at 80 mVpp.}
+	\label{fig:80_1_metrics}
 \end{figure}
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=4.5in, trim=0cm 6cm 0cm 0cm]{./figs/fft_rec_centers_80_1}
-\caption{FFT of reconstructed nodes at 80 mVpp.}
-\label{fig:80_1_fft}
+	\centering
+	\includegraphics[width=4.5in, trim=0cm 6cm 0cm 0cm]{./figs/fft_rec_centers_80_1}
+	\caption{FFT of reconstructed nodes at 80 mVpp.}
+	\label{fig:80_1_fft}
 \end{figure}
 
 The data for the experiment at 280 mVpp is plotted in \figg{\ref{fig:280_1_data}}. The higher intensity produces a prominent harmonic at $2f_0$ and a sub-harmonic at $1/2 f_0$. The heisenberg plot is shown in \figg{\ref{fig:280_1_heisenberg}}.
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=4in]{./figs/280_1_data}
-\caption{High-intensity ultrasound data at 280 mVpp.}
-\label{fig:280_1_data}
+	\centering
+	\includegraphics[width=4in]{./figs/280_1_data}
+	\caption{High-intensity ultrasound data at 280 mVpp.}
+	\label{fig:280_1_data}
 \end{figure}
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=4in]{./figs/heisenberg_280_1}
-\caption{Heisenberg plot of wavelet transform at high-intensity at 280 mVpp.}
-\label{fig:280_1_heisenberg}
+	\centering
+	\includegraphics[width=4in]{./figs/heisenberg_280_1}
+	\caption{Heisenberg plot of wavelet transform at high-intensity at 280 mVpp.}
+	\label{fig:280_1_heisenberg}
 \end{figure}
 
 The results are shown in \figg{\ref{fig:280_1_fft}} and \figg{\ref{fig:280_1_fft_metrics}}. These plots show that the algorithm is able to separate the harmonics and subharmonics from the fundamental frequency but unable to separate the harmonics from the low level noise. The algorithm finds three clusters this time, and they were manually labelled as measurement noise, broadband \& harmonics, and fundamental frequency. The algorithm is once again able to distinguish between the fundamental frequency, low frequency noise, and high frequency noise but is unable to separate the harmonics and sub-harmonics from the noise. This is because the harmonics and other low-frequency components share similar log average energy. Removing log average energy results in the results shown in \figg{\ref{fig:280_1_fft_alt}}. Where the harmonics and fundamental are better separated but the measurement and broadband noises are combined.
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=4.2in, trim=0cm 5cm 0cm 0cm]{./figs/fft_rec_centers_280_1}
-\caption{FFT of reconstructed nodes (high-intensity) at 280 mVpp.}
-\label{fig:280_1_fft}
+	\centering
+	\includegraphics[width=4.2in, trim=0cm 5cm 0cm 0cm]{./figs/fft_rec_centers_280_1}
+	\caption{FFT of reconstructed nodes (high-intensity) at 280 mVpp.}
+	\label{fig:280_1_fft}
 \end{figure}
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=4.2in, trim=0cm 5cm 0cm 0cm]{./figs/fft_rec_centers_280_1_alt}
-\caption{FFT of reconstructed nodes (high-intensity) at 280 mVpp without using log average energy.}
-\label{fig:280_1_fft_alt}
+	\centering
+	\includegraphics[width=4.2in, trim=0cm 5cm 0cm 0cm]{./figs/fft_rec_centers_280_1_alt}
+	\caption{FFT of reconstructed nodes (high-intensity) at 280 mVpp without using log average energy.}
+	\label{fig:280_1_fft_alt}
 \end{figure}
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=3.5in]{./figs/sig_components_metrics_280_1}
-\caption{Signal component metrics measured at cluster centres (high-intensity) at 280 mVpp. Clusters stand for measurement noise, broadband noise \& harmonics, and fundamental frequency.}
-\label{fig:280_1_metrics}
+	\centering
+	\includegraphics[width=3.5in]{./figs/sig_components_metrics_280_1}
+	\caption{Signal component metrics measured at cluster centres (high-intensity) at 280 mVpp. Clusters stand for measurement noise, broadband noise \& harmonics, and fundamental frequency.}
+	\label{fig:280_1_metrics}
 \end{figure}
 
 The algorithm is consistently able to extract and categorise the fundamental frequency of the signal. However, it struggles with separating harmonics, broadband noise, and measurement noise.
@@ -450,13 +450,13 @@ The algorithm is consistently able to extract and categorise the fundamental fre
 In this paper a novel approach was developed for classifying PCD data by clustering DWPT nodes, in an attempt to create an automated algorithm that can separate out features relating to stable and transient cavitation. The DWPT has been found to be useful in separating out these components in a flexible manner, especially when combined with the minimum entropy decomposition, which is able to generate a reasonable time-frequency tiling. Several features were assessed to help classify the nodes. Self-organising maps were used to help visualise the feature space, a useful method in determining which ones may be the most useful. However, the algorithm is unable to consistently separate harmonics and sub-harmonics from lower-kurtosis noise. This leads to several suggestions for future work:
 
 \begin{itemize}
-\item Explore alternative algorithms to \km which may be able to find more meaningful clusters.
-\item Explore other methods of generating training data with more involved models.
-\item Expand the work to cavitation in other common mediums like tissue.
-\item Separate noise generated through cavitation and measurement noise.
-\item Extend the algorithm to automatically detect cavitation activity over noise. This can be useful for applications where the ultrasound is pulsed.
-\item Explore the use of entropy, getting around the issue discussed in section \ref{sec:feature_selection} where the level of the transform dominates their measure. Possible approaches could involve calculating the entropy and spectral entropy on the reconstructed signals which always have the same length as the original signal or by using an undecimated transform.
-\item The sparseness of the algorithm could be addressed by clustering nodes from more than one sample. This could allow it to classify harmonics in separate clusters.
+	\item Explore alternative algorithms to \km which may be able to find more meaningful clusters.
+	\item Explore other methods of generating training data with more involved models.
+	\item Expand the work to cavitation in other common mediums like tissue.
+	\item Separate noise generated through cavitation and measurement noise.
+	\item Extend the algorithm to automatically detect cavitation activity over noise. This can be useful for applications where the ultrasound is pulsed.
+	\item Explore the use of entropy, getting around the issue discussed in section \ref{sec:feature_selection} where the level of the transform dominates their measure. Possible approaches could involve calculating the entropy and spectral entropy on the reconstructed signals which always have the same length as the original signal or by using an undecimated transform.
+	\item The sparseness of the algorithm could be addressed by clustering nodes from more than one sample. This could allow it to classify harmonics in separate clusters.
 \end{itemize}
 % ---------------------------------------------------------------------
 % Appendix  (optional)

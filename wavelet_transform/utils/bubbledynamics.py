@@ -97,6 +97,7 @@ class BubbleDynamics(object):
         self.phase_initial = phase_initial
         self.phase_shift = phase_shift
         self.no_harmonics = no_harmonics
+        self.resonance_frequency = []
 
     def initialize(self):
         """
@@ -138,6 +139,23 @@ class BubbleDynamics(object):
         A_RecDiff_coeff = 2 * nsigma / np0
         B_RecDiff_coeff = nomega**2 * nrho / (3 * self.medium_parameters["gamma"] * np0)
 
+        # Calculating the linear (first order) resonance frequency of a bubble with R_init.
+        # This equation ignores the viscosity and vapour pressure effects. Taken from Eq. 43, Neppiras 1970, Acoustic Cavitation.
+        omega_resonance_sqrd = (
+            1 / (self.medium_parameters["density"] * self.R_init**2)
+        ) * (
+            3
+            * self.medium_parameters["gamma"]
+            * (
+                self.medium_parameters["p0"]
+                + 2 * self.medium_parameters["sigma"] / self.R_init
+            )
+            - 2 * self.medium_parameters["sigma"] / self.R_init
+        )
+        omega_resonance = np.sqrt(omega_resonance_sqrd)
+        nomega_resonance = omega_resonance / omega
+        self.resonance_frequency = omega_resonance / 2 / np.pi
+
         npac_wave = np.zeros(tau.shape)
         for i in range(self.no_harmonics):
             i = (
@@ -160,6 +178,7 @@ class BubbleDynamics(object):
             "nRdot_init": nRdot_init,
             "nmu": nmu,
             "nomega": nomega,
+            "nomega_resonance": nomega_resonance,
             "npac": npac,
             "tau": tau,
             "nA": nA,
