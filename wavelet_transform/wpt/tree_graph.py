@@ -21,6 +21,11 @@ class TreeGraph:
         3: "purple",
         4: "cyan",
         5: "red",
+        6: "yellow",
+        7: "magenta",
+        8: "pink",
+        9: "lime",
+        10: "navy",
     }  # Map label number to colour
 
     def __init__(self, tr_obj: "Transform"):
