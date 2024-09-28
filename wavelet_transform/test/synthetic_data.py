@@ -81,8 +81,7 @@ def sound_wave(
         delay = 0
     if end is None:
         end = duration
-    delay_index = find_delay_index(t, delay)
-    end_index = find_end_index(t, end)
+    delay_index, end_index = find_time_indices(t, delay, end)
 
     wave[:delay_index] = 0
     wave[end_index:] = 0
@@ -108,8 +107,8 @@ def time_array(duration=None, sampling_rate=None, time=None):
 
 def noise(standard_deviation, duration=None, sampling_rate=None, time=None):
     """
-    creates and array of noise with the same dimensions as the synthetic data
-    can be specified using either an array of time to fit noise into or can
+    Creates and array of noise with the same dimensions as the synthetic data.
+    Can be specified using either an array of time to fit noise into or can
     accept the sampling rate and duration used to generate the signal.
     """
     t = time_array(duration, sampling_rate, time)
@@ -169,6 +168,12 @@ def transients(
         transient_array[i : i + j] += amp * np.hanning(j)
 
     return transient_array
+
+
+def find_time_indices(t, delay, end):
+    delay_index = find_delay_index(t, delay)
+    end_index = find_end_index(t, end)
+    return delay_index, end_index
 
 
 def find_delay_index(t, delay):

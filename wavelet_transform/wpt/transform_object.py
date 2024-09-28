@@ -1,10 +1,8 @@
 from pywt import Wavelet as pywtWavelet
 
-import numpy as np
-import pandas as pd
-
-from wavelet_transform.utils.extensions import to_list
 from wavelet_transform.wpt.transform_node import BaseNode, Node
+from wavelet_transform.wpt.transform_results import TransformResults
+from wavelet_transform.wpt.tree_graph import TreeGraph
 
 
 class Transform:
@@ -24,15 +22,55 @@ class Transform:
     """
 
     def __init__(self, data, wavelet, mode):
+        self.results = TransformResults(self)
         self.wavelet = wavelet
         self.mode = mode
         self.data = data
-        self.base_node = BaseNode(data)  # initialise base node
+        self.base_node = BaseNode(data, self)  # initialise base node
         self.levels = {0: [self.base_node]}  # initialise list of all nodes
         self.filter_bank = self.pywt_filter_bank(self.wavelet)
-        self.sampling_rate = (
-            None  # used for calculating the frequency range of each node
-        )
+        self.sampling_rate = None  # for calculating the frequency range of each node
+        self.tree = TreeGraph(self)
+
+    # -------------------- Parameters --------------------
+
+    @property
+    def parameters(self):
+        if not hasattr(self, "_parameters"):
+            self._parameters = {
+                "wavelet": self.wavelet,
+                "mode": self.mode,
+                "data": self.data,
+                "min_level": self.min_level,
+                "min_entropy": self.min_entropy,
+            }
+        return self._parameters
+
+    @property
+    def min_level(self):
+        "The minimum level of transform"
+        if not hasattr(self, "_min_level"):
+            return None
+        else:
+            return self._min_level
+
+    @min_level.setter
+    def min_level(self, value):
+        assert isinstance(value, int)
+        self._min_level = value
+
+    @property
+    def min_entropy(self):
+        "Whether or not the minimum entropy transform has been used"
+        if not hasattr(self, "_min_entropy"):
+            return False
+        else:
+            return self._min_entropy
+
+    @min_entropy.setter
+    def min_entropy(self, value):
+        assert isinstance(value, bool)
+        self._min_entropy = value
 
     # -------------------- Functions used for Transform ---------------
 
@@ -53,26 +91,73 @@ class Transform:
         nodes: list
             list of nodes in selected level
         """
-        if level is None:
-            level = self.max_level()
+        if order not in ["natural", "freq"]:
+            raise ValueError("order must be 'nutaral' or 'freq")
+        level = self.max_level() if level is None else level
         if order == "natural":
-            return self.levels[level]
+            return self.levels.get(level, [])
         elif order == "freq":
             nodes = self.levels[level].copy()
             nodes.sort(key=lambda x: x.norm_frequency_range[0])
             return nodes
 
-    def create_node(self, parent, a_d):
-        "creates a node object, adds it to list of nodes"
-        # initialise node object
-        node = Node(parent, a_d, self)
-        self.add_node(node)
+    def get_full_level(self, level=None):
+        """
+        Fill out missing nodes in the level with None. Used for the inverse transform
+        with a minimum entropy decomposition.
+        """
+        if level is None:
+            level = self.max_level()
+        nodes = self.get_level(level, order="natural")  # order must be natural
+        full_level_nodes = [None for _ in range(2**level)]
+        for node in nodes:
+            full_level_nodes[node.node_number] = node
+        return full_level_nodes
 
-    def add_node(self, node):
+    def get_leaf_nodes(self, order="natural", freq_threshold=None):
+        """
+        Get the leaf nodes in the tree. Ordered by frequency.
+        Frequency threshold is the normalised frequency threshold.
+        """
+        leaf_nodes = [
+            node
+            for level in self.levels
+            for node in self.get_level(level)  # gather nodes with no children
+            if (
+                2 * node.node_number not in self.node_numbers(level + 1)
+                and 2 * node.node_number + 1 not in self.node_numbers(level + 1)
+            )
+        ]
+        if freq_threshold is not None:
+            leaf_nodes = [
+                i for i in leaf_nodes if i.norm_frequency_range[1] <= freq_threshold
+            ]
+        if order not in ["freq", "natural"]:
+            raise ValueError("order must be 'freq' or 'natural'")
+        # Sort nodes in order of frequency.
+        if order == "freq":
+            leaf_nodes.sort(key=lambda x: x.norm_frequency_range[0])
+        return leaf_nodes
+
+    def node_numbers(self, level=None):
+        "Generator for node numbers"
+        return (node.node_number for node in self.get_level(level))
+
+    def create_node(self, parent, a_d):
+        """
+        Creates a node object, adds it to list of nodes if add_node is true.
+        add_node allows for further logic to be implemented in the transform
+        for adding nodes (e.g. for choosing best basis).
+        """
+        # Initialise node object
+        node = Node(parent, a_d, self)
+        return node
+
+    def add_node(self, node: Node):
         "appends a node to node list"
         self.levels.setdefault(node.level, list()).append(node)
 
-    def pywt_filter_bank(self, wavelet="haar"):
+    def pywt_filter_bank(self, wavelet):
         "obtains the filter coefficients from the pywt filter bank function"
         w = pywtWavelet(wavelet)
         return w.filter_bank
@@ -88,218 +173,61 @@ class Transform:
         self.sampling_rate = sampling_rate
         for level in self.levels:
             for node in self.levels[level]:
-                node.frequency_range = node.calc_freq(self.sampling_rate)
+                node.set_frequency_range(self.sampling_rate)
 
-    def calc_total_energy(self, level=None):
-        "calculates the total energy of the transform at a given level"
-        total_energy = 0
-        for node in self.get_level(level):
-            total_energy += np.sum(node.data**2)
-        return total_energy
+    def total_energy(self, level=None):
+        "Return the total energy of all nodes in a level. Max level by default."
+        if not hasattr(self, "_total_energy"):
+            self._total_energy = sum(node.energy for node in self.get_level(level))
+        return self._total_energy
 
-    def info(self, level=None, order="natural"):
-        """
-        Returns a dataframe with information about each node in a specified level
-        of the transform.
-
-        Parameters
-        ----------
-        level: int
-            the level of transform to display information for
-        order: str
-            "natural" or "freq" (see self.get_level())
-
-        Returns
-        -------
-        info: pd.DataFrame
-            A dataframe containing statistical measures calculated from the coefficients
-            at each node.
-        """
-        if level is None:
-            level = self.max_level()
-
-        info_data = []
-        for node in self.get_level(level, order=order):
-            info_data.append(
-                {
-                    "node number": node.node_number,
-                    "energy": node.energy,
-                    "kurtosis": node.kurtosis,
-                    "crest factor": node.crest_factor,
-                    "skewness": node.skewness,
-                    "frequency range": node.freq_range,
-                }
-            )
-
-        info = pd.DataFrame(info_data)
-        return info
-
-    # ---------------- Functions Used for Inverse Transform -----------------
+    # ---------------- Generate Results ----------------
 
     def find_nodes(self, node_list, **kwargs):
-        """
-        list nodes with specified frequency and/or path from a give list of nodes
-
-        Parameters
-        ----------
-        node_list: list
-            list of Node objects to seasrch though.
-
-        Keyword Arguments
-        -----------------
-        nodes: list of str or list of int
-            List of nodes to reconstruct. Can specify a path e.g. "ad" or the node number (0-indexed)
-        nodes_to_leave: list of str or list of int
-            List of nodes to leave out of reconstruction.
-        frequencies: list
-            List of frequenices (int or float) to reconstruct. Only nodes containing these frequencies
-            will be reconstructed.
-        frequencies_to_leave: list
-            List of frequenices (int or float) to leave out of reconstruction. Nodes containing these
-            frequencies will not be reconstructed.
-        min_energy: float or int
-            The minimum energy a node must have to be added to the reconstruction.
-        max_energy: float or int
-            The maximumm energy a node can have to be added to the reconstruction.
-
-        Returns
-        -------
-        node_list: list
-            list containing node objects with specified ids or minimum energy
-        """
-
-        # Gather kwargs
-        nodes = to_list(kwargs.get("nodes", None))
-        nodes_to_leave = to_list(kwargs.get("nodes_to_leave", None))
-
-        # Check types of
-        for _list in [nodes, nodes_to_leave]:
-            if _list is None:
-                continue
-            if any((isinstance(i, float) for i in _list)):
-                raise ValueError(
-                    """nodes are defined by strings or integers. Use kwargs "frequencies" or "frequencies_to_leave" to sort using frequencies """
-                )
-        # Convert frequencies to floats for compatibility with Node.match_id()
-        frequencies = to_list(kwargs.get("frequencies", None), convert_to_float=True)
-        frequencies_to_leave = to_list(
-            kwargs.get("frequencies_to_leave", None), convert_to_float=True
-        )
-        min_energy = kwargs.get("min_energy", None)
-        max_energy = kwargs.get("max_energy", None)
-
-        # Concatenate node lists
-        keep = []
-        for i in [nodes, frequencies]:
-            if i is not None:
-                keep += i
-
-        leave = []
-        for i in [nodes_to_leave, frequencies_to_leave]:
-            if i is not None:
-                leave += i
-
-        # Only one of keep, leave
-        if keep and leave:
-            raise SyntaxError("Cannot specify nodes to keep and nodes to leave")
-
-        if keep:
-            node_list = [node for node in node_list if node.match_ids(keep)]
-        elif leave:
-            node_list = [node for node in node_list if node.match_ids(leave)]
-
-        # Filter nodes by energy
-        filtered_node_list = [
-            node
-            for node in node_list
-            if (min_energy is None or min_energy <= node.energy)
-            and (max_energy is None or node.energy <= max_energy)
-        ]
-        return filtered_node_list
-
-    def packet_nodes_for_rec(self, level, **kwargs):
-        """
-        Gather nodes for reconstruction with more than min_energy. Must be
-        called before inverse transform. keep and leave cannot be used in
-        tandem.
-
-        e.g.
-        transform_object.packet_nodes_for_rec(keep=['aa','dd'], min_energy=0.1)
-        will reconstruct nodes 'aa' and 'dd' as long as they have minimum
-        energy of 0.1.
-
-        Parameters
-        ----------
-        level: int
-            the level of transform to start reconstruct from
-
-        Keyword Arguments
-        -----------------
-        See self.find_nodes()
-
-
-        Returns
-        -------
-        node_list: list
-            list of nodes meeting requirements
-
-        Raises
-        ------
-        SyntaxError:
-            when specifying more than one of keep and leave.
-        """
-        nodes = self.get_level(level)  # max level by default
-
-        nodes_to_keep = self.find_nodes(nodes, **kwargs)
-        node_list = []
-        node_list = [node if node in nodes_to_keep else None for node in nodes]
-
-        # check if any nodes are remaining after filtering
-        if node_list.count(None) == len(node_list):
-            raise ValueError("could not found any nodes matching input arguments")
-        return node_list
-
-    def nodes2data(self, nodes):
-        """
-        Converts a list of nodes to a list of arrays containing their data.
-
-        Parameters
-        ----------
-        nodes: list
-            list of node objects
-
-        Returns
-        -------
-        output: list
-            list of arrays, replacing the respective node in the input list
-            with its data
-        """
-
-        output = [node.data if node is not None else None for node in nodes]
-
-        return output
+        return self.results.find_nodes(node_list, **kwargs)
 
     def dwt_results(self):
+        return self.results.dwt_results()
+
+    def info(self, level=None, order="natural", leaf_nodes=False):
+        return self.results.info(level, order, leaf_nodes)
+
+    # ---------------- Plot Tree Diagram ---------------
+
+    def plot_tree(
+        self,
+        node_size=1500,
+        node_colour="skyblue",
+        freq_threshold=None,
+        graph_legend="Graph legend",
+        fig_name=None,
+        **kwargs
+    ):
         """
-        Extracts the nodes containing dwt results from a dwt or dwpt transform
-        object
+        Plot the tree diagram for the wavelet transform.
 
         Parameters
         ----------
-        None
+        node_size: int or str
+            use an integer to set a global size for all nodes.
+            use a string with the same name as an attribute of the Transform.info()
+            dataframe to set size based on the attribute e.g. node_size = "energy"
+            will make higher energy nodes larger.
+        node_colour: str or list
+            use a string to set a global colour name.
+            use a list of labels (one for each leaf node) to colour the leaf nodes by label
+        freq_threshold: float
+            the frequency threshold for leaf nodes to be labeled. Nodes with upper bound
+            of frequency range above this threshold will not be labeled
 
-        Returns
-        -------
-        results: list
-            list of nodes containing the results for the dwt
+        keyword arguments
+        -----------------
+        sampling_rate: float
+            supply the sampling rate to calculate frequencies for nodes. Will plot
+            normalised frequencies otherwise.
+        order: str
+            "natural" or "freq" to order the tree in natural or freuqency order
         """
-        results = []
-        # append all of the relevant detail nodes
-        for level in range(1, len(self.levels)):
-            nodes = self.get_level(level)
-            detail_node = nodes[1]
-            results.insert(0, detail_node)
-        # append final approx node
-        approx_node = nodes[0]
-        results.insert(0, approx_node)
-        return results
+        self.tree.plot_tree(
+            node_size, node_colour, freq_threshold, graph_legend, fig_name, **kwargs
+        )
