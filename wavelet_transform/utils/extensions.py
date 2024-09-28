@@ -20,7 +20,7 @@ def eng_form_plot(number, power, dp=3):
     n, p = sci_form_number.split("e")
     n, p = float(n), float(p)
 
-    inc = np.sign(power - p)
+    inc = power - p
     n /= 10**inc
     return f"{n:.{dp}f}"
 
