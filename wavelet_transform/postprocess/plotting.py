@@ -7,10 +7,11 @@ from scipy.interpolate import interp1d
 from itertools import cycle
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
-fsize = 20  # font size
-tick_size = 16 # tick size
-cl_label_fsize = 14 # clusters labels font size
-
+fsize = 24  # font size
+tick_size = 24 # tick size
+cl_label_fsize = 20 # clusters labels font size
+margine_value = 0 #zero margine for plotly plots
+margine_top_value = 50
 def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
     """
     Separately plots the data from a provided list of nodes.
@@ -385,6 +386,10 @@ def plot_reconstructions_by_group(
         transform_object, labels, freq_threshold
     )
 
+    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
+    linestyles = cycle(lines)
+    line_width = [3]*n_clusters + [1]
 
     fig = go.Figure()
 
@@ -412,12 +417,11 @@ def plot_reconstructions_by_group(
             y=transform_object.data[0:data_len],
             mode="lines",
             name="Original signal",
+            line=dict(color="blue", 
+                          dash="solid",
+                          width=line_width[-1]),
         )
     )
-
-    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
-    linestyles = cycle(lines)
 
     # Iterate through clusters
     for i in range(n_clusters):
@@ -427,7 +431,9 @@ def plot_reconstructions_by_group(
                 y=reconstructions[i][0:data_len],
                 mode="lines",
                 name=get_label(i, label_map),
-                line=dict(color=colours[i], dash=next(linestyles)),
+                line=dict(color=colours[i], 
+                          dash=next(linestyles),
+                          width=line_width[i]),
             )
         )
 
@@ -436,10 +442,16 @@ def plot_reconstructions_by_group(
         height=fig_height,
         font_size=fsize,
         title=title,
-        xaxis_title=x_label,
-        yaxis_title="Amplitude",
+        xaxis=dict(title=x_label,tickfont = dict(size=tick_size)),
+        yaxis=dict(title="Amplitude",tickfont = dict(size=tick_size)),
         legend=dict(title="", traceorder="normal", font=dict(size=fsize)),
         plot_bgcolor="white",
+        margin=go.layout.Margin(
+        l=margine_value, #left margin
+        r=margine_value, #right margin
+        b=margine_value, #bottom margin
+        t=margine_top_value  #top margin
+    )
     )
 
     fig.update_xaxes(
@@ -466,7 +478,8 @@ def plot_fft_by_group(
     labels,
     sampling_rate,
     clusters=None,
-    xlim=None,
+    xlims=None,
+    ylims=None,
     fundamental_freq=None,
     freq_threshold=None,
     label_map=None,
@@ -492,6 +505,12 @@ def plot_fft_by_group(
         transform_object, labels, freq_threshold
     )
 
+    
+    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
+    linestyles = cycle(lines)
+    line_width = [3]*n_clusters + [1]
+    
     fig = go.Figure()
 
     # FFT of original signal
@@ -505,17 +524,15 @@ def plot_fft_by_group(
             y=20 * np.log10(np.abs(fft_original)),
             mode="lines",
             name="Original Signal",
-            line=dict(color="blue"),
+            line=dict(color="blue", 
+                      dash="solid",
+                      width=line_width[-1]),
         )
     )
 
     # Plot FFTs
     if clusters is None:
         clusters = range(n_clusters)
-
-    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
-    linestyles = cycle(lines)
 
     for i in clusters:
         fft_rec = fft(reconstructions[i])
@@ -525,7 +542,9 @@ def plot_fft_by_group(
                 y=20 * np.log10(np.abs(fft_rec)),
                 mode="lines",
                 name=get_label(i, label_map),
-                line=dict(color=colours[i], dash=next(linestyles)),
+                line=dict(color=colours[i],
+                          dash=next(linestyles),
+                          width=line_width[i]),
             )
         )
 
@@ -536,7 +555,7 @@ def plot_fft_by_group(
                 y=20 * np.log10(np.abs(fft(sum(reconstructions)))),
                 mode="lines",
                 name="full reconstruction",
-                line=dict(dash="dot", color="blue"),
+                line=dict(dash="dot", color="blue", width=line_width[-1]),
             )
         )
 
@@ -545,13 +564,19 @@ def plot_fft_by_group(
         height=fig_height,
         font_size=fsize,
         title=title,
-        xaxis_title=(
-            "Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]"
+        xaxis=dict(title="Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]",
+                    tickfont = dict(size=tick_size),
+                    range=xlims if xlims is not None else None
         ),
-        yaxis=dict(title="Amplitude [dB]", range=[-140, 10]),
+        yaxis=dict(title="Amplitude [dB]",tickfont = dict(size=tick_size), range=ylims),
         legend=dict(title="", traceorder="normal", font=dict(size=fsize)),
-        xaxis=dict(range=[0, xlim] if xlim is not None else None),
         plot_bgcolor="white",
+        margin=go.layout.Margin(
+        l=margine_value, #left margin
+        r=margine_value, #right margin
+        b=margine_value, #bottom margin
+        t=margine_top_value  #top margin
+    )
     )
 
     fig.update_xaxes(
