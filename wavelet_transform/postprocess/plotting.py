@@ -7,11 +7,19 @@ from scipy.interpolate import interp1d
 from itertools import cycle
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
+<<<<<<< HEAD
 fsize = 24  # font size
 tick_size = 24 # tick size
 cl_label_fsize = 20 # clusters labels font size
 margine_value = 0 #zero margine for plotly plots
 margine_top_value = 50
+=======
+fsize = 20  # font size
+tick_size = 16  # tick size
+cl_label_fsize = 14  # clusters labels font size
+
+
+>>>>>>> 0a63def4ed40c2207c1a300dbe09c9808030b574
 def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
     """
     Separately plots the data from a provided list of nodes.
@@ -132,7 +140,7 @@ def heisenberg(
     title="DWPT of signal",
     vmin=None,
     vmax=None,
-    color_map = 'seismic'
+    color_map="seismic",
 ):
     """
     Calls imshow to create a heisenberg plot of the wavelet packet leaf nodes.
@@ -386,17 +394,20 @@ def plot_reconstructions_by_group(
         transform_object, labels, freq_threshold
     )
 
+<<<<<<< HEAD
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
     lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
     linestyles = cycle(lines)
     line_width = [3]*n_clusters + [1]
 
+=======
+>>>>>>> 0a63def4ed40c2207c1a300dbe09c9808030b574
     fig = go.Figure()
 
     data_len = len(transform_object.data)
     if t_plot is None:
         xvals = np.arange(data_len)
-        x_label = ['x']
+        x_label = ["x"]
     elif isinstance(t_plot, (np.ndarray)):
         data_len = len(t_plot)
         xvals = t_plot.copy()
@@ -410,7 +421,6 @@ def plot_reconstructions_by_group(
         x_label = list(t_plot.keys())[0]
         xvals = list(t_plot.values())[0]
         data_len = len(xvals)
-        
     fig.add_trace(
         go.Scatter(
             x=xvals,
@@ -598,6 +608,47 @@ def plot_fft_by_group(
     return fig
 
 
+def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold):
+    """
+    Thresholds nodes according to a given feature and returns the total
+    reconstructions of nodes above and below the threshold.
+
+    Parameters
+    ----------
+    tr_obj: Transform
+        object containing nodes
+    feature: str or func
+        str - the chosen feature calculated on the wavelet coefficients (see Node class for options)
+        func - calculate the fetaure on the reconstructed signal
+    threshold: float
+        the numerical threshold to sort the nodes by
+    freq_threshold: float
+        ignore all nodes above a given frequency threshold
+
+    Returns
+    -------
+    reconstructions: list of np.array
+        list containing 2 np.arrays. These are the reconstructed signals above
+        and below the threshold respectively
+    """
+    if not isinstance(feature, str) and not callable(feature):
+        raise ValueError("feature must be a string or a function")
+    signal_length = len(tr_obj.data)
+    # List reconstructions
+    reconstructions = [np.zeros(signal_length) for _ in range(2)]
+
+    # Sum all reconstructions belonging to the same group
+    for node in tr_obj.get_leaf_nodes(freq_threshold=freq_threshold):  # natural order
+        rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
+        _feature = (
+            getattr(node, feature) if isinstance(feature, str) else feature(rec_signal)
+        )
+        i = 0 if _feature > threshold else 1  # shorten name for readability
+        reconstructions[i] = reconstructions[i] + rec_signal
+
+    return reconstructions
+
+
 # ---------------------- Clustering Results ----------------------
 
 
@@ -639,8 +690,7 @@ def plot_clustering(
     # Make scatter plots
     legend_elements = []
     for center in range(centers.shape[0]):
-        # Plot data
-        for level in unique_levels:  # iterate through level markers
+        for level in unique_levels:  # iterate  through level markers
             mask = (labels == center) & (np.array(levels) == level)
             scatter = ax.scatter(
                 data_train.loc[mask, metrics_to_plot[0]],
@@ -653,7 +703,6 @@ def plot_clustering(
             if center == 0:
                 legend_elements.append(scatter)
 
-        # Plot centres
         ax.scatter(
             centers.loc[center, metrics_to_plot[0]],
             centers.loc[center, metrics_to_plot[1]],
@@ -683,15 +732,15 @@ def plot_clustering(
     # z_ticks = np.linspace(min(centers[metrics_to_plot[2]]), max(centers[metrics_to_plot[2]]),10)
     # ax.set_xticks(x_ticks,a2s(x_ticks),fontsize=tick_size)
     # ax.set_yticks(y_ticks,a2s(y_ticks),fontsize=tick_size)
-    # ax.set_zticks(z_ticks,a2s(z_ticks),fontsize=tick_size) 
+    # ax.set_zticks(z_ticks,a2s(z_ticks),fontsize=tick_size)
     ax.xaxis.pane.fill = False
     ax.yaxis.pane.fill = False
     ax.zaxis.pane.fill = False
-    
+
     # Now set color to white (or whatever is "invisible")
-    ax.xaxis.pane.set_edgecolor('w')
-    ax.yaxis.pane.set_edgecolor('w')
-    ax.zaxis.pane.set_edgecolor('w')
+    ax.xaxis.pane.set_edgecolor("w")
+    ax.yaxis.pane.set_edgecolor("w")
+    ax.zaxis.pane.set_edgecolor("w")
     ax.set_box_aspect(None, zoom=0.92)
     if not all(i == 0 for i in levels):
         ax.legend(handles=legend_elements, title="Node level")
@@ -734,11 +783,11 @@ def plot_centers(classifying_metrics, centers, label_map=None, xlabel_user=None)
             yvals = to_dB(yvals)
             ylabel = "Amplitude [dB]"
 
-        if isinstance(label_map, dict) and xlabel_user==None:
+        if isinstance(label_map, dict) and xlabel_user == None:
             xlabel = "signal component"
             xvals = [v for v in dict(sorted(label_map.items())).values()]
             label_angle = 45
-        elif isinstance(label_map, dict) and isinstance(xlabel_user,str):
+        elif isinstance(label_map, dict) and isinstance(xlabel_user, str):
             xlabel = xlabel_user
             xvals = [v for v in dict(sorted(label_map.items())).values()]
             label_angle = 0

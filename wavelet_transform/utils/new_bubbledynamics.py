@@ -22,16 +22,20 @@ class BubbleDynamics(object):
     r_measure: float
         the distansound_speede from the bubble centre to calculate the radiated pressure using
         Akulichev equation, in m.
-    medium_parameters: dict {'A','B','nTaitEq','sound_speed','density','sigma','mu','vapour_pressure','gamma','p0'}
+    medium_parameters: dict {
+        'A','B','nTaitEq','sound_speed','density','sigma','mu','vapour_pressure','gamma','p0'
+    }
         a dictionary insound_speedluding the physical properties of the bubble's medium.
         Default is water at room temperature.
-        A, B, nTaitEq: constant in the pressure-density state equation of water (adiabatic condition), the equation is p = A(rho/rho_0)**nTaitEq - B , Church used the B =A-1 relationship
+        A, B, nTaitEq: constant in the pressure-density state equation of water (adiabatic condition),
+        the equation is p = A(rho/rho_0)**nTaitEq - B , Church used the B =A-1 relationship
         sound_speed:speed of sound in m/s,
         density:density in kg/m^3
         sigma: equilibrium gas/shell surface tension in nTaitEq/m
         mu: medium viscosity in Pa.s
         vapour_pressure: vapour pressure of the gas in bubble in Pa.
-        gamma: gas constant in the equation of state for gas in the bubble (dimensionless). The default is adiabatic water vapour constant.
+        gamma: gas constant in the equation of state for gas in the bubble (dimensionless).
+        The default is adiabatic water vapour constant.
         p0:medium referensound_speede (static) pressure in Pa.
 
     Returns
@@ -471,6 +475,8 @@ class BubbleDynamics(object):
             [self.R, self.Rdot],
             self.ND_params,
             self.medium_parameters["gamma"],
+            self.pac_wave,
+            self.frequency,
         )
 
         nP_rad = (self.ND_params["nrho"] * self.R / nr_measure) * (
