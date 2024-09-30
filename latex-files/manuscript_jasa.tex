@@ -10,7 +10,7 @@
 % \documentclass[preprint,NumberedRefs]{revtex4}
 
 %\documentclass[reprint,TurnOnLineNumbers]{JASA}
-\documentclass[jasa,reprint,groupedaddress]{revtex4-2}
+\documentclass[jasa,preprint,groupedaddress]{revtex4-2}
 
 \usepackage{color}
 % \usepackage[caption=false]{subfig}
@@ -361,8 +361,8 @@ Several plots look similar to each other, indicating redundancy in the feature s
 
 \begin{figure}[tbh]
 	\centering
-	\includegraphics[width=\linewidth]{./figs/SOMs.pdf}
-	\caption{ Self-organizing map results are presented, with each feature plotted to illustrate its relationships with other features. The data was generated through minimum entropy decomposition of emissions, based on the Gilmore-Akulichev model. The DWPT nodes are arranged in a rectangle with an aspect ratio of 1.5, using decomposition levels ranging from 5 to 10, and employing the db20 wavelet.}
+	\includegraphics[width=\linewidth]{./figs/SOMs_db30.pdf}
+	\caption{ Self-organizing map results are presented, with each feature plotted to illustrate its relationships with other features. The data was generated through minimum entropy decomposition of emissions, based on the Gilmore-Akulichev model. The DWPT is carried out using decomposition levels ranging from 5 to 10, and employing the db30 wavelet.}
 	\label{fig:som}
 \end{figure}
 
@@ -372,7 +372,7 @@ It is worth noting that the results for self-organizing maps is highly inconsist
 
 \subsection{Bubble dynamics data}
 \label{sec:GA_data}
-The incident ultrasound pressure is modelled as a sine wave, i.e., $P_{ac}(t)= P_A sin(2 \pi f t)$ where $P_A$ and $f$ are the amplitude and frequency of the ultrasound wave. The frequency and pulse length are set to \SI{1.1}{\mega\hertz} and $100/f$, to mimic experiments, and $P_A=1 \si{\mega\pascal}$ for the results presented below. We choose water and oxygen for the liquid and the gas. The physical parameters used for numerical simulations are as follows (at room temperature \SI{293}{\kelvin} and atmospheric pressure $p_0=100 \si{\kilo\pascal}$): $\rho_0=\SI{e3}{\kilogram\per\cubic\metre}$, $\sigma=\SI{7.25e-2}{\newton\per\metre}$, $\mu=\SI{e-3}{\pascal\second}$, $c_0=\SI{1482}{\metre\per\second}$, $n=7$, $A=\SI{3.04e2}{\mega\pascal}$, $B=\SI{3.039e2}{\mega\pascal}$ and $\gamma=1.4$. The initial conditions are: $R(0)=R_0$ and $\dot{R}(0)=0$. The radius of a resonant bubble at the driving frequency (\SI{1.1}{\mega\hertz}) is \SI{3.4}{\micro\metre} - calculated using the linear resonance equation.\cite{neppiras1980} Here, three scenarios are simulated in which the initial radii are (i) much smaller than the resonant bubble, i.e. $R_0=\SI{0.5}{\micro\metre}$, (ii) close to the size of the resonant bubble; $R_0=\SI{5}{\micro\metre}$, and (iii) much larger than the resonant bubble, i.e., $R_0=\SI{50}{\micro\metre}$, resulting in transient and stable cavitation regimes.  
+The incident ultrasound pressure is modelled as a sine wave, i.e., $P_{ac}(t)= P_A sin(2 \pi f t)$ where $P_A$ and $f$ are the amplitude and frequency of the ultrasound wave. The frequency and pulse length are set to \SI{1.1}{\mega\hertz} and $100/f$, to mimic experiments, and $P_A=1 \si{\mega\pascal}$ for the results presented below. We choose water and oxygen for the liquid and the gas. The physical parameters used for numerical simulations are as follows (at room temperature \SI{293}{\kelvin} and atmospheric pressure $p_0=100 \si{\kilo\pascal}$): $\rho_0=\SI{e3}{\kilogram\per\cubic\metre}$, $\sigma=\SI{7.25e-2}{\newton\per\metre}$, $\mu=\SI{e-3}{\pascal\second}$, $c_0=\SI{1482}{\metre\per\second}$, $n=7$, $A=\SI{3.04e2}{\mega\pascal}$, $B=\SI{3.039e2}{\mega\pascal}$ and $\gamma=1.4$. The initial conditions are: $R(0)=R_0$ and $\dot{R}(0)=0$. The radius of a resonant bubble at the driving frequency (\SI{1.1}{\mega\hertz}) is \SI{3.4}{\micro\metre} - calculated using the linear resonance equation.\cite{neppiras1980} Here, three scenarios are simulated in which the initial radii are (i) much smaller than the resonant bubble, i.e. $R_0=\SI{0.5}{\micro\metre}$, (ii) the resonant bubble radius; $R_0=\SI{3.4}{\micro\metre}$, and (iii) much larger than the resonant bubble, i.e., $R_0=\SI{50}{\micro\metre}$, resulting in transient and stable cavitation regimes.  
 
 The radiated pressures at $r=\SI{100}{\micro\metre}$ and their spectra are shown in Fig. \ref{fig:emissions_and_fft_GA}. 
 
@@ -381,7 +381,7 @@ The radiated pressures at $r=\SI{100}{\micro\metre}$ and their spectra are shown
 	\begin{subfigure}{.45\textwidth}
 		{
 			\centering
-			\includegraphics[trim=0 0 50 0, clip, width=\textwidth]{./figs/GA_calculated_emissions_R00p5um_R03p5um_R050um_freq1p1MHz_Pac1MPa.pdf}
+			\includegraphics[width=\textwidth]{./figs/GA_calculated_emissions_R00p5um_R03p4um_R050um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
 			\label{subfig:GA_emissions_sig}
 		}
@@ -390,12 +390,12 @@ The radiated pressures at $r=\SI{100}{\micro\metre}$ and their spectra are shown
 	\begin{subfigure}{.45\textwidth}
 		{
 			\centering
-			\includegraphics[trim=0 0 50 0, clip, width=\textwidth]{./figs/spectrum_GA_calculated_emissions_R00p5um_R03p4um_R050um_freq1p1MHz_Pac1MPa.pdf}
+			\includegraphics[clip, width=\textwidth]{./figs/spectrum_GA_calculated_emissions_R00p5um_R03p4um_R050um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
 			\label{subfig:GA_emissions_fft}
 		}
 	\end{subfigure}
-	\caption{Simulated acoustic emissions from bubbles with the initial radii of \SI{0.5}{\micro\metre},\SI{5}{\micro\metre}, and \SI{50}{\micro\metre}; the time series (a) and spectra (b) of emissions during the first 7 cycles of excitations. }
+	\caption{Simulated acoustic emissions from bubbles with the initial radii of \SI{0.5}{\micro\metre},\SI{3.4}{\micro\metre}, and \SI{50}{\micro\metre}; the time series (a) and spectra (b) of emissions during the first 7 cycles of excitations. }
 	\label{fig:emissions_and_fft_GA}
 \end{figure*}
 		
@@ -442,80 +442,119 @@ The radiated pressures at $r=\SI{100}{\micro\metre}$ and their spectra are shown
 % \subref{fig:emissions_GA} the time series of 7 cycles of excitations, \subref{fig:fft_GA} the spectrum of the acoustic emissions.
 		
 		
-The bubble with $R_0=\SI{50}{\micro\metre}$ sustains periodic stable oscillations and irradiates cyclic pressure. The main components of the spectrum are the bubble's resonance frequency at $0.06f$ and the fundamental. Considering the low energy and the kurtosis ($K=3.5$) of the transient component, it mainly represents the added WGN. Note that the kurtosis of the WGN is approximately 3. The $R_0=\SI{0.5}{\micro\metre}$ and $R_0=\SI{5}{\micro\metre}$ bubbles experience cyclic transient cavitation, which is manifested as impulsive transient components in the emissions. However, the spectral features of these transients are different. For the $\SI{0.5}{\micro\metre}$ bubble, the reconstructed transient component of the acoustic emission manifests harmonics, ultra-harmonics at $(2m+1)f/2, m\geq 2$ and broadband spectral components. In this case, the bubble is driven below its resonance which is about \SI{11.7}{\mega\hertz}, thus, $f/f_r \approx 1/10$. This bubble expands across multiple periods of excitation, evident in the time series of the reconstructed transient signal, and the collapses are driven by strong inertial forces. The emissions from the larger bubble of $R_0=\SI{5}{\micro\metre}$,  with the resonance frequency of \SI{0.72}{\mega\hertz} and $f/f_r \approx 5/3$, include the $3f/5$ and $3f/10$ sub-harmonics, the fundamental, the second harmonic and broadband. 
+The bubble with $R_0=\SI{50}{\micro\metre}$ sustains periodic stable oscillations and irradiates cyclic pressure. The main components of the spectrum are the bubble's resonance frequency at $0.06f$ and the fundamental. Considering the low energy and the kurtosis ($K=3.5$) of the transient component, it mainly represents the added WGN (the kurtosis of the WGN is approximately 3). The $R_0=\SI{0.5}{\micro\metre}$ bubble experiences cyclic transient cavitation, which is manifested as impulsive transient components in the emissions. The reconstructed transient component of the acoustic emission manifests harmonics, ultra-harmonics at $(2m+1)f/2, m\geq 2$ and broadband spectral components. In this case, the bubble is driven below its resonance which is about \SI{11.7}{\mega\hertz}, thus, $f/f_r \approx 1/10$. The emissions from the resonant bubble of $R_0=\SI{3.4}{\micro\metre}$, include the $3f/4$ and $f/2$ sub-harmonics, the fundamental, an ultra-harmonic at about $3f/2$, the second harmonic and broadband. 
 		
-To analyze the emissions, the Daubechies wavelet function of order 20 (db20) was chosen in accordance with the physics of cavitation and the impulsive nature of desired transient component in transient cavitation. The depth of the decomposition was determined for each signal using the minimum Shannon entropy criterion, discussed before. The choice of the wavelet function is not unique. Our numerical studies (not shown here) confirmed that other orthonormal wavelet functions with relatively high order (e.g., Coiflet17) can effectively extract cavitation signatures in the signal. Statistical metrics defined in Section \ref{sec:statistical_metrics} were calculated for all leaf nodes.  From the feature space analysis, a smaller subset of features — namely spectral entropy, log average energy, kurtosis, and average energy — was selected for clustering and classification of the packets, as detailed in Section \ref{sec:feature_selection}. Initially, \km clustering was applied to classify the leaf nodes into two clusters, separating the transient from the periodic components. Figure \ref{fig:rec_fft_2clusters_GA} depicts the reconstructed components and their spectra. Considering these spectra and the values of the classifying metrics at the centers of these clusters, these two clusters represent the periodic and transient components of the emissions. The emissions from the \SI{0.5}{\micro\meter} bubble features periodic impulses created by cyclic collapses, as shown in Fig. \ref{fig:rec_fft_2clusters_GA}. The classifier grouped these cyclic impulses and the fundamental tone as the periodic component of the signal and the broadband and sub- and ultra-harmonics are grouped as transient component, see Figs. \ref{subfig:rec_2clusters_0p5micron_GA} and \ref{subfig:fft_2clusters_0p5micron_GA}. 
+To analyze the emissions, the Daubechies wavelet function of order 30 (db30) was chosen in accordance with the physics of cavitation and the impulsive nature of desired transient component in transient cavitation. The depth of the decomposition was determined for each signal using the minimum Shannon entropy criterion, discussed before. The choice of the wavelet function is not unique. Our numerical studies (not shown here) confirmed that other orthonormal high order wavelet functions can extract cavitation signatures in the signal. Statistical metrics defined in Section \ref{sec:statistical_metrics} were calculated for all leaf nodes.  From the feature space analysis, a smaller subset of features — namely spectral entropy, log average energy, kurtosis, and average energy — was selected for clustering and classification of the packets, as detailed in Section \ref{sec:feature_selection}. 
+% Initially, \km clustering was applied to classify the leaf nodes into two clusters, separating the transient from the periodic components. Figure \ref{fig:rec_fft_2clusters_GA} depicts the reconstructed components and their spectra. Considering these spectra and the values of the classifying metrics at the centers of these clusters, these two clusters represent the periodic and transient components of the emissions. The emissions from the \SI{0.5}{\micro\meter} bubble features periodic impulses created by cyclic collapses, as shown in Fig. \ref{fig:rec_fft_2clusters_GA}. The classifier grouped these cyclic impulses and the fundamental tone as the periodic component of the signal and the broadband and sub- and ultra-harmonics are grouped as transient component, see Figs. \ref{subfig:rec_2clusters_0p5micron_GA} and \ref{subfig:fft_2clusters_0p5micron_GA}. 
 			
-\begin{figure*}[tp]
-	\centering
-	\begin{subfigure}{.4\textwidth}
-		{
-			\centering
-			\includegraphics[trim= 0 0 150 70,clip, width=\textwidth]{./figs/sig_rec_centeroids_enforced2clusters_GA_calculated_emissions_R0p5um_freq1p1MHz_Pac1MPa.pdf}
-			\subcaption{}
-			\label{subfig:rec_2clusters_0p5micron_GA} 
-		}%
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}{.5\textwidth}
-		{
-			\centering
-			\includegraphics[trim= 0 0 10 70,clip, width=\textwidth]{./figs/spectrum_rec_centeroids_enforced2clusters_GA_calculated_emissions_R0p5um_freq1p1MHz_Pac1MPa.pdf}
-			\subcaption{}
-			\label{subfig:fft_2clusters_0p5micron_GA}
-		}
-	\end{subfigure}
-	\\
-	\begin{subfigure}{.4\textwidth}
-		{
-			\centering
-			\includegraphics[trim= 0 0 150 70,clip, width=\textwidth]{./figs/sig_rec_centeroids_enforced2clusters_GA_calculated_emissions_R05um_freq1p1MHz_Pac1MPa.pdf}	
-			\subcaption{}
-			\label{subfig:rec_2clusters_5micron_GA}
-		}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}{.5\textwidth}
-		{
-			\centering
-			\includegraphics[trim= 0 0 10 70,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_enforced2clusters_GA_calculated_emissions_R05um_freq1p1MHz_Pac1MPa.pdf}
-			\subcaption{}
-			\label{subfig:fft_2clusters_5micron_GA}
-		}
-	\end{subfigure}
-	\\
-	\begin{subfigure}{.4\textwidth}
-		{
-			\centering
-			\includegraphics[trim= 0 0 150 70,clip, width=\textwidth]{./figs/sig_rec_centeroids_enforced2clusters_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa.pdf}
-			\subcaption{}
-			\label{subfig:rec_2clusters_50micron_GA}
-		}
-	\end{subfigure}%
-	\hfill
-	\begin{subfigure}{.5\textwidth}
-		{
-			\centering
-			\includegraphics[trim= 0 0 10 70,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_enforced2clusters_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa.pdf}
-			\subcaption{}
-			\label{subfig:fft_2clusters_50micron_GA}
-		}%
-	\end{subfigure}
-	\caption{Periodic and transient components of simulated acoustic emissions and their spectra, generated from bubbles with the initial radii of (a,b) \SI{0.5}{\micro\metre}, (c,d) \SI{5}{\micro\metre}, and (e,f) \SI{50}{\micro\metre}.}
-	\label{fig:rec_fft_2clusters_GA}
-\end{figure*}
+% \begin{figure*}[tp]
+% 	\centering
+% 	\begin{subfigure}{.4\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[trim= 0 0 170 25,clip,width=\textwidth]{./figs/sig_rec_centeroids_enforced2clusters_GA_calculated_emissions_R00p5um_freq1p1MHz_Pac1MPa.pdf}
+% 			\subcaption{}
+% 			\label{subfig:rec_2clusters_0p5micron_GA} 
+% 		}%
+% 	\end{subfigure}
+% 	\hfill
+% 	\begin{subfigure}{.5\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[trim= 0 0 0 25,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_enforced2clusters_GA_calculated_emissions_R00p5um_freq1p1MHz_Pac1MPa.pdf}
+% 			\subcaption{}
+% 			\label{subfig:fft_2clusters_0p5micron_GA}
+% 		}
+% 	\end{subfigure}
+% 	\\
+% 	\begin{subfigure}{.4\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[trim= 0 0 170 25,clip,width=\textwidth]{./figs/sig_rec_centeroids_enforced2clusters_GA_calculated_emissions_R03p4um_freq1p1MHz_Pac1MPa.pdf}	
+% 			\subcaption{}
+% 			\label{subfig:rec_2clusters_5micron_GA}
+% 		}
+% 	\end{subfigure}
+% 	\hfill
+% 	\begin{subfigure}{.5\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[trim= 0 0 0 25,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_enforced2clusters_GA_calculated_emissions_R03p4um_freq1p1MHz_Pac1MPa.pdf}
+% 			\subcaption{}
+% 			\label{subfig:fft_2clusters_5micron_GA}
+% 		}
+% 	\end{subfigure}
+% 	\\
+% 	\begin{subfigure}{.4\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[trim= 0 0 170 25,clip,width=\textwidth]{./figs/sig_rec_centeroids_enforced2clusters_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa.pdf}
+% 			\subcaption{}
+% 			\label{subfig:rec_2clusters_50micron_GA}
+% 		}
+% 	\end{subfigure}%
+% 	\hfill
+% 	\begin{subfigure}{.5\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[trim= 0 0 0 25,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_enforced2clusters_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa.pdf}
+% 			\subcaption{}
+% 			\label{subfig:fft_2clusters_50micron_GA}
+% 		}%
+% 	\end{subfigure}
+% 	\caption{Periodic and transient components of simulated acoustic emissions and their spectra, generated from bubbles with the initial radii of (a,b) \SI{0.5}{\micro\metre}, (c,d) \SI{3.4}{\micro\metre}, and (e,f) \SI{50}{\micro\metre}.}
+% 	\label{fig:rec_fft_2clusters_GA}
+% \end{figure*}
 
 
 % The resonance frequency of the \qty{0.5}{\micro\metre} bubble is about \qty{11.7}{\mega\hertz} which is approximately ten times higher than the driving frequency ($f/f_r = 94/100 \appr 1/10$). The spectrum features multiple ultra-harmonics at $(2m+1)f/2, m\leq 2$, harmonics and broadband component, which are expected when a sub-resonance bubble ius excited, see Section \ref{sec:cavita_physics} for detail. The larger bubble of \qty{5}{\micro\meter} is close the resonance bubble size at the driving frequency and its spectrum features sub-harmonics at $f/3$, $2f/3$, the second harmonic, and stronger broadband compared to the \qty{0.5}{\micro\meter} bubble.
 			
-To further decompose the transient components, we set the minimum number of clusters to be 2 and let the \km clustering algorithm identifies the clusters in the leaves packets using the silhouette score. For the the submicron bubble, four clusters are identified which the first clust ($Cl0$) includes the periodic component and the other three clusters, i.e., $Cl1$ to $Cl3$, include transient features. The cluster $Cl2$ includes sub-harmonics and a high-kurtosis ($K=17.8$) broadband component, and the other two clusters include almost half of the nodes of transient components, which are high and low energy nodes. Similarly, the leaves of the emissions from the $5$ micron bubble are classified into four clusters: the $Cl1$ cluster includes the periodic component,i.e., the fundamental frequency, the $Cl2$ includes the sub-harmonics, the second harmonic and a low-frequency part of broadband and noise, and the high-frequency broadband and noise are divided into clusters $Cl0$ and $Cl3$. Finally, the emissions from the large $50$ micron bubble are classified into three clusters, where the transients are divided into a high-kurtosis broadband component ($K=10.4$), i.e., $Cl2$, and the low-kurtosis ($K=3.2$) noise $Cl0$.  
-		
+To classify the leaf nodes, we set the minimum number of clusters to be 2 and let the \km clustering algorithm identifies the clusters in the nodes using the silhouette score. The clusters are sorted from the highest average energy ($Cluster 0$) to the lowest one. For the the submicron bubble, four clusters are identified which the first cluster ($Cluster 0$) includes the periodic component as it has the maximum energy and the lowest kurtosis, see Figs. \ref{subfig:metrics_0p5micron_GA}, \ref{subfig:rec_arbitrary_0p5micron_GA} and \ref{subfig:fft_arbitrary_0p5micron_GA}. $Cluster 1$ includes nodes which represent the harmonics and ultra-harmonic components and $Cluster 2$ includes sub-harmonics and a high-kurtosis ($K=17.8$) broadband component. Finally, the last cluster includes the low-energy nodes of the broadband. 
+
+The leaf nodes of the emissions from the $3.4$ micron bubble are divided into into three clusters: $Cluster 0$ includes the periodic component,i.e., the fundamental frequency, see Figs. \ref{subfig:rec_arbitrary_3p4micron_GA} and \ref{subfig:fft_arbitrary_3p4micron_GA}. It has the highest energy and lowest kurtosis among other cluster centers, as shown in Fig. \ref{subfig:metrics_3p4micron_GA}. $Cluster 1$ includes the sub-harmonics, the second harmonic and a low-frequency part of broadband and noise. The high-frequency broadband and noise are contained in $Cluster 2$. 
+
+Finally, the emissions from the large $50$ micron bubble are classified into three clusters, where the transients are divided into a high-kurtosis broadband component ($K=10.4$), i.e., $Cluster 2$, and the low-kurtosis ($K=3.2$) noise $Cluster 1$.  
+
+\begin{figure*}[tp]
+	\centering
+	\begin{subfigure}{0.5\textwidth}
+		{
+			\centering
+			\includegraphics[width=\textwidth]{./figs/metrics_centroids_arbitrary_GA_calculated_emissions_R00p5um_freq1p1MHz_Pac1MPa}
+			\subcaption{}
+			\label{subfig:metrics_0p5micron_GA} 
+		}%
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.5\textwidth}
+		{
+			\centering
+			\includegraphics[width=\textwidth]{./figs/metrics_centroids_arbitrary_GA_calculated_emissions_R03p4um_freq1p1MHz_Pac1MPa}
+			\subcaption{}
+			\label{subfig:metrics_3p4micron_GA} 
+		}%
+	\end{subfigure}
+	\\
+	\begin{subfigure}{0.5\textwidth}
+		{
+			\centering
+			\includegraphics[width=\textwidth]{./figs/metrics_centroids_arbitrary_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa}
+			\subcaption{}
+			\label{subfig:metrics_50micron_GA} 
+		}%
+	\end{subfigure}
+	\caption{Classification metrics of the centers of the leaf nodes clusters identified by the \km algorithm (a,b) \SI{0.5}{\micro\metre}, (c,d) \SI{3.4}{\micro\metre}, and (e,f) \SI{50}{\micro\metre} bubble.}
+	\label{fig:metrics_arbitrary_clusters_GA}
+\end{figure*}
+
+
+
 \begin{figure*}[htp]
 	\centering
 	\begin{subfigure}{0.4\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 150 70,clip, width=\textwidth]{./figs/sig_rec_centeroids_arbitrary_GA_calculated_emissions_R0p5um_freq1p1MHz_Pac1MPa.pdf}
+			\includegraphics[trim= 0 0 170 25,clip,width=\textwidth]{./figs/sig_rec_centeroids_arbitrary_GA_calculated_emissions_R00p5um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
 			\label{subfig:rec_arbitrary_0p5micron_GA}
 			}
@@ -524,7 +563,7 @@ To further decompose the transient components, we set the minimum number of clus
 	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 0 70,clip, width=\textwidth]{./figs/spectrum_rec_centeroids_arbitrary_GA_calculated_emissions_R0p5um_freq1p1MHz_Pac1MPa.pdf}		
+			\includegraphics[trim= 0 0 0 25,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_arbitrary_GA_calculated_emissions_R00p5um_freq1p1MHz_Pac1MPa.pdf}		
 			\subcaption{}
 			\label{subfig:fft_arbitrary_0p5micron_GA}
 			}
@@ -533,7 +572,7 @@ To further decompose the transient components, we set the minimum number of clus
 	\begin{subfigure}{0.4\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 150 70,clip, width=\textwidth]{./figs/sig_rec_centeroids_arbitrary_GA_calculated_emissions_R05um_freq1p1MHz_Pac1MPa.pdf}
+			\includegraphics[trim= 0 0 170 25,clip,width=\textwidth]{./figs/sig_rec_centeroids_arbitrary_GA_calculated_emissions_R03p4um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
 			\label{subfig:rec_arbitrary_5micron_GA}
 			}
@@ -542,7 +581,7 @@ To further decompose the transient components, we set the minimum number of clus
 	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 0 70,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_arbitrary_GA_calculated_emissions_R05um_freq1p1MHz_Pac1MPa.pdf}
+			\includegraphics[trim= 0 0 0 25,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_arbitrary_GA_calculated_emissions_R03p4um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
 			\label{subfig:fft_arbitrary_5micron_GA}
 		}
@@ -551,7 +590,7 @@ To further decompose the transient components, we set the minimum number of clus
 	\begin{subfigure}{0.4\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 150 70,clip, width=\textwidth]{./figs/sig_rec_centeroids_arbitrary_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa.pdf}
+			\includegraphics[trim= 0 0 170 25,clip,width=\textwidth]{./figs/sig_rec_centeroids_arbitrary_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
 			\label{subfig:rec_arbitrary_50micron_GA}
 			}
@@ -560,20 +599,20 @@ To further decompose the transient components, we set the minimum number of clus
 	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 0 70,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_arbitrary_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa.pdf}
+			\includegraphics[trim= 0 0 0 25,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_arbitrary_GA_calculated_emissions_R050um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
 			\label{subfig:fft_arbitrary_50micron_GA}
 			}
 	\end{subfigure}
-	\caption{Reconstructed components of acoustic emissions and their spectra, generated from bubbles with the initial radii of (a,b) \SI{0.5}{\micro\metre}, (c,d) \SI{5}{\micro\metre}, and (e,f) \SI{50}{\micro\metre}.}
+	\caption{Reconstructed components of acoustic emissions and their spectra, generated from bubbles with the initial radii of (a,b) \SI{0.5}{\micro\metre}, (c,d) \SI{3.4}{\micro\metre}, and (e,f) \SI{50}{\micro\metre}.}
 \end{figure*}
 		
 		
 \subsection{Analyzing PCD data}
 \label{sec:analyzing_PCD_data}
-A focused ultrasound transducer (H102, Sonic Concepts, WA, USA) was driven with a burst of 100 cycles at the fundamental frequency of \SI{1.1}{\mega\hertz} and different amplitudes. Focused PCDs with centre frequencies of \SI{1}{\mega\hertz}, \SI{5}{\mega\hertz} and \SI{10}{\mega\hertz} were used to measure acoustic emissions from the focus of the ultrasound transducer. Experiments were carried out in a tank filled with de-ionised water (oxygen concentration: $7.00\pm0.2$ \si{\milli\gram\per\liter} for all trials) at room temperature (\SI{22}{\degreeCelsius}). Refer to Haqshenas et al \cite{haqshenas2015} for the detailed description of the test set-up, data acquisition parameters and experimental procedures. Here, the readings of the \SI{1}{\mega\hertz} PCD are presented, as it overlaps with the excitation frequency. Two experimental scenarios were investigated, characterised by calculated peak-positive ($P_{p+}$) and peak-negative ($P_{p-}$) pressures at the focus: i) low-amplitude sonication where $P_{p+}=\SI{3}{\mega\pascal}$ and $P_{p-}=\SI{2.6}{\mega\pascal}$, denoted as D1 below, ii) high-amplitude sonication $P_{p+}=\SI{12.5}{\mega\pascal}$ and $P_{p-}=\SI{7.1}{\mega\pascal}$, denoted as D2. In scenario D1, the incident pressure waves remain linear, whereas in case D2, the waveform becomes strongly distorted, leading to the formation of higher harmonics. These harmonics can excite bubble nuclei smaller than the resonance bubble at the excitation frequency $f=\SI{1.1}{\mega\hertz}$.
+A focused ultrasound transducer (H102, Sonic Concepts, WA, USA) was driven with a burst of 100 cycles at the fundamental frequency of \SI{1.1}{\mega\hertz} and different amplitudes. Focused PCDs with centre frequencies of \SI{1}{\mega\hertz}, \SI{5}{\mega\hertz} and \SI{10}{\mega\hertz} were used to measure acoustic emissions from the focus of the ultrasound transducer. Experiments were carried out in a tank filled with de-ionized water (oxygen concentration: $7.00\pm0.2$ \si{\milli\gram\per\liter} for all trials) at room temperature (\SI{22}{\degreeCelsius}). Refer to Haqshenas et al \cite{haqshenas2015} for the detailed description of the test set-up, data acquisition parameters and experimental procedures. Here, the readings of the \SI{1}{\mega\hertz} PCD are presented, as its center frequency overlaps with the excitation frequency. Two experimental scenarios were investigated, characterized by calculated peak-positive ($P_{p+}$) and peak-negative ($P_{p-}$) pressures at the focus: i) low-amplitude sonication where $P_{p+}=\SI{3}{\mega\pascal}$ and $P_{p-}=\SI{2.6}{\mega\pascal}$, denoted as D1 below, ii) high-amplitude sonication $P_{p+}=\SI{12.5}{\mega\pascal}$ and $P_{p-}=\SI{7.1}{\mega\pascal}$, denoted as D2. In the scenario D1, the incident pressure waves remain linear, whereas in the case D2, the waveform becomes strongly distorted, leading to the formation of higher harmonics. These harmonics can excite bubble nuclei smaller than the resonance bubble at the excitation frequency $f=\SI{1.1}{\mega\hertz}$.
 			
-The wavelet transform uses minimum entropy decomposition, the db20 wavelet, symmetric padding, and enforces decomposition levels between 6-12. Given the frequency response of the PCD, the cut-off frequency of the decomposition was set to \SI{10}{\mega\hertz}, with packets above this threshold discarded. The results from the wavelet transform are presented in Heisenberg plots in Fig. \ref{fig:heisenberg_pcd_data}. The color of each Heisenberg box indicates the amplitude of the corresponding wavelet packet coefficient. The plot reveals a higher energy band around the sub-harmonics, the fundamental frequency, and the second harmonic. A stronger broadband component above the second harmonic is evident in the D1 data. These plots also illustrate the trade-off between frequency and time resolution. The minimum entropy decomposition algorithm tends to achieve a finer frequency resolution around higher energy parts of the frequency spectrum i.e. at the fundamental frequency. As expected with wavelet transforms, there is finer temporal resolution at higher frequencies.
+The wavelet transform uses minimum entropy decomposition, the db20 wavelet, symmetric padding, and enforces decomposition levels between 6 to 12. Given the frequency response of the PCD, the cut-off frequency of the decomposition was set to \SI{10}{\mega\hertz}, with packets above this threshold discarded. The results from the wavelet transform are presented in Heisenberg plots in Fig. \ref{fig:heisenberg_pcd_data}. The color of each Heisenberg box indicates the amplitude of the corresponding wavelet packet coefficient. The plot reveals a higher energy band around the sub-harmonics, the fundamental frequency, and the second harmonic. A stronger broadband component above the second harmonic is evident in the D1 data. These plots also illustrate the trade-off between frequency and time resolution. The minimum entropy decomposition algorithm tends to achieve a finer frequency resolution around higher energy parts of the frequency spectrum i.e. at the fundamental frequency. As expected with wavelet transforms, there is finer temporal resolution at higher frequencies.
 			
 % \begin{figure}[tbh]
 % 	\centering
@@ -614,41 +653,41 @@ The wavelet transform uses minimum entropy decomposition, the db20 wavelet, symm
 % 	\label{fig:heisenberg_pcd_data}
 % \end{figure}
 
-The \km algorithm is initially enforced to classify the nodes into 2 clusters, shown in Fig. \ref{fig:rec_pcd_data_2centers}. The selected classifying metrics are as before, identified using self-organizing maps. In both data sets, the algorithm classifies the fundamental as the periodic component and broadband, and (sub-)harmonics as the transient component. 
+The \km algorithm is initially enforced to classify the nodes into 2 clusters, shown in Fig. \ref{fig:rec_pcd_data_2centers}. The selected classifying metrics are as before, identified using self-organizing maps. In both data sets, the algorithm classifies the fundamental and sub-harmonics together as the periodic component and broadband, and harmonics as the transient component. The miss-classification of the sub-harmonics is a result of binary classification and is corrected by selecting sufficient number of clusters. 
 
 \begin{figure*}[tp]
 	\centering
-	\begin{subfigure}{0.45\textwidth}
+	\begin{subfigure}{0.4\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 130 70,clip, width=\textwidth]{./figs/sig_rec_centers_truncated_80_1_2.pdf}
+			\includegraphics[trim= 0 0 150 0,clip,width=\textwidth]{./figs/sig_rec_centers_truncated_80_1_2.pdf}
 			\subcaption{}
 			\label{subfig:sig_rec_centers_truncated_80_1_2}
 		}
 	\end{subfigure}%
 	\hfill
-	\begin{subfigure}{0.55\textwidth}
+	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 0 70,clip, width=\textwidth]{./figs/fft_rec_centers_80_1_2.pdf}
+			\includegraphics[width=\textwidth]{./figs/fft_rec_centers_80_1_2.pdf}
 			\subcaption{}
 			\label{subfig:fft_rec_centers_80_1_2}
 		}
 	\end{subfigure}%
 	\\
-	\begin{subfigure}{0.45\textwidth}
+	\begin{subfigure}{0.4\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 130 70,clip, width=\textwidth]{./figs/sig_rec_centers_truncated_280_1_2.pdf}
+			\includegraphics[trim= 0 0 150 0,clip,width=\textwidth]{./figs/sig_rec_centers_truncated_280_1_2.pdf}
 			\subcaption{}
 			\label{subfig:sig_rec_centers_truncated_280_1_2}
 		}
 	\end{subfigure}%
 	\hfill
-	\begin{subfigure}{0.55\textwidth}
+	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 0 70,clip, width=\textwidth]{./figs/fft_rec_centers_280_1_2.pdf}
+			\includegraphics[width=\textwidth]{./figs/fft_rec_centers_280_1_2.pdf}
 			\subcaption{}
 			\label{subfig:fft_rec_centers_280_1_2}
 		}
@@ -657,7 +696,7 @@ The \km algorithm is initially enforced to classify the nodes into 2 clusters, s
 	\label{fig:rec_pcd_data_2centers}
 \end{figure*}
 
-Subsequently, for more granular decomposition, \km is set to select clusters based on the silhouette score, with a minimum of $k=3$. The algorithm divides the leaf nodes of the D1 and D2 data sets into five and three clusters, respectively. In both cases, the fundamental is the high-energy node that has been singled out by the algorithm, denoted as $Cl0$. The same leaf nodes are classified as periodic components in Fig. \ref{fig:rec_pcd_data_2centers}.
+To this end and for more granular decomposition, \km is set to select clusters based on the silhouette score, with a minimum of $k=3$. The algorithm divides the leaf nodes of the D1 and D2 data into five and three clusters, respectively. In both cases, the fundamental is the high-energy node that has been singled out by the algorithm, denoted as $Cl0$. The same leaf nodes are classified as periodic components in Fig. \ref{fig:rec_pcd_data_2centers}.
 
 % The DWPT graph is shown in Fig. \ref{ig:dwpt_graph_pcd_data} where the leaf nodes are color coded according to the clustering results. 
 
@@ -708,24 +747,24 @@ The time series reconstructed from these clusters and their spectra are shown in
 	% \end{subfigure}%
 	% \\
 	\centering
-	\begin{subfigure}{0.45\textwidth}
+	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 15 40 10 0,clip, width=\textwidth]{./figs/sig_components_metrics_80_1_3to6.pdf}
+			\includegraphics[width=\textwidth]{./figs/sig_components_metrics_80_1_3to6.pdf}
 			\subcaption{}
 			\label{subfig:sig_components_metrics_80_1_3to6}
 		}
 	\end{subfigure}%
 	\hfill
-	\begin{subfigure}{0.45\textwidth}
+	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 15 40 10 0,clip, width=\textwidth]{./figs/sig_components_metrics_280_1_3to6.pdf}	
+			\includegraphics[width=\textwidth]{./figs/sig_components_metrics_280_1_3to6.pdf}	
 			\subcaption{}
 			\label{subfig:sig_components_metrics_280_1_3to6}
 		}
 	\end{subfigure}%
-	\caption{Clustering of DWPT leaves using the selected metrics. Three out of four metrics are arbitrarily chosen for visualization. (a) D1 data, (b) D2 data.}
+	\caption{Classification metrics calculated at the centers of clusters. (a) D1 data, (b) D2 data.}
 	\label{fig:cluster_pcd_data}
 \end{figure*}
 
@@ -735,37 +774,37 @@ Figures \ref{fig:280_1_fft} and \ref{fig:280_1_fft_metrics} show that the algori
 			
 \begin{figure*}[tp]
 	\centering
-	\begin{subfigure}{0.45\textwidth}
+	\begin{subfigure}{0.4\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 10 0,clip, width=\textwidth]{./figs/sig_rec_centers_truncated_80_1_3to6.pdf}
+			\includegraphics[trim= 0 0 160 0,clip, width=\textwidth]{./figs/sig_rec_centers_truncated_80_1_3to6.pdf}
 			\subcaption{}
 			\label{subfig:sig_rec_centers_truncated_80_1_3to6}
 		}
 	\end{subfigure}%
 	\hfill
-	\begin{subfigure}{0.45\textwidth}
+	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 10 0,clip, width=\textwidth]{./figs/fft_rec_centers_80_1_3to6.pdf}%		
+			\includegraphics[width=\textwidth]{./figs/fft_rec_centers_80_1_3to6.pdf}%		
 			\subcaption{}
 			\label{subfig:fft_rec_centers_80_1_3to6}
 		}
 	\end{subfigure}%
 	\\
-	\begin{subfigure}{0.45\textwidth}
+	\begin{subfigure}{0.4\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 10 0,clip, width=\textwidth]{./figs/sig_rec_centers_truncated_280_1_3to6.pdf}
+			\includegraphics[trim= 0 0 160 0,clip, width=\textwidth]{./figs/sig_rec_centers_truncated_280_1_3to6.pdf}
 			\subcaption{}
 			\label{subfig:sig_rec_centers_truncated_280_1_3to6}
 		}
 	\end{subfigure}%
 	\hfill
-	\begin{subfigure}{0.45\textwidth}
+	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 10 0,clip, width=\textwidth]{./figs/fft_rec_centers_280_1_3to6.pdf}		
+			\includegraphics[width=\textwidth]{./figs/fft_rec_centers_280_1_3to6.pdf}		
 			\subcaption{}
 			\label{subfig:fft_rec_centers_280_1_3to6}
 		}
