@@ -57,8 +57,6 @@ class TreeGraph:
             sampling_rate,
             show_frequency,
         )
-        
-
 
     # ---------------- Getting Nodes & Edges ----------------
 
@@ -193,7 +191,6 @@ class TreeGraph:
             plt.savefig(fig_name + ".png", format="PNG")
             plt.savefig(fig_name + ".pdf", format="PDF")
             write_dot(G, fig_name + ".dot")
-            
 
     def _get_colours(self, G, node_colour, freq_threshold):
         labels = []
