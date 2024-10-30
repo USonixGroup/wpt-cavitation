@@ -1,4 +1,4 @@
-from wavelet_transform.utils.extensions import sci_form, fft, to_dB, eng_form_plot
+from wavelet_transform.utils.extensions import sci_form, psd, to_dB, eng_form_plot
 import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,9 +7,11 @@ from scipy.interpolate import interp1d
 from itertools import cycle
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
-fsize = 20  # font size
-tick_size = 16  # tick size
-cl_label_fsize = 14  # clusters labels font size
+fsize = 24  # font size
+tick_size = 24  # tick size
+cl_label_fsize = 20  # clusters labels font size
+margine_value = 0  # zero margine for plotly plots
+margine_top_value = 50
 
 
 def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
@@ -86,7 +88,7 @@ def plot_wave(data, t_plot, ax, title=""):
     "Plots the data"
     ax.plot(t_plot, data)
     ax.set_xlabel("Time [s]", fontsize=fsize)
-    ax.set_ylabel("Amplitude [mV]", fontsize=fsize)
+    ax.set_ylabel("Magnitude [mV]", fontsize=fsize)
     ax.set_title(f"Data {title}", fontsize=fsize)
     ax.grid(True)
 
@@ -240,9 +242,9 @@ def heisenberg(
 
     # Formatting
     cbar_label = (
-        "Amplitude of DWPT coeffs [dB]"
+        "Magnitude of DWPT coeffs [dB]"
         if use_log_scale is True
-        else "Amplitude of DWPT coeffs"
+        else "Magnitude of DWPT coeffs"
     )
     fig.tight_layout()
     cbar = fig.colorbar(graph, pad=0.01)
@@ -311,7 +313,7 @@ def interpolate_data(data, length):
     return interpolated_signal
 
 
-# ---------------- Plot Reconstructed Data & FFTs ---------------
+# ---------------- Plot Reconstructed Data & PSDs ---------------
 
 
 def get_label(label_no, label_map):
@@ -386,6 +388,11 @@ def plot_reconstructions_by_group(
         transform_object, labels, freq_threshold
     )
 
+    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
+    linestyles = cycle(lines)
+    line_width = [3] * n_clusters + [1]
+
     fig = go.Figure()
 
     data_len = len(transform_object.data)
@@ -411,12 +418,9 @@ def plot_reconstructions_by_group(
             y=transform_object.data[0:data_len],
             mode="lines",
             name="Original signal",
+            line=dict(color="blue", dash="solid", width=line_width[-1]),
         )
     )
-
-    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
-    linestyles = cycle(lines)
 
     # Iterate through clusters
     for i in range(n_clusters):
@@ -426,7 +430,7 @@ def plot_reconstructions_by_group(
                 y=reconstructions[i][0:data_len],
                 mode="lines",
                 name=get_label(i, label_map),
-                line=dict(color=colours[i], dash=next(linestyles)),
+                line=dict(color=colours[i], dash=next(linestyles), width=line_width[i]),
             )
         )
 
@@ -435,10 +439,16 @@ def plot_reconstructions_by_group(
         height=fig_height,
         font_size=fsize,
         title=title,
-        xaxis_title=x_label,
-        yaxis_title="Amplitude",
+        xaxis=dict(title=x_label, tickfont=dict(size=tick_size)),
+        yaxis=dict(title="Magnitude", tickfont=dict(size=tick_size)),
         legend=dict(title="", traceorder="normal", font=dict(size=fsize)),
         plot_bgcolor="white",
+        margin=go.layout.Margin(
+            l=margine_value,  # left margin
+            r=margine_value,  # right margin
+            b=margine_value,  # bottom margin
+            t=margine_top_value,  # top margin
+        ),
     )
 
     fig.update_xaxes(
@@ -465,17 +475,18 @@ def plot_fft_by_group(
     labels,
     sampling_rate,
     clusters=None,
-    xlim=None,
+    xlims=None,
+    ylims=None,
     fundamental_freq=None,
     freq_threshold=None,
     label_map=None,
-    title="FFT comparison",
+    title="PSD comparison",
     fig_height=400,
     fig_width=1000,
     plot_full_reconstruction=False,
 ):
     """
-    Plot FFTs of reconstructed signals and original signal.
+    Plot PSDs of reconstructed signals and original signal.
 
     Paramters (incomplete)
     ---------
@@ -491,40 +502,41 @@ def plot_fft_by_group(
         transform_object, labels, freq_threshold
     )
 
+    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
+    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
+    linestyles = cycle(lines)
+    line_width = [3] * n_clusters + [1]
+
     fig = go.Figure()
 
-    # FFT of original signal
+    # PSD of original signal
     if not isinstance(sampling_rate, (float, int)):
         raise ValueError("sampling rate must be provided as a float or int")
-    fft_original, freq = fft(transform_object.data, sampling_rate, fundamental_freq)
+    psd_original, freq = psd(transform_object.data, sampling_rate, fundamental_freq)
 
     fig.add_trace(
         go.Scatter(
             x=freq,
-            y=20 * np.log10(np.abs(fft_original)),
+            y=10 * np.log10(psd_original),
             mode="lines",
             name="Original Signal",
-            line=dict(color="blue"),
+            line=dict(color="blue", dash="solid", width=line_width[-1]),
         )
     )
 
-    # Plot FFTs
+    # Plot PSDs
     if clusters is None:
         clusters = range(n_clusters)
 
-    colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
-    linestyles = cycle(lines)
-
     for i in clusters:
-        fft_rec = fft(reconstructions[i])
+        psd_rec = psd(reconstructions[i])
         fig.add_trace(
             go.Scatter(
                 x=freq,
-                y=20 * np.log10(np.abs(fft_rec)),
+                y=10 * np.log10(psd_rec),
                 mode="lines",
                 name=get_label(i, label_map),
-                line=dict(color=colours[i], dash=next(linestyles)),
+                line=dict(color=colours[i], dash=next(linestyles), width=line_width[i]),
             )
         )
 
@@ -532,10 +544,10 @@ def plot_fft_by_group(
         fig.add_trace(
             go.Scatter(
                 x=freq,
-                y=20 * np.log10(np.abs(fft(sum(reconstructions)))),
+                y=10 * np.log10(psd(sum(reconstructions))),
                 mode="lines",
                 name="full reconstruction",
-                line=dict(dash="dot", color="blue"),
+                line=dict(dash="dot", color="blue", width=line_width[-1]),
             )
         )
 
@@ -544,13 +556,24 @@ def plot_fft_by_group(
         height=fig_height,
         font_size=fsize,
         title=title,
-        xaxis_title=(
-            "Frequency [Hz]" if fundamental_freq is None else "f / f<sub>0</sub> [DL]"
+        xaxis=dict(
+            title=(
+                "Frequency [Hz]"
+                if fundamental_freq is None
+                else "f / f<sub>0</sub> [DL]"
+            ),
+            tickfont=dict(size=tick_size),
+            range=xlims if xlims is not None else None,
         ),
-        yaxis=dict(title="Amplitude [dB]", range=[-140, 10]),
+        yaxis=dict(title="Magnitude [dB]", tickfont=dict(size=tick_size), range=ylims),
         legend=dict(title="", traceorder="normal", font=dict(size=fsize)),
-        xaxis=dict(range=[0, xlim] if xlim is not None else None),
         plot_bgcolor="white",
+        margin=go.layout.Margin(
+            l=margine_value,  # left margin
+            r=margine_value,  # right margin
+            b=margine_value,  # bottom margin
+            t=margine_top_value,  # top margin
+        ),
     )
 
     fig.update_xaxes(
@@ -583,7 +606,7 @@ def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold)
         object containing nodes
     feature: str or func
         str - the chosen feature calculated on the wavelet coefficients (see Node class for options)
-        func - calculate the fetaure on the reconstructed signal
+        func - calculate the feature on the reconstructed signal
     threshold: float
         the numerical threshold to sort the nodes by
     freq_threshold: float
@@ -738,14 +761,14 @@ def plot_centers(classifying_metrics, centers, label_map=None, xlabel_user=None)
         assert label_map is None or len(yvals) == len(
             label_map
         ), "each cluster must be labelled"
-        ylabel = "Amplitude [DL]"
+        ylabel = "Magnitude [DL]"
         if "energy" in metric:
-            ylabel = "Amplitude"
+            ylabel = "Magnitude [$\mathrm{unit}^2$]"
         if ("log" in metric) and ("energy" in metric):
-            ylabel = "Amplitude [dB]"
+            ylabel = "Magnitude [dB]"
         if "entropy" in metric:
-            yvals = to_dB(yvals)
-            ylabel = "Amplitude [dB]"
+            yvals = yvals
+            ylabel = "Magnitude [DL]"
 
         if isinstance(label_map, dict) and xlabel_user == None:
             xlabel = "signal component"
@@ -863,7 +886,7 @@ def plot_multiple_centers(
 
         # Formatting
         ylabel = (
-            "Amplitude [dB]" if "energy" in metric and "log" not in metric else "Value"
+            "Magnitude [dB]" if "energy" in metric and "log" not in metric else "Value"
         )
 
         n_experiments = len(classifying_metrics)
