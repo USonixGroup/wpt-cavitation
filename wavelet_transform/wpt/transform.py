@@ -172,11 +172,11 @@ def max_level_check(data, level):
         raise ValueError(error_message)
 
 
-def calc_max_level(data):
-    "finds the maximum level a 1-dimensional array of data"
+def calc_max_level(data_len, filter_len):
+    "Get the maximum decomposition level for a 1-dimensional array of data"
     max_level = 0
-    sections = 1
-    while sections < len(data):
+    len_ = data_len
+    while len_ > filter_len:
+        len_ = int(len_ / 2)
         max_level += 1
-        sections *= 2
     return max_level
