@@ -10,7 +10,7 @@ def crest_factor(array):
 
 
 def energy(array):
-    return sum(array**2)
+    return np.sum(array**2)
 
 
 def log_energy(array):
@@ -43,7 +43,7 @@ def entropy(array, total_energy=None):
         raise ValueError("input array must be np.ndarray")
     energy = array**2
     if total_energy is None:
-        total_energy = sum(energy)
+        total_energy = np.sum(energy)
         if total_energy == 0:
             return 0
     norm_energy = energy / total_energy

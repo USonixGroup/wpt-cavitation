@@ -228,7 +228,7 @@ def heisenberg(
     sparse_y_labels = _unrepeat(sparse_y_labels)
     x_labels = np.linspace(0, t_end, len_data)
     x_labels = [eng_form_plot(x, -6, 1) for x in x_labels]
-    x_space = int(len(x_labels) / 10)
+    x_space = max(int(len(x_labels) / 10), 1)
     sparse_x_labels = [
         label if id % x_space == 0 else "" for id, label in enumerate(x_labels)
     ]
@@ -770,7 +770,7 @@ def plot_centers(classifying_metrics, centers, label_map=None, xlabel_user=None)
             yvals = yvals
             ylabel = "Magnitude [DL]"
 
-        if isinstance(label_map, dict) and xlabel_user == None:
+        if isinstance(label_map, dict) and xlabel_user is None:
             xlabel = "signal component"
             xvals = [v for v in dict(sorted(label_map.items())).values()]
             label_angle = 45

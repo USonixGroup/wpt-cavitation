@@ -1,6 +1,7 @@
-from pywt import waverec, idwt
+from pywt import waverec  # , idwt as pyidwt
 import numpy as np
 import pandas as pd
+import scipy.signal as sp
 
 from wavelet_transform.wpt.transform_object import Transform
 import wavelet_transform.utils.statistical_features as stats
@@ -19,12 +20,19 @@ def nodes2data(nodes):
 
 def inv_dwt(transform_object: Transform):
     """
-    calls the waverec() function from the pywavelet library
+    Calls the waverec() function from the pywavelet library
     """
     t = transform_object
     nodes = t.dwt_results()
     coeffs = nodes2data(nodes)
     return waverec(coeffs, t.wavelet, t.mode)[: len(transform_object.data)]
+
+
+# def inv_dwt(transform_object: Transform):
+#     """
+#     Iteratively reconstructs each node by level
+#     """
+#     # TODO
 
 
 # --------------- Inverse DWPT -----------------
@@ -71,9 +79,13 @@ def inv_dwpt(transform_object: Transform, level=None, **kwargs):
 
     # generate list of coefficients
     nodes = packet_nodes_for_rec(transform_object, level, **kwargs)
-    coeffs = nodes2data(nodes=nodes)
+    coeffs = nodes2data(nodes=nodes)  # change to nodes2fulldata for filtfilt inverse
     assert all(item is None for item in coeffs) is False, "node not found"
     levels = int((np.log2(len(coeffs))))
+
+    filter_bank = Transform.pywt_filter_bank(transform_object.wavelet)
+    rec_filt_approx = filter_bank[2]
+    rec_filt_detail = filter_bank[3]
 
     input = coeffs
     for _ in range(levels):
@@ -81,22 +93,41 @@ def inv_dwpt(transform_object: Transform, level=None, **kwargs):
         for i in range(int(len(input) / 2)):
             approx = input[2 * i]
             detail = input[2 * i + 1]
-            if (approx is None) and (
-                detail is None
-            ):  # if neither node is used, move on
+            if (approx is None) and (detail is None):  # if neither node is used
                 output.append(None)
                 continue
-            c = idwt(approx, detail, transform_object.wavelet, transform_object.mode)
+            c = idwt(approx, detail, rec_filt_approx, rec_filt_detail)
+            # c = pyidwt(approx, detail, transform_object.wavelet, transform_object.mode)
             output.append(c)
         input = output.copy()
     return output[0][: len(transform_object.data)]
 
 
+def idwt(approx, detail, rec_filt_approx, rec_filt_detail):
+    rec_approx = 0 if approx is None else _get_rec(approx, rec_filt_approx)
+    rec_detail = 0 if detail is None else _get_rec(detail, rec_filt_detail)
+
+    rec_full = rec_approx + rec_detail
+    return rec_full
+
+
+def _get_rec(data, filter_coeffs):
+    data_upsampled = upsample(data)
+    data_rec = sp.convolve(data_upsampled, filter_coeffs, mode="valid")
+    return data_rec
+
+
+def upsample(signal):
+    upsampled_signal = np.zeros(len(signal) * 2 + 1)
+
+    # Fill upsampled signal with the original values
+    upsampled_signal[1 : 2 * len(signal) : 2] = signal
+    return upsampled_signal
+
+
 def packet_nodes_for_rec(transform_object: Transform, level, **kwargs):
     """
-    Gather nodes for reconstruction with more than min_energy. Must be
-    called before inverse transform. keep and leave cannot be used in
-    tandem.
+    Gather nodes for reconstruction.
 
     e.g.
     transform_object.packet_nodes_for_rec(keep=['aa','dd'], min_energy=0.1)
@@ -144,7 +175,14 @@ class InverseTransform:
     def inv_dwt(self, levels, **kwargs):
         return inv_dwt(self.transform_object, levels, **kwargs)
 
-    def info(self, level=None, order="natural", leaf_nodes=False, freq_threshold=1):
+    def info(
+        self,
+        level=None,
+        order="natural",
+        leaf_nodes=False,
+        freq_threshold=1,
+        keep_ratio=1,
+    ):
         """
         Perform the inverse transform on each node then calculate statistical measures on each.
 
@@ -181,12 +219,14 @@ class InverseTransform:
             nodes = self.transform_object.get_level(level, order=order)
         elif leaf_nodes is True:
             nodes = self.transform_object.get_leaf_nodes(order=order)
+        total_energy = tr_obj.total_energy(0)
         for node in nodes:
             assert isinstance(node, Node)
             # Calculate inverse transform
             if node.norm_frequency_range[1] > freq_threshold:
                 continue
             inverse = inv_dwpt(tr_obj, node.level, nodes=node)
+            inverse = self._trim(inverse, keep_ratio)
             info_data.append(
                 {
                     "level": node.level,
@@ -204,10 +244,14 @@ class InverseTransform:
                     "abs skewness": stats.abs_skewness(inverse),
                     "entropy": stats.entropy(inverse),
                     "spectral entropy": stats.spectral_entropy(inverse),
-                    "level entropy": stats.entropy(
-                        inverse, node.transform_object.total_energy(0)
-                    ),
+                    "level entropy": stats.entropy(inverse, total_energy),
                 }
             )
         info = pd.DataFrame(info_data)
         return info
+
+    def _trim(self, data, ratio):
+        lim = int((1 - ratio) / 2 * len(data))
+        if lim == 0:
+            return data
+        return data[lim:-lim]

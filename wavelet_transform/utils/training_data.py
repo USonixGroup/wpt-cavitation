@@ -123,9 +123,6 @@ def generate_training_data_with_wavelet(
     # Concat all dataframes into a single dataframe
     wpt_df = pd.concat(results, ignore_index=True)
 
-    if freq_threshold is not None:
-        wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
-
     return wpt_df
 
 
@@ -310,6 +307,7 @@ def generate_training_data(
     min_level=0,
     include_tr_obj=False,
     freq_threshold=1,
+    keep_ratio="full",
 ):
     """
     Generate training data for clustering using the wavelet packet transform. Statistical
@@ -338,6 +336,9 @@ def generate_training_data(
     include_tr_obj: bool
         whether to return the transform object used for the transform containing
         info about the nodes.
+    keep_ratio: str, int, float
+        the section of data to keep when caluclating statistical metrics on nodes.
+        see Node class for more details.
 
     Returns
     -------
@@ -346,6 +347,7 @@ def generate_training_data(
         several features
 
     """
+
     # DWPT
     tr_obj = wpt.dwpt(
         data,
@@ -357,9 +359,10 @@ def generate_training_data(
         freq_threshold=freq_threshold,
     )
 
+    tr_obj.keep_ratio = keep_ratio
+
     wpt_df = tr_obj.info(levels, order="natural", leaf_nodes=True)
 
-    wpt_df = _ditch_nodes_above_threshold(wpt_df, freq_threshold)
     # Return the transform object if specified
     if include_tr_obj is True:
         return wpt_df, tr_obj
@@ -367,28 +370,17 @@ def generate_training_data(
         return wpt_df
 
 
-def _ditch_nodes_above_threshold(wpt_df, freq_threshold):
-    "Remove nodes from the dataframe with noramlisesd upper frequency below threshold"
-    if not 0 <= freq_threshold <= 1:
-        raise ValueError(
-            "freq_threshold must be the normalised with the nyquist frequency"
-        )
-    # Filter out nodes which have upper bound freq greater than threshold
-    node_mask = wpt_df["norm frequency range"].apply(
-        lambda x: float(x[1]) <= freq_threshold
-    )
-
-    return wpt_df[node_mask]
-
-
 def add_noise(data, signal2noise, display_std_noise=False):
-    "Add noise to a signal with a given signal to noise ratio."
+    """
+    Add noise to a signal with a given signal to noise ratio.
+    Returns the noisy data.
+    """
     data_to_noise_power_ratio = 10 ** (signal2noise / 20)
     power_noise = np.var(data) / data_to_noise_power_ratio
     std_noise = np.sqrt(power_noise)
     noise = np.random.normal(0, std_noise, len(data))
-    data += noise
+    data_noisy = data.copy() + noise
 
     if display_std_noise is True:
         print("std_noise:", std_noise)
-    return data
+    return data_noisy

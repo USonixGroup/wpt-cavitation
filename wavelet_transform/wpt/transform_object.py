@@ -32,6 +32,9 @@ class Transform:
         self.sampling_rate = None  # for calculating the frequency range of each node
         self.tree = TreeGraph(self)
 
+        # Retained data for calculating statistical features
+        self.keep_ratio = "full"
+
     # -------------------- Parameters --------------------
 
     @property
@@ -129,6 +132,10 @@ class Transform:
             )
         ]
         if freq_threshold is not None:
+            if freq_threshold > 1 or freq_threshold < 0:
+                raise ValueError(
+                    "frequency threshold must be normalised with the nyquist frequency"
+                )
             leaf_nodes = [
                 i for i in leaf_nodes if i.norm_frequency_range[1] <= freq_threshold
             ]
@@ -157,7 +164,8 @@ class Transform:
         "appends a node to node list"
         self.levels.setdefault(node.level, list()).append(node)
 
-    def pywt_filter_bank(self, wavelet):
+    @classmethod
+    def pywt_filter_bank(cls, wavelet):
         "obtains the filter coefficients from the pywt filter bank function"
         w = pywtWavelet(wavelet)
         return w.filter_bank
@@ -169,7 +177,7 @@ class Transform:
     # ------------------ Generate Additional Data ----------------
 
     def calc_frequencies(self, sampling_rate):
-        "set the sampling rate to give information about nyquist frequency"
+        "Set the sampling rate to give information about nyquist frequency"
         self.sampling_rate = sampling_rate
         for level in self.levels:
             for node in self.levels[level]:
@@ -191,6 +199,31 @@ class Transform:
 
     def info(self, level=None, order="natural", leaf_nodes=False):
         return self.results.info(level, order, leaf_nodes)
+
+    @property
+    def keep_ratio(self):
+        """
+        Determines the length of the signal used for calculating statistical metrics.
+
+        str in ["full", "valid", "same"]: trim data length to match valid or samse convolution modes
+
+        full uses the full length of data and is set by default.
+
+        int or float: number between 0-1 determining the ratio of the original data retained
+        centered around the original data.
+        """
+        return self._keep_ratio
+
+    @keep_ratio.setter
+    def keep_ratio(self, value):
+        if not isinstance(value, (str, float, int)):
+            raise ValueError("keep_ratio must be str, float, or int")
+        if isinstance(value, str) and value not in ("full", "valid", "same"):
+            raise ValueError("keep_ratio must be 'full', 'valid', or 'same'")
+        if isinstance(value, (int, float)):
+            if value > 1 or value < 0:
+                raise ValueError("keep_ratio must be between 0-1")
+        self._keep_ratio = value
 
     # ---------------- Plot Tree Diagram ---------------
 
