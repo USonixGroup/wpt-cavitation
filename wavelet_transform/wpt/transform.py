@@ -39,10 +39,11 @@ def dwpt(
     transform: an object containing the results from the transform
     """
 
+    filter_len = len(Transform.pywt_filter_bank(wavelet)[0])
     if max_level is None:
-        max_level = calc_max_level(data)
+        max_level = calc_max_level(data, filter_len)
     else:
-        max_level_check(data, max_level)
+        max_level_check(data, max_level, filter_len)
 
     if isinstance(data, list):
         data = np.array(data)
@@ -130,7 +131,8 @@ def dwt(data, max_level, wavelet="haar", mode="symmetric"):
     -------
     transform: an object containing the results from the transform
     """
-    max_level_check(data, max_level)
+    filter_coeffs = Transform.pywt_filter_bank(wavelet)
+    max_level_check(data, max_level, len(filter_coeffs))
 
     if isinstance(data, list):
         data = np.array(data)
@@ -147,7 +149,7 @@ def dwt(data, max_level, wavelet="haar", mode="symmetric"):
     return transform
 
 
-def max_level_check(data, level):
+def max_level_check(data, level, filter_len=None):
     """
     checks if there are too many levels
 
@@ -163,7 +165,7 @@ def max_level_check(data, level):
     ValueError:
         when the number of levels is too high
     """
-    max_level = calc_max_level(data)
+    max_level = calc_max_level(data, filter_len)
     error_message = f"""
     too many levels. length of data is length of data is: {len(data)}
     the maximum level is: {max_level}
@@ -172,11 +174,22 @@ def max_level_check(data, level):
         raise ValueError(error_message)
 
 
-def calc_max_level(data_len, filter_len):
+def calc_max_level(data, filter_len):
     "Get the maximum decomposition level for a 1-dimensional array of data"
-    max_level = 0
-    len_ = data_len
-    while len_ > filter_len:
-        len_ = int(len_ / 2)
-        max_level += 1
-    return max_level
+
+    # Check that there are fewer nodes at max level than data points
+    if filter_len is None:
+        max_level = 0
+        sections = 1
+        while sections < len(data):
+            max_level += 1
+            sections *= 2
+        return max_level
+    # Check that max level node oontains more coeffs than filter
+    else:
+        max_level = 0
+        len_ = len(data)
+        while len_ > filter_len:
+            len_ = int(len_ / 2)
+            max_level += 1
+        return max_level

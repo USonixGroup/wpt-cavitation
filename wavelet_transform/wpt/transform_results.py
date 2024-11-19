@@ -32,12 +32,12 @@ class TransformResults:
             list of nodes containing the results for the dwt
         """
         results = []
-        # append all of the relevant detail nodes
+        # Append all of the relevant detail nodes
         for level in range(1, len(self.tr_obj.levels)):
             nodes = self.tr_obj.get_level(level)
             detail_node = nodes[1]
             results.insert(0, detail_node)
-        # append final approx node
+        # Append final approx node
         approx_node = nodes[0]
         results.insert(0, approx_node)
         return results
@@ -77,8 +77,12 @@ class TransformResults:
             nodes = self.tr_obj.get_level(level, order=order)
         elif leaf_nodes is True:
             nodes = self.tr_obj.get_leaf_nodes(order=order)
+        short_node_len = len(nodes[0].data_keep)
         for node in nodes:
             assert isinstance(node, Node)
+            node_len = len(node.data_keep)
+            if node_len < short_node_len:
+                short_node_len = node_len
             info_data.append(
                 {
                     "level": node.level,
@@ -99,7 +103,8 @@ class TransformResults:
                     "level entropy": node.level_entropy,
                 }
             )
-
+        if short_node_len < 500:
+            print(f"WARNING: short node data. Shortest node data is ({short_node_len})")
         info = pd.DataFrame(info_data)
         return info
 

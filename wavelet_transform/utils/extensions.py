@@ -20,7 +20,7 @@ def eng_form_plot(number, power, dp=3):
     n, p = sci_form_number.split("e")
     n, p = float(n), float(p)
 
-    inc = np.sign(power - p)
+    inc = power - p
     n /= 10**inc
     return f"{n:.{dp}f}"
 
@@ -44,9 +44,7 @@ def fft(array, sampling_rate=None, fundamental_freq=None):
     signal_length = len(array)
 
     # Calculate FFT with numpy, take the first half of the FFT of the signal, i.e., positive freqs, and normalise by setting norm=forward
-    fft = np.fft.fft(array, norm="forward")[
-        0 : int(signal_length / 2)
-    ]  # / (signal_length / 2)
+    fft = np.fft.fft(array, norm="forward")[0 : int(signal_length / 2)]
 
     if sampling_rate is not None:
         freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[

@@ -10,11 +10,11 @@ def crest_factor(array):
 
 
 def energy(array):
-    return sum(array**2)
+    return np.sum(array**2)
 
 
 def log_energy(array):
-    return np.log10(energy(array))
+    return 10 * np.log10(energy(array))
 
 
 def avg_energy(array):
@@ -22,7 +22,7 @@ def avg_energy(array):
 
 
 def log_avg_energy(array):
-    return np.log10(avg_energy(array))
+    return 10 * np.log10(avg_energy(array))
 
 
 def kurtosis(array):
@@ -43,7 +43,7 @@ def entropy(array, total_energy=None):
         raise ValueError("input array must be np.ndarray")
     energy = array**2
     if total_energy is None:
-        total_energy = sum(energy)
+        total_energy = np.sum(energy)
         if total_energy == 0:
             return 0
     norm_energy = energy / total_energy
@@ -53,10 +53,10 @@ def entropy(array, total_energy=None):
 
 def spectral_entropy(array):
     # Calculate the power spectrum
-    # half_length_array = int(len(array) / 2)
+    half_length_array = int(len(array) / 2)
     power_spectrum = psd(array)  # np.abs(fft(array)) ** 2
     norm_spectrum = power_spectrum / np.sum(power_spectrum)
 
     spectral_entropy = -sum(0 if i == 0 else i * np.log2(i) for i in norm_spectrum)
-    # spectral_entropy /= np.log2(half_length_array)
+    spectral_entropy /= np.log2(half_length_array)
     return spectral_entropy

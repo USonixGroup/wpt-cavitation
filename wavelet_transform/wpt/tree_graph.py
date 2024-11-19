@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
-from networkx.drawing.nx_agraph import graphviz_layout
+from networkx.drawing.nx_agraph import graphviz_layout, write_dot
 import networkx as nx
 
 from wavelet_transform.utils.extensions import sci_form
@@ -21,6 +21,11 @@ class TreeGraph:
         3: "purple",
         4: "cyan",
         5: "red",
+        6: "yellow",
+        7: "magenta",
+        8: "pink",
+        9: "lime",
+        10: "navy",
     }  # Map label number to colour
 
     def __init__(self, tr_obj: "Transform"):
@@ -180,9 +185,12 @@ class TreeGraph:
                 fontsize=40,
             )
 
+        self.Graph = G
+        self.Graph_pydot = nx.nx_pydot.to_pydot(G)
         if fig_name:
             plt.savefig(fig_name + ".png", format="PNG")
             plt.savefig(fig_name + ".pdf", format="PDF")
+            write_dot(G, fig_name + ".dot")
 
     def _get_colours(self, G, node_colour, freq_threshold):
         labels = []
