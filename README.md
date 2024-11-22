@@ -1,30 +1,48 @@
 # WPT-Cavitation
 
-A python library for wavelet transforms and machine learning for classifying cavitation using data captured by hydrophones. 
+A python library for wavelet transforms and machine learning for 1D time-seriers data. 
+
+The main features are:
+
+- a 1D implementation of the discrete wavelet packet transform (DWPT) and wavelet transform (DWT)
+- inverse transforms which can reconstructed selected nodes individually
+- minimum entropy decomposition
+- decomposition for nodes under a selected frequency threshold
+- statistical features of node data
+- bubble dynamics simulations with the Gilmmore-Akulichev model
+- visualisation with tree diagrams and spectrograms
+- classification of nodes with clustering algorithms
+
+The wavelet transform has been tested against results from the PyWavelets library and matlab although the implementation only relies on filter coefficients from PyWavelets.
 
 This library was developed as part of an ongoing project associated with an upcoming paper:
 
 Acoustic cavitation detection and classification using wavelet packet transform and
 K-Means clustering
 
-## Dependencies
+This library is partially funded by the Focused Ultrasound Foundation.
 
-WPT-Cavitation is dependent on numpy and scipy for the wavelet transform. Plotting requires matplotlib and plotly.
+## Examples
 
-## Features
+Bubble dynamics results:
+![bdsimulation](bdsimulation.jpg)
 
-This library implements its own discrete wavelet packet transform (DWPT) and wavelet transform (DWT) based off results from the pywt library. The implementation is focused around extracting key data from the nodes obtained from the DWPT and creating graphs to visualise features such as energy spread and kurtosis across the subbands. Unsupervised machine learning models have been implemented and explored to classify packets and break down the signal into components representing inertial and stable cavitation.
+Heisenberg plot of wavelet packet trasnform:
+![heisenberg](heisenberg.png)
 
-## Wavelet Packet Transform
+Tree plot of wavelet transform with node size corresponding to the energy in the node:
+![treeplot](treeplot.png)
 
-Discrete wavelet and discrete wavelet packet transforms have been implemented and validated as well as their inverses. Packets can be reconstructed separately using the idwt and idwpt functions.
+## Installation
 
-## Visualisation
+This library can be used by cloning and pulling from main.
 
-The library provides several options for visualising the results from the wavelet transform and outputs from the machine learning algorithms.
-
-Heisenberg plots display the time-frequency characteristics of the signal, useful for identifying stable and transisent features. Tree plots help visualise the structure of the wavelet packet decomposition, providing information about the distribution of statistical features across the subbands.
+WPT-Cavitation is dependent on NumPy, SciPy, and PyWavelets for the wavelet transform and scikit-learn for the k-means algorithm. Plotting requires matplotlib, plotly, and pygraphviz.
 
 ## Get help
 
+Contact on GitHub or at max.au-yeung20@ucl.ac.uk.
+
 ## Citation
+
+This library can be cited as ...
