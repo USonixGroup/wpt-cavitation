@@ -41,6 +41,10 @@ class TreeGraph:
         **kwargs,
     ):
         "Plot the tree diagram for the wavelet packet transform."
+
+        if not isinstance(node_colour, (str, list)):
+            raise ValueError("node_colour must be str or list")
+
         order = kwargs.get("order", "natural")
         sampling_rate = kwargs.get("sampling_rate")
         show_frequency = kwargs.get("show_frequency", False)
@@ -179,7 +183,7 @@ class TreeGraph:
             # Add legend to the plot
             plt.legend(
                 handles=legend_patches,
-                loc="upper right",
+                loc="best",
                 title=graph_legend,
                 title_fontsize=40,
                 fontsize=40,

@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from scipy.interpolate import interp1d
 from itertools import cycle
 from wavelet_transform.wpt.tree_graph import TreeGraph
+from wavelet_transform.utils.statistical_features import kurtosis
 
 fsize = 24  # font size
 tick_size = 24  # tick size
@@ -389,7 +390,7 @@ def plot_reconstructions_by_group(
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
+    lines = ["solid", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
     linestyles = cycle(lines)
     line_width = [3] * n_clusters + [1]
 
@@ -595,7 +596,7 @@ def plot_fft_by_group(
     return fig
 
 
-def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold):
+def get_reconstructions_by_threshold(tr_obj, feature, threshold):
     """
     Thresholds nodes according to a given feature and returns the total
     reconstructions of nodes above and below the threshold.
@@ -625,13 +626,37 @@ def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold)
     reconstructions = [np.zeros(signal_length) for _ in range(2)]
 
     # Sum all reconstructions belonging to the same group
-    for node in tr_obj.get_leaf_nodes(freq_threshold=freq_threshold):  # natural order
+    for node in tr_obj.get_leaf_nodes():  # natural order
         rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
         _feature = (
             getattr(node, feature) if isinstance(feature, str) else feature(rec_signal)
         )
         i = 0 if _feature > threshold else 1  # shorten name for readability
         reconstructions[i] = reconstructions[i] + rec_signal
+        if i == 1:
+            fig = go.Figure()
+            fig.add_trace(
+                go.Scatter(
+                    x=[i for i in range(len(rec_signal))],
+                    y=rec_signal,
+                    name=f"kurtosis rec: {kurtosis(rec_signal)}",
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=[i for i in range(len(node.data_keep))],
+                    y=node.data_keep,
+                    name=f"kurt wave coeffs: {node.kurtosis}",
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=[i for i in range(len(node.data))],
+                    y=node.data,
+                    name=f"kurt wave coeffs: {kurtosis(node.data)}",
+                )
+            )
+            fig.show()
 
     return reconstructions
 
