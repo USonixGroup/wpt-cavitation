@@ -24,14 +24,17 @@ This library is partially funded by the Focused Ultrasound Foundation.
 
 ## Examples
 
-Bubble dynamics results:
+Bubble dynamics simulation:
 ![bdsimulation](bdsimulation.jpg)
 
-Heisenberg plot of wavelet packet trasnform:
+Heisenberg plot of wavelet packet transform:
 ![heisenberg](heisenberg.png)
 
 Tree plot of wavelet transform with node size corresponding to the energy in the node:
 ![treeplot](treeplot.png)
+
+Reconstructed data:
+![reconstruction](reconstruction.jpg)
 
 ## Installation
 
