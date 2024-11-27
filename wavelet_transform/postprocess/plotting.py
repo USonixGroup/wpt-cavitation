@@ -6,7 +6,6 @@ import plotly.graph_objects as go
 from scipy.interpolate import interp1d
 from itertools import cycle
 from wavelet_transform.wpt.tree_graph import TreeGraph
-from wavelet_transform.utils.statistical_features import kurtosis
 
 fsize = 24  # font size
 tick_size = 24  # tick size
@@ -633,30 +632,6 @@ def get_reconstructions_by_threshold(tr_obj, feature, threshold):
         )
         i = 0 if _feature > threshold else 1  # shorten name for readability
         reconstructions[i] = reconstructions[i] + rec_signal
-        if i == 1:
-            fig = go.Figure()
-            fig.add_trace(
-                go.Scatter(
-                    x=[i for i in range(len(rec_signal))],
-                    y=rec_signal,
-                    name=f"kurtosis rec: {kurtosis(rec_signal)}",
-                )
-            )
-            fig.add_trace(
-                go.Scatter(
-                    x=[i for i in range(len(node.data_keep))],
-                    y=node.data_keep,
-                    name=f"kurt wave coeffs: {node.kurtosis}",
-                )
-            )
-            fig.add_trace(
-                go.Scatter(
-                    x=[i for i in range(len(node.data))],
-                    y=node.data,
-                    name=f"kurt wave coeffs: {kurtosis(node.data)}",
-                )
-            )
-            fig.show()
 
     return reconstructions
 
