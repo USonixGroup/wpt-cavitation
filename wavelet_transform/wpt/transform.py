@@ -165,16 +165,19 @@ def max_level_check(data, level, filter_len=None):
     ValueError:
         when the number of levels is too high
     """
-    max_level = calc_max_level(data, filter_len)
+    max_level = calc_max_level(data)
+    rec_max_level = calc_max_level(data, filter_len)
     error_message = f"""
     too many levels. length of data is length of data is: {len(data)}
     the maximum level is: {max_level}
     """
     if level > max_level:
         raise ValueError(error_message)
+    if level > rec_max_level:
+        print(f"WARNING: recommended max level is {rec_max_level}")
 
 
-def calc_max_level(data, filter_len):
+def calc_max_level(data, filter_len=None):
     "Get the maximum decomposition level for a 1-dimensional array of data"
 
     # Check that there are fewer nodes at max level than data points
