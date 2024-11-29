@@ -327,7 +327,7 @@ def get_label(label_no, label_map):
         raise ValueError("label_map must be a dictionary of label_no: label")
 
 
-def get_reconstructions_by_group(tr_obj, labels, freq_threshold):
+def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1):
     signal_length = len(tr_obj.data)
     n_clusters = len(set(labels))
     # List reconstructions by group
@@ -385,7 +385,7 @@ def plot_reconstructions_by_group(
     n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, freq_threshold
+        transform_object, labels, freq_threshold=1
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
@@ -499,7 +499,7 @@ def plot_fft_by_group(
     n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, freq_threshold
+        transform_object, labels, freq_threshold=1
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
@@ -595,7 +595,7 @@ def plot_fft_by_group(
     return fig
 
 
-def get_reconstructions_by_threshold(tr_obj, feature, threshold):
+def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold=1):
     """
     Thresholds nodes according to a given feature and returns the total
     reconstructions of nodes above and below the threshold.
@@ -625,7 +625,7 @@ def get_reconstructions_by_threshold(tr_obj, feature, threshold):
     reconstructions = [np.zeros(signal_length) for _ in range(2)]
 
     # Sum all reconstructions belonging to the same group
-    for node in tr_obj.get_leaf_nodes():  # natural order
+    for node in tr_obj.get_leaf_nodes(freq_threshold=freq_threshold):  # natural order
         rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
         _feature = (
             getattr(node, feature) if isinstance(feature, str) else feature(rec_signal)
