@@ -595,7 +595,7 @@ def plot_fft_by_group(
     return fig
 
 
-def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold):
+def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold=1):
     """
     Thresholds nodes according to a given feature and returns the total
     reconstructions of nodes above and below the threshold.
