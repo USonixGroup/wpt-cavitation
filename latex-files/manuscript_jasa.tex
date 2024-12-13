@@ -52,7 +52,7 @@
 
 \begin{document}
 
-\title[]{Acoustic cavitation detection and classification using wavelet packet transform and K-Means clustering}
+\title[]{Quantitative Detection and Classification of Acoustic Cavitation Using Wavelet Packet Transform and k-Means Clustering}
 
 %% repeat as needed
 \author{Max Au-Yeung}
@@ -96,15 +96,15 @@ The method is discussed in detail in Section \ref{sec:materials_methods}. To tes
 \subsection{Features of acoustic cavitation}
 \label{sec:cavitation_physics}
 
-The signal from a PCD may exhibit multiple spectral features, influenced by acoustic parameters and the physical properties of the liquid: (i) harmonics at frequencies of $nf$ where $f$ is the fundamental (excitation) frequency and $n$ is a positive integer, (ii) sub-harmonics at frequencies of $f/n$, (iii) ultra-harmonics at frequencies of $mf/n$ where $m > n$ is an integer that is not divisible by $n$, (iv) a broadband frequency component. The relationship between bubble dynamics and the these spectral features is complex, with various hypotheses proposed and studied in literature. \cite{apfel1981, prosperetti1984, neppiras1980, lauterborn1976, lauterborn2010, lauterborn2015} A fundamental study of acoustic cavitation is beyond the scope of this work. However, a brief discussion is provided below to guide and support the analyses in the following sections. 
+The signal from a PCD may exhibit multiple spectral features, influenced by acoustic parameters and the physical properties of the liquid: (i) harmonics at frequencies of $nf$ where $f$ is the fundamental (excitation) frequency and $n$ is a positive integer, (ii) sub-harmonics at frequencies of $nf/m$ where $m > n$ is an integer that is not divisible by $n$, (iii) ultra-harmonics at frequencies of $mf/n$, (iv) a broadband frequency component. The relationship between bubble dynamics and the these spectral features is complex, with various hypotheses proposed and studied in literature. \cite{apfel1981, prosperetti1984, neppiras1980, lauterborn1976, lauterborn2010, lauterborn2015} A fundamental study of acoustic cavitation is beyond the scope of this work. However, a brief discussion is provided below to guide and support the analyses in the following sections. 
 
 The fundamental frequency $f$ is the main component observed when a bubble undergoes low-amplitude periodic oscillations or behaves as a scatterer, such as when the initial radii are larger than the incident wavelength. \cite{neppiras1980} In the stable cavitation regime, e.g. at low intensities, a bubble may begin to oscillate nonlinearly due to the nonlinear coupling between free and forced pulsations. This process emits high-order harmonics, with the second harmonic $2f$ often being the most prominent. The amplitude of the second harmonic is proportional to the square of the fundamental. \cite{neppiras1980} Theoretical studies show that for these nonlinear oscillations to occur, the ratio of the excitation frequency to the linear resonance frequency of the bubble, denoted by $f_r$, must be a rational fraction, i.e. $f/f_r = n/m$ and the pressure amplitude must be above a certain threshold. \cite{neppiras1980} The emissions from these nonlinear stable pulsations appear as sub-harmonics if $m=1$, meaning that the bubbles are driven at integer multiples of their resonances. Harmonics are produced if $n=1$ and ultra-harmonics are produced otherwise (i.e., $n \neq m$). \cite{lauterborn1976, apfel1981, lauterborn2015} A bubble excited by a pulsed excitation with a small duty cycle and a large repetition period may also emit low-energy signals at the $f/2$ sub-harmonic. \cite{neppiras1980}
 
 In the transient cavitation regime, at intensities above the transient cavitation threshold, the amplitudes of spectral features increase. The sub-harmonic signals are explained by the prolonged expansion phase that can occur when a bubble grows or oscillates over several cycles of sonication before collapsing. Additionally, a bubble with an initial size whose resonance frequency is close to sub-harmonics may resonate and undergo transient cavitation. The chaotic dynamics of transient bubbles \cite{lauterborn2015}, and shocks produced by inertial collapses manifest as broadband noise in the spectrum, which is often considered a hallmark of transient cavitation. \cite{frohly2000} In the case of a cloud of bubbles, the interaction between bubbles can produce harmonics and sub- and ultra-harmonics as well \cite{yasui2010}, further complicating the analysis of the PCD data. Moreover, emitted shocks can set neighboring bubbles into oscillations at their resonance frequencies which may appear as spectral contents unrelated to the excitation frequency $f$.
 
-The spectral features of acoustic emissions exhibit distinct time-frequency structures depending on the cavitation regime. In stable cavitation, the (sub- and ultra-) harmonic components of the signal may persist over extended time intervals with localized frequency values corresponding to $mf/n$. In contrast, during transient cavitation, the emissions display impulsive temporal structures. These transient impulsive components can manifest in the frequency domain as both broadband noise and localized spectral components at $mf/n$.
+These spectral features of acoustic emissions exhibit distinct time-frequency structures depending on the cavitation regime. In stable cavitation, the (sub- and ultra-) harmonic components of the signal may persist over extended time intervals with localized frequency values corresponding to $mf/n$. In contrast, during transient cavitation, the emissions display impulsive temporal structures. These transient impulsive components can manifest in the frequency domain as both broadband noise and localized spectral components at $mf/n$. 
 
-The noise component (primarily measurement noise) exists over a long period and manifests as a broadband distribution in the frequency domain. To analyze these multi-resolution acoustic emissions, the wavelet packet transform was utilized as discussed in the following section. 
+The noise component (primarily measurement noise) exists over a long period and manifests as a broadband distribution in the frequency domain. Separating measurement noise from the cavitation broadband noise is challenging as their statistical features are unknown. Additionally, the range of the cavitation broadband noise is usually identified arbitrarily. To quantify these multi-resolution features of the spectrum and determine the range and energy of cavitation broadband noise, we propose a method that utilizes the wavelet packet transform and \km clustering, which is discussed in the following section. 
 
 % \subsection{Literature Review}
 % The problem of classifying cavitation using PCD data has been explored in the past for applications such as ultrasonic cleaning and high-intensity focused ultrasound (HIFU). This section will outline some approaches to the problem of classifying PCD data.
@@ -204,17 +204,17 @@ Level entropy is a variation on the calculation of entropy given by
 
 \noindent Level entropy is also used to obtain the minimum entropy decomposition for DWPT.
 
-The spectral entropy is a measure of the complexity of the distribution in the spectrum of the subband. This calculated using \eq{\ref{eq:entropy}} where $x_{j,k}[n]$ is replaced with its magnitude spectrum. The lower the spectral entropy of a subband, the more deterministic components (information about the fundamental and harmonics) are within the subband. The transient components have a broadband frequency signature, hence a higher entropy can be attributed to transient and/or noise components of the signal. To distinguish these features additional statistical metrics are required.
+The normalized spectral entropy $S(f)_{j,k}$ is a measure of the complexity of the distribution in the spectrum of the subband. This is calculated using \eq{\ref{eq:entropy}} where $x_{j,k}[n]$ is replaced with its magnitude spectrum and normalized by $\log(N_{j,k})$. The normalized spectral entropy is in [0,1], with the lower the normalized spectral entropy of a subband, the more deterministic components (information about the fundamental and harmonics) are within the subband. Subbands with flat power spectral density have values close to 1, corresponding to the highest possible entropy which is a characteristic of white noise. The transient components have a broadband frequency signature, hence a higher entropy can be attributed to transient and/or noise components of the signal. To distinguish these features additional statistical metrics are required.
 %and $E_{j,k}$ is the energy of the magnitude spectrum.
 
-Kurtosis measures the occurrence of outliers in a signal. Therefore, it is considered as a metric for detecting transient cavitation. Kurtosis is calculated using the following formula
+Kurtosis measures the occurrence of outliers in a signal. Therefore, it is considered as a metric for detecting transient cavitation. The kurtosis is calculated using the following formula (the Pearson definition)
 
 \begin{align}
 	\label{eq:kurtosis}                                                                        
 	K_{j,k} = \dfrac{1}{n\sigma_{j,k}^4} \sum_{n=1}^{N_{j,k}}(x_{j,k}[n]-\overline{x}_{j,k})^4 
 \end{align}
 
-\noindent where $\overline{x}_{j,k}$ and $\sigma_{j,k}$ are the mean and standard deviation of the coefficients of the node $(j,k)$.
+\noindent where $\overline{x}_{j,k}$ and $\sigma_{j,k}$ are the mean and standard deviation of the coefficients of the node $(j,k)$. 
 
 Skewness measures the extent to which a distribution is asymmetrical. It is given by
 
@@ -352,9 +352,10 @@ Gilmore's equation describes the dynamics of a spherical bubble in a compressibl
 %explain how self-organisisng maps work?
 The feature space is explored using self-organizing maps, \cite{kohonen2012} a type of neural network maps high dimensional data in two dimensions and is primarily used for data visualisation and clustering. The algorithm starts with predefined two-dimensional grid of nodes, each containing an array of weights, one representing each input feature. The algorithm will iteratively adjust the weights of the nodes to fit them to the features in the training data; the nodes can be thought of as cluster centres which are interconnected such that neighboring nodes have similar features. The grid of nodes is plotted for each feature, giving a set of maps which can be visually compared to evaluate the correlations between features. The details of the algorithm can be found in Haroun et al. \cite{haroun2017feature}, used in the context of bearing fault detection and diagnosis. 
 
-The data utilized to train the self-organizing map uses 192 signals generated with the GA model, representing both stable and transient cavitation. The signals have noise added to them and are windowed and normalized as described in Fig. \ref{fig:method_flowchart} - see Section \ref{sec:GA_data} for computational details and parameters. The results are shown in Fig. \ref{fig:som}. When the maps are visually similar, their respective features are correlated with each other. This shows that the high energy DWPT nodes tend to have low skewness, kurtosis, and spectral entropy, as expected given the physical interpretations of each. This area represents packet nodes containing fundamental frequencies. The spectral entropy and level entropy are able to find nodes around the high energy area. These represent harmonics which are not easily picked out using average energy alone. The nodes with high frequency and kurtosis, and low energy indicate signals with sharp transients. The rest of the high-frequency nodes represent noise.
+The data utilized to train the self-organizing map uses 192 signals generated with the GA model, representing both stable and transient cavitation. The signals have noise added to them and are windowed and normalized as described in Fig. \ref{fig:method_flowchart} - see Section \ref{sec:GA_data} for computational details and parameters. The results are shown in Fig. \ref{fig:som}. When the maps are visually similar, their respective features are correlated with each other. This shows that the high energy DWPT nodes tend to have low skewness, kurtosis, and normalized spectral entropy, as expected given the physical interpretations of each. This area represents packet nodes containing fundamental frequencies. The normalized spectral entropy and level entropy are able to find nodes around the high energy area. These represent harmonics which are not easily picked out using average energy alone. The nodes with high normalized spectral entropy and kurtosis, and low energy indicate signals with sharp transients. Finally, the nodes with high normalized spectral entropy but low kurtosis and energy represent measurement noise. Depending on the statistical properties of the measurement noise, different threshold values can be defined to distinguish between the cavitation broadband noise and the measurement noise. Here, we threshold based on the kurtosis value of 3, assuming the measurement noise is white Gaussian. The metrics of the centers of the clusters are used for thresholding.
 
-Several plots look similar, indicating redundancy in the feature space. Skewness, kurtosis, and crest factor perform similarly, while level entropy (normalized by the energy of the original signal), and spectral entropy are highly correlated. Overall, the best features are hand picked as average energy, kurtosis, log average energy, and spectral entropy and used for identifying nodes representing fundamentals, harmonics, and noise.
+Several plots look similar, indicating redundancy in the feature space. Skewness, kurtosis, and crest factor perform similarly, while level entropy (normalized by the energy of the original signal), and normalized spectral entropy are highly correlated. Overall, the best features are hand picked as average energy, kurtosis, log average energy, and normalized spectral entropy and used for identifying nodes representing periodic, transient and noise (broadband and measurement) components.
+
 
 \begin{figure}[tbh]
 	\centering
@@ -372,7 +373,7 @@ The incident ultrasound pressure is modelled as a sine wave, i.e., $P_{ac}(t)= P
 
 The radiated pressures at $r=\SI{100}{\micro\metre}$ and their spectra are shown in Fig. \ref{fig:emissions_and_fft_GA}. 
 
-\begin{figure*}[htp]
+\begin{figure*}[tph]
 	\centering
 	\begin{subfigure}{.45\textwidth}
 		{
@@ -440,7 +441,7 @@ The radiated pressures at $r=\SI{100}{\micro\metre}$ and their spectra are shown
 		
 The bubble with $R_0=\SI{50}{\micro\metre}$ sustains periodic stable oscillations and irradiates cyclic pressure. The main components of the spectrum are the bubble's resonance frequency at $0.06f$ and the fundamental. Considering the low energy and the kurtosis ($K=3.5$) of the transient component, it mainly represents the added WGN (the kurtosis of the WGN is approximately 3). The $R_0=\SI{0.5}{\micro\metre}$ bubble experiences cyclic transient cavitation, which is manifested as impulsive transient components in the emissions. The reconstructed transient component of the acoustic emission manifests harmonics, ultra-harmonics at $(2m+1)f/2, m\geq 2$ and broadband spectral components. In this case, the bubble is driven below its resonance which is about \SI{11.7}{\mega\hertz}, thus, $f/f_r \approx 1/10$. The emissions from the resonant bubble of $R_0=\SI{3.4}{\micro\metre}$, include the $3f/4$ and $f/2$ sub-harmonics, the fundamental, an ultra-harmonic at about $3f/2$, the second harmonic and broadband. 
 		
-To analyze the emissions, the Daubechies wavelet function of order 30 (db30) was chosen in accordance with the physics of cavitation and the impulsive nature of desired transient component in transient cavitation. The depth of the decomposition was determined for each signal using the minimum Shannon entropy criterion, discussed before. The choice of the wavelet function is not unique. Our numerical studies (not shown here) confirmed that other orthonormal high order wavelet functions can extract cavitation signatures in the signal. Statistical metrics defined in Section \ref{sec:statistical_metrics} were calculated for all leaf nodes.  From the feature space analysis, a smaller subset of features — namely spectral entropy, log average energy, kurtosis, and average energy — was selected for clustering and classification of the packets, as detailed in Section \ref{sec:feature_selection}. 
+To analyze the emissions, the Daubechies wavelet function of order 30 (db30) was chosen in accordance with the physics of cavitation and the impulsive nature of desired transient component in transient cavitation. The depth of the decomposition was determined for each signal using the minimum Shannon entropy criterion, discussed before. The choice of the wavelet function is not unique. Our numerical studies (not shown here) confirmed that other orthonormal high order wavelet functions can extract cavitation signatures in the signal. Statistical metrics defined in Section \ref{sec:statistical_metrics} were calculated for all leaf nodes. From the feature space analysis, a smaller subset of features — namely normalized spectral entropy, log average energy, kurtosis, and average energy — was selected for clustering and classification of the packets, as detailed in Section \ref{sec:feature_selection}. 
 % Initially, \km clustering was applied to classify the leaf nodes into two clusters, separating the transient from the periodic components. Figure \ref{fig:rec_fft_2clusters_GA} depicts the reconstructed components and their spectra. Considering these spectra and the values of the classifying metrics at the centers of these clusters, these two clusters represent the periodic and transient components of the emissions. The emissions from the \SI{0.5}{\micro\meter} bubble features periodic impulses created by cyclic collapses, as shown in Fig. \ref{fig:rec_fft_2clusters_GA}. The classifier grouped these cyclic impulses and the fundamental tone as the periodic component of the signal and the broadband and sub- and ultra-harmonics are grouped as transient component, see Figs. \ref{subfig:rec_2clusters_0p5micron_GA} and \ref{subfig:fft_2clusters_0p5micron_GA}. 
 			
 % \begin{figure*}[tp]
@@ -505,11 +506,16 @@ To analyze the emissions, the Daubechies wavelet function of order 30 (db30) was
 
 % The resonance frequency of the \qty{0.5}{\micro\metre} bubble is about \qty{11.7}{\mega\hertz} which is approximately ten times higher than the driving frequency ($f/f_r = 94/100 \appr 1/10$). The spectrum features multiple ultra-harmonics at $(2m+1)f/2, m\leq 2$, harmonics and broadband component, which are expected when a sub-resonance bubble ius excited, see Section \ref{sec:cavita_physics} for detail. The larger bubble of \qty{5}{\micro\meter} is close the resonance bubble size at the driving frequency and its spectrum features sub-harmonics at $f/3$, $2f/3$, the second harmonic, and stronger broadband compared to the \qty{0.5}{\micro\meter} bubble.
 			
-To classify the leaf nodes, we set the minimum number of clusters to be 2 and let the \km clustering algorithm identifies the clusters in the nodes using the silhouette score. The clusters are sorted from the highest average energy ($Cluster 0$) to the lowest one. For the the submicron bubble, four clusters are identified which the first cluster ($Cluster 0$) includes the periodic component as it has the maximum energy and the lowest kurtosis, see Figs. \ref{subfig:metrics_0p5micron_GA}, \ref{subfig:rec_arbitrary_0p5micron_GA} and \ref{subfig:fft_arbitrary_0p5micron_GA}. $Cluster 1$ includes nodes which represent the harmonics and ultra-harmonic components and $Cluster 2$ includes sub-harmonics and a high-kurtosis ($K=17.8$) broadband component. Finally, the last cluster includes the low-energy nodes of the broadband. 
+To classify the leaf nodes, we set the minimum number of clusters to be two and let the \km clustering algorithm identifies the clusters in the nodes using the silhouette score. The clusters are sorted from the highest average energy ($Cluster 0$) to the lowest one.
 
-The leaf nodes of the emissions from the $3.4$ micron bubble are divided into into three clusters: $Cluster 0$ includes the periodic component,i.e., the fundamental frequency, see Figs. \ref{subfig:rec_arbitrary_3p4micron_GA} and \ref{subfig:fft_arbitrary_3p4micron_GA}. It has the highest energy and lowest kurtosis among other cluster centers, as shown in Fig. \ref{subfig:metrics_3p4micron_GA}. $Cluster 1$ includes the sub-harmonics, the second harmonic and a low-frequency part of broadband and noise. The high-frequency broadband and noise are contained in $Cluster 2$. 
+For the the submicron bubble, four clusters are identified which the first cluster ($Cluster 0$) includes the periodic component as it has the maximum energy and the lowest kurtosis, see Figs. \ref{subfig:metrics_0p5micron_GA}, \ref{subfig:rec_arbitrary_0p5micron_GA} and \ref{subfig:fft_arbitrary_0p5micron_GA}. $Cluster 1$ includes nodes which represent the harmonics and ultra-harmonic components and $Cluster 2$ includes sub-harmonics and a high-kurtosis ($K=17.8$) broadband component. Finally, the last cluster includes the low-energy and high spectral entropy nodes of the broadband and noise. The metrics of the centers quantify different components included in each cluster. 
+% Thresholding the nodes in high-kurtosis (transient) clusters, i.e., $Cluster 1$ and $2$, and reconstructing them, an estimate of the broadband component is obtained, which has log average energy of $10\log_{10}(\barE)=-9.8 \si{\decible}$, the spectral entropy of $S(f)=10.3$ and kurtosis $K=29.4$. The broadband spans across multiple frequency bands in the frequency range of $0.1f$ to $9.8f$.  
 
-Finally, the emissions from the large $50$ micron bubble are classified into three clusters, where the transients are divided into a high-kurtosis broadband component ($K=10.4$), i.e., $Cluster 2$, and the low-kurtosis ($K=3.2$) noise $Cluster 1$.  
+The leaf nodes of the emissions from the $3.4$ micron bubble are classified into three clusters: $Cluster 0$ includes the fundamental frequency, i.e., the periodic component, see Figs. \ref{subfig:metrics_3p4micron_GA}, \ref{subfig:rec_arbitrary_3p4micron_GA} and \ref{subfig:fft_arbitrary_3p4micron_GA}. It has the highest energy and lowest kurtosis among other cluster centers. $Cluster 1$ includes the sub-harmonics, the second harmonic and a low-frequency part of broadband and noise. The high-frequency broadband and noise are contained in $Cluster 2$. 
+% Thresholding transient leaf nodes, the broadband component is quantified as follows: it spans $5.8f-6.6f$ and $8.9f-9.8f$, with $10\log_{10}(\barE)=-9.5 \si{\decible}$, $S(f)=10.3$ and $K=23.7$.  
+
+Finally, the emissions from the large $50$ micron bubble are classified into three clusters, where the transients are divided into a high-kurtosis broadband component ($K=10.4$), i.e., $Cluster 2$, and the low-kurtosis ($K=3.2$) noise $Cluster 1$, see Fig. \ref{subfig:metrics_50micron_GA}. 
+% The broadband component is estimated to span $1.5f-9.6f$, with $10\log_{10}(\barE)=-18 \si{\decible}$, $S(f)= 11$ and $K=3.7$. 
 
 \begin{figure*}[tp]
 	\centering
@@ -539,7 +545,7 @@ Finally, the emissions from the large $50$ micron bubble are classified into thr
 			\label{subfig:metrics_50micron_GA} 
 		}%
 	\end{subfigure}
-	\caption{Classification metrics of the centers of the leaf nodes clusters identified by the \km algorithm (a,b) \SI{0.5}{\micro\metre}, (c,d) \SI{3.4}{\micro\metre}, and (e,f) \SI{50}{\micro\metre} bubble.}
+	\caption{Classification metrics of the centers of the leaf nodes clusters identified by the \km algorithm (a) \SI{0.5}{\micro\metre}, (b) \SI{3.4}{\micro\metre}, and (c) \SI{50}{\micro\metre} bubble.}
 	\label{fig:metrics_arbitrary_clusters_GA}
 \end{figure*}
 
@@ -570,7 +576,7 @@ Finally, the emissions from the large $50$ micron bubble are classified into thr
 			\centering
 			\includegraphics[trim= 0 0 170 25,clip,width=\textwidth]{./figs/sig_rec_centeroids_arbitrary_GA_calculated_emissions_R03p4um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
-			\label{subfig:rec_arbitrary_5micron_GA}
+			\label{subfig:rec_arbitrary_3p4micron_GA}
 			}
 	\end{subfigure}	
 	\hfill
@@ -579,7 +585,7 @@ Finally, the emissions from the large $50$ micron bubble are classified into thr
 			\centering
 			\includegraphics[trim= 0 0 0 25,clip,width=\textwidth]{./figs/spectrum_rec_centeroids_arbitrary_GA_calculated_emissions_R03p4um_freq1p1MHz_Pac1MPa.pdf}
 			\subcaption{}
-			\label{subfig:fft_arbitrary_5micron_GA}
+			\label{subfig:fft_arbitrary_3p4micron_GA}
 		}
 	\end{subfigure}
 	\\
@@ -608,7 +614,7 @@ Finally, the emissions from the large $50$ micron bubble are classified into thr
 \label{sec:analyzing_PCD_data}
 A focused ultrasound transducer (H102, Sonic Concepts, WA, USA) was driven with a burst of 100 cycles at the fundamental frequency of \SI{1.1}{\mega\hertz} and different amplitudes. Focused PCDs with centre frequencies of \SI{1}{\mega\hertz}, \SI{5}{\mega\hertz} and \SI{10}{\mega\hertz} were used to measure acoustic emissions from the focus of the ultrasound transducer. Experiments were carried out in a tank filled with de-ionized water (oxygen concentration: $7.00\pm0.2$ \si{\milli\gram\per\liter} for all trials) at room temperature (\SI{22}{\degreeCelsius}). Refer to Haqshenas et al \cite{haqshenas2015} for the detailed description of the test set-up, data acquisition parameters and experimental procedures. Here, the readings of the \SI{1}{\mega\hertz} PCD are presented, as its center frequency overlaps with the excitation frequency. Two experimental scenarios were investigated, characterized by calculated peak-positive ($P_{p+}$) and peak-negative ($P_{p-}$) pressures at the focus: i) low-amplitude sonication where $P_{p+}=\SI{3}{\mega\pascal}$ and $P_{p-}=\SI{2.6}{\mega\pascal}$, denoted as D1 below, ii) high-amplitude sonication $P_{p+}=\SI{12.5}{\mega\pascal}$ and $P_{p-}=\SI{7.1}{\mega\pascal}$, denoted as D2. In the scenario D1, the incident pressure waves remain linear, whereas in the case D2, the waveform becomes strongly distorted, leading to the formation of higher harmonics. These harmonics can excite bubble nuclei smaller than the resonance bubble at the excitation frequency $f=\SI{1.1}{\mega\hertz}$.
 			
-The wavelet transform uses minimum entropy decomposition, the db20 wavelet, symmetric padding, and enforces decomposition levels between 6 to 12. Given the frequency response of the PCD, the cut-off frequency of the decomposition was set to \SI{10}{\mega\hertz}, with packets above this threshold discarded. The results from the wavelet transform are presented in Heisenberg plots in Fig. \ref{fig:heisenberg_pcd_data}. The color of each Heisenberg box indicates the amplitude of the corresponding wavelet packet coefficient. The plot reveals a higher energy band around the sub-harmonics, the fundamental frequency, and the second harmonic. A stronger broadband component above the second harmonic is evident in the D1 data. These plots also illustrate the trade-off between frequency and time resolution. The minimum entropy decomposition algorithm tends to achieve a finer frequency resolution around higher energy parts of the frequency spectrum i.e. at the fundamental frequency. As expected with wavelet transforms, there is finer temporal resolution at higher frequencies.
+The wavelet transform uses minimum entropy decomposition, the db30 wavelet, symmetric padding, and enforces decomposition levels between 6 to 12. Given the frequency response of the PCD, the cut-off frequency of the decomposition was set to \SI{10}{\mega\hertz}, with packets above this threshold discarded. The results from the wavelet transform are presented in Heisenberg plots in Fig. \ref{fig:heisenberg_pcd_data}. The color of each Heisenberg box indicates the amplitude of the corresponding wavelet packet coefficient. The plot reveals a higher energy band around the sub-harmonics, the fundamental frequency, and the second harmonic. A stronger broadband component above the second harmonic is evident in the D1 data. These plots also illustrate the trade-off between frequency and time resolution. The minimum entropy decomposition algorithm tends to achieve a finer frequency resolution around higher energy parts of the frequency spectrum i.e. at the fundamental frequency. As expected with wavelet transforms, there is finer temporal resolution at higher frequencies.
 			
 % \begin{figure}[tbh]
 % 	\centering
@@ -622,7 +628,7 @@ The wavelet transform uses minimum entropy decomposition, the db20 wavelet, symm
 	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 70 70,clip, width=\linewidth]{./figs/heisenberg_80_1_2.pdf}
+			\includegraphics[trim= 0 0 70 70,clip, width=\linewidth]{./figs/heisenberg_80_1_3to6.pdf}
 			\subcaption{}
 			\label{subfig:heisenberg_80_1_2}
 		}
@@ -631,7 +637,7 @@ The wavelet transform uses minimum entropy decomposition, the db20 wavelet, symm
 	\begin{subfigure}{0.5\textwidth}
 		{
 			\centering
-			\includegraphics[trim= 0 0 70 70,clip, width=\linewidth]{./figs/heisenberg_280_1_2.pdf}
+			\includegraphics[trim= 0 0 70 70,clip, width=\linewidth]{./figs/heisenberg_280_1_3to6.pdf}
 			\subcaption{}
 			\label{subfig:heisenberg_280_1_2}
 		}
@@ -649,50 +655,53 @@ The wavelet transform uses minimum entropy decomposition, the db20 wavelet, symm
 % 	\label{fig:heisenberg_pcd_data}
 % \end{figure}
 
-The \km algorithm is initially enforced to classify the nodes into 2 clusters, shown in Fig. \ref{fig:rec_pcd_data_2centers}. The selected classifying metrics are as before, identified using self-organizing maps. In both data sets, the algorithm classifies the fundamental and sub-harmonics together as the periodic component and broadband, and harmonics as the transient component. The miss-classification of the sub-harmonics is a result of binary classification and is corrected by selecting sufficient number of clusters. 
+% The \km algorithm is initially enforced to classify the nodes into 2 clusters, shown in Fig. \ref{fig:rec_pcd_data_2centers}. The selected classifying metrics are as before, identified using self-organizing maps. In both data sets, the algorithm clusters the fundamental and sub-harmonics together, which has features of the periodic component, and harmonics and noises (broadband and measurement) together, featuring the transient component of the signal. The miss-classification of the sub-harmonics is a result of binary classification of \km algorithm, which can be corrected by selecting sufficient number of clusters. 
 
-\begin{figure*}[tp]
-	\centering
-	\begin{subfigure}{0.4\textwidth}
-		{
-			\centering
-			\includegraphics[trim= 0 0 150 0,clip,width=\textwidth]{./figs/sig_rec_centers_truncated_80_1_2.pdf}
-			\subcaption{}
-			\label{subfig:sig_rec_centers_truncated_80_1_2}
-		}
-	\end{subfigure}%
-	\hfill
-	\begin{subfigure}{0.5\textwidth}
-		{
-			\centering
-			\includegraphics[width=\textwidth]{./figs/fft_rec_centers_80_1_2.pdf}
-			\subcaption{}
-			\label{subfig:fft_rec_centers_80_1_2}
-		}
-	\end{subfigure}%
-	\\
-	\begin{subfigure}{0.4\textwidth}
-		{
-			\centering
-			\includegraphics[trim= 0 0 150 0,clip,width=\textwidth]{./figs/sig_rec_centers_truncated_280_1_2.pdf}
-			\subcaption{}
-			\label{subfig:sig_rec_centers_truncated_280_1_2}
-		}
-	\end{subfigure}%
-	\hfill
-	\begin{subfigure}{0.5\textwidth}
-		{
-			\centering
-			\includegraphics[width=\textwidth]{./figs/fft_rec_centers_280_1_2.pdf}
-			\subcaption{}
-			\label{subfig:fft_rec_centers_280_1_2}
-		}
-	\end{subfigure}%
-	\caption{The reconstructed periodic and transient components of the D1 and D2 signals and their spectra. (a,b) D1 data, (c,d) D2 data.}
-	\label{fig:rec_pcd_data_2centers}
-\end{figure*}
+% \begin{figure*}[tp]
+% 	\centering
+% 	\begin{subfigure}{0.4\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[trim= 0 0 150 0,clip,width=\textwidth]{./figs/sig_rec_centers_truncated_80_1_2.pdf}
+% 			\subcaption{}
+% 			\label{subfig:sig_rec_centers_truncated_80_1_2}
+% 		}
+% 	\end{subfigure}%
+% 	\hfill
+% 	\begin{subfigure}{0.5\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[width=\textwidth]{./figs/fft_rec_centers_80_1_2.pdf}
+% 			\subcaption{}
+% 			\label{subfig:fft_rec_centers_80_1_2}
+% 		}
+% 	\end{subfigure}%
+% 	\\
+% 	\begin{subfigure}{0.4\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[trim= 0 0 150 0,clip,width=\textwidth]{./figs/sig_rec_centers_truncated_280_1_2.pdf}
+% 			\subcaption{}
+% 			\label{subfig:sig_rec_centers_truncated_280_1_2}
+% 		}
+% 	\end{subfigure}%
+% 	\hfill
+% 	\begin{subfigure}{0.5\textwidth}
+% 		{
+% 			\centering
+% 			\includegraphics[width=\textwidth]{./figs/fft_rec_centers_280_1_2.pdf}
+% 			\subcaption{}
+% 			\label{subfig:fft_rec_centers_280_1_2}
+% 		}
+% 	\end{subfigure}%
+% 	\caption{The reconstructed periodic and transient components of the D1 and D2 signals and their spectra. (a,b) D1 data, (c,d) D2 data.}
+% 	\label{fig:rec_pcd_data_2centers}
+% \end{figure*}
 
-To this end and for more granular decomposition, \km is set to select clusters based on the silhouette score, with a minimum of $k=3$. The algorithm divides the leaf nodes of the D1 and D2 data into five and three clusters, respectively. In both cases, the fundamental is the high-energy node that has been singled out by the algorithm, denoted as $Cl0$. The same leaf nodes are classified as periodic components in Fig. \ref{fig:rec_pcd_data_2centers}.
+The \km is set to select clusters based on the silhouette score, with a minimum of 3 clusters. The algorithm divides the leaf nodes of the D1 and D2 data into three and four clusters, respectively. In both cases, the fundamental is the high-energy node that has been singled out by the algorithm, denoted as $Cluster 0$, as shown in Fig. \ref{fig:metrics_pcd_data}. 
+
+
+% The same leaf nodes are classified as periodic components in Fig. \ref{fig:rec_pcd_data_2centers}.
 
 % The DWPT graph is shown in Fig. \ref{ig:dwpt_graph_pcd_data} where the leaf nodes are color coded according to the clustering results. 
 
@@ -719,7 +728,7 @@ To this end and for more granular decomposition, \km is set to select clusters b
 % 	\label{fig:dwpt_graph_pcd_data}
 % \end{figure*}
 
-The time series reconstructed from these clusters and their spectra are shown in Fig. \ref{fig:rec_pcd_data_3to6centers}. The clusters of packets with high kurtosis and low energy have broadband spectrum and represent the broadband components of the signals. These are ClXX clusters in the D1 and D2 data, respectively. The clusters with low energy, low kurtosis and high spectral density are classified as measurement noise. Harmonics are characterized by a low spectral entropy. Depending on the statistical properties of the measurement noise, different threshold values can be defined. However, in the current study, the the classes were labeled manually based on the relative values of the cluster centers and the spectrum of the reconstructed time series of the nodes of classes. Fig. \ref{fig:cluster_pcd_data} plots the positions of the cluster centers. These plots show that measurement and broadband noise are separated by their difference in log average energy. The clusters of nodes are reconstructed and the power spectrum is calculated for each, shown in Fig. \ref{fig:rec_pcd_data_3to6centers}. The algorithm is able to separate the fundamental frequency from the rest of the lower frequencies. The single node representing the fundamental frequency produces three peaks on the spectrum, as most nodes do when they are reconstructed. This leads to some artifacts at around 0.5 and 1.8 MHz. These artifacts are cancelled out by neighboring nodes. The broadband and noise are separated as expected while the cluster representing harmonics has a similar shape to the fundamental, indicating that, because there are no prominent harmonics in this signal, the algorithm instead finds nodes where some of the energy leaked out from the fundamental.
+The time series reconstructed from these clusters and their spectra are shown in Fig. \ref{fig:rec_pcd_data_3to6centers}. The clusters of packets with high kurtosis and low energy have broadband spectrum and represent the broadband components of the signals, i.e., $Cluster1$ in D1. The broadband and measurement noise are separated by the kurtosis and normalized spectral entropy values. In the low-intensity data (D1), the algorithm identifies a low-kurtosis, low-energy and high-spectral entropy cluster ($Cluster 2$). This cluster has characteristics of measurement noise.  
 			
 
 \begin{figure*}[tp]
@@ -761,10 +770,10 @@ The time series reconstructed from these clusters and their spectra are shown in
 		}
 	\end{subfigure}%
 	\caption{Classification metrics calculated at the centers of clusters. (a) D1 data, (b) D2 data.}
-	\label{fig:cluster_pcd_data}
+	\label{fig:metrics_pcd_data}
 \end{figure*}
 
-The data for the D2 experiment is plotted in Fig. \ref{subfig:sig_rec_centers_truncated_280_1_3to6}. The higher intensity ultrasound produces a prominent harmonic at $2f_0$ and a sub-harmonic at $1/2 f_0$, visible in Fig. \ref{subfig:fft_rec_centers_280_1_3to6}. These figures show that the algorithm is able to separate the harmonics and subharmonics from the fundamental frequency. The algorithm finds three clusters for this signal, which represent measurement noise, broadband \& harmonics, and fundamental frequency. The algorithm is once again able to distinguish between the fundamental frequency, low frequency noise, and high frequency noise but is unable to separate the harmonics and sub-harmonics from the noise. This is because the harmonics and other low-frequency components share similar log average energy. 
+The higher intensity ultrasound produces a prominent harmonic at $2f_0$ and a sub-harmonic at $\frac{f_0}{2}$, visible in Fig. \ref{subfig:fft_rec_centers_280_1_3to6}. The algorithm finds four clusters for this signal, which represent fundamental frequency ($Cluster 0$), sub-harmonic and high-kurtosis low-energy noise ($Cluster 1$), harmonics and low-kurtosis low-energy noise ($Cluster 2$) and high-frequency low-kurtosis and low-energy noise ($Cluster 3$). The algorithm is once again able to distinguish between the fundamental sub-harmonics and harmonics and high frequency noise, but is unable to separate the harmonics and sub-harmonics from the noise. This is because the harmonics and other low-frequency components share similar log average energy. In this case, the leaf nodes of broadband component are shared between different clusters. To quantify the broadband component, we carry out kurtosis thresholding by keeping the clusters which their centers have $K>3$. Subsequently, all the nodes belong to these clusters are searched and thresholded as well. The time series are then reconstructed using these nodes, as shown in \ref{fig:rec_BB}. According to this method of identifying broadband components, we can see that they span across both low-frequency, i.e. $f<f_0$, and high-frequency, i.e. $f>>f_0$, ranges. Within these broad ranges, the magnitude of the spectrum drops by more than \SI{20}{\dB}. Thus, to quantify the bandwidth of the broadband range, we only search for frequency ranges which are above the root mean-square of the spectrum which results in the bandwidth of $[0.01f_0,1.85f_0]$ and $[0.1f_0,0.75f_0]$ for D1 and D2, respectively. Also, we can quantify the broadband component by calculating the previously defined statistical metrics, as follows: (i) D1 data: $K=3.26$, $L\bar{E}=\SI{-9.75}{\dB}$, $C=5$, (i) D2 data: $K=3.23$, $L\bar{E}=\SI{-11}{\dB}$, $C=3.2$. 
 
 % Removing log average energy metric from classification, results in a better separation between the harmonics and fundamental, as shown in Fig. \ref{fig:280_1_fft_alt}. However, this combines measurement noise and broadband components in a single cluster, mislabeling the corresponding packets. The algorithm is consistently able to extract and categorize the fundamental frequency of the signal. However, it struggles with separating harmonics, broadband noise, and measurement noise.
 			
@@ -808,15 +817,25 @@ The data for the D2 experiment is plotted in Fig. \ref{subfig:sig_rec_centers_tr
 	\caption{Reconstructed time series of the leaf nodes of different clusters. (a) D1 data, (b) D2 data.}
 	\label{fig:rec_pcd_data_3to6centers}
 \end{figure*}
-		
+
+
+\begin{figure}[tbh]
+	\centering
+	\includegraphics[width=0.5\linewidth]{./figs/Reconstructed_thresholded_clusters_80_and_280_3to6.pdf}
+	\caption{ Reconstructed broadband components of the D1 and D2 data sets.}
+	\label{fig:rec_BB}
+\end{figure}
+
+
+
 			
 \section{Conclusion}
 \label{sec:conclusion}
-This paper presents a novel approach for analyzing acoustic emissions measured by PCDs, utilizing multi-resolution analysis through DWPT and \km clustering. The combination of DWPT with minimum entropy decomposition proved effective in flexibly separating the transient and periodic components of the emissions. Several metrics were evaluated to classify the leaf nodes and characterize cavitation features. Self-organizing maps were used to visualize the feature space and identify a subset of the most relevant metrics.
+This paper presents a novel approach for analyzing acoustic emissions measured by PCDs, utilizing multi-resolution analysis through DWPT and \km clustering. The combination of DWPT with minimum entropy decomposition proved effective in flexibly separating the transient and periodic components of the emissions. Several metrics were evaluated to classify the leaf nodes and quantitatively characterize cavitation features. Self-organizing maps were used to visualize the feature space and identify a subset of the most relevant metrics.
 
-The algorithm was tested on data from both numerical experiments and experimental measurements, successfully distinguishing the periodic and transient components of the emissions. It also identified and characterized cavitation features such as harmonics, sub- and ultra-harmonics, and broadband components. This was achieved by linking the physical interpretation of these metrics to the time-frequency signatures of acoustic emissions. This provides an effective tool for quantifying various cavitation features in PCD data and for quantitatively characterizing acoustic cavitation. 
+The algorithm was tested on data from both numerical experiments and experimental measurements, successfully distinguishing the periodic and transient components of the emissions. It also identified and characterized cavitation features such as harmonics, sub- and ultra-harmonics, and broadband components. This was achieved by linking the physical interpretation of these metrics to the time-frequency signatures of acoustic emissions. A quantitative approach was proposed and utilized to determine the bandwidth and statistical metrics of the broadband component. This provides an effective tool for quantifying various cavitation features in PCD data and for quantitatively characterizing acoustic cavitation. 
 
-Since the statistical characteristics of the measurement noise are unknown, this remains a challenging problem to separate the measurement noise from broadband component of transient cavitation, especially when the kurtosis is low. Additionally, when leaf nodes were not sufficiently sparse—e.g., located at the boundary of two or more clusters—the \km algorithm produced inconsistent classifications. This is mainly due to the known limitations of the \km algorithm, such as performing hard clustering, assuming even cluster sizes and using Euclidean distances. Future work will aim to address this issue by employing alternative classification methods.
+Since the statistical characteristics of the measurement noise are unknown, this remains a challenging problem to separate the measurement noise from broadband component of transient cavitation, especially when the kurtosis is low. Additionally, when leaf nodes were not sufficiently sparse, e.g., located at the boundary of two or more clusters—the \km algorithm produced inconsistent classifications. This is mainly due to the known limitations of the \km algorithm, such as performing hard clustering, assuming even cluster sizes and using Euclidean distances. Future work will aim to address this issue by employing alternative classification methods.
 	
 
 % ---------------------------------------------------------------------
