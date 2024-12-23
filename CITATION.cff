@@ -9,7 +9,7 @@ authors:
 title: "WPT-Cavitation Analysis"
 version: 0.1.0
 doi: 
-url: "https://github.com/SRHaqshenas/WPT-Cavitation/"
+url: "https://github.com/USonixGroup/wpt-cavitation/"
 identifiers:
   - type: doi
     value: 
