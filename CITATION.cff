@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this library, please cite it as below."
+authors:
+- family-names: "Au-Yeung"
+  given-names: "Max"
+- family-names: "Haqshenas"
+  given-names: "Reza"
+  orcid: "https://orcid.org/0000-0002-3082-0232"
+title: "WPT-Cavitation Analysis"
+version: 0.1.0
+doi: 
+url: "https://github.com/SRHaqshenas/WPT-Cavitation/"
+identifiers:
+  - type: doi
+    value: 
+date-released: 2024-01-10
