@@ -45,7 +45,7 @@ Contact on GitHub or at max.au-yeung20@ucl.ac.uk.
 This work was partially supported by the Focused Ultrasound Foundation, and the UCL Mechanical Engineering department.
 
 ## Licence
-WPT-Cavitation is licensed under an MIT licence. Full text of the licence can be found [here](LICENSE.md).
+WPT-Cavitation is licensed under an MIT licence. Full text of the licence can be found [here](LICENSE).
 
 ## Citation
 If you use WPT-Cavitation in your work, please cite it as follows:
