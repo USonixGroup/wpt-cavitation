@@ -1,4 +1,4 @@
-from matplotlib.backends.backend_pdf import PdfPages
+# from matplotlib.backends.backend_pdf import PdfPages
 import os
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
@@ -19,19 +19,18 @@ def save_figure(figure, file_name, file_path=None):
         if not file_path:
             file_path = get_path(file_name, ".pdf")
         else:
-            file_path = file_path + "/" + file_name + ".pdf" 
-        with PdfPages(file_path) as pdf:
-            pdf.savefig(figure)
+            file_path = file_path + "\\" + file_name + ".pdf"
+        figure.savefig(file_path, format="pdf")
 
     elif isinstance(figure, go.Figure):
-        if not isinstance(file_path,str):
+        if not isinstance(file_path, str):
             file_path_pdf = get_path(file_name, ".pdf")
-            file_path_html = get_path(file_name, ".html")
+            # file_path_html = get_path(file_name, ".html")
         else:
-            file_path_pdf = file_path + "/" + file_name + ".pdf"
-            file_path_html = file_path + "/" + file_name + ".html"
-        figure.write_html(file_path_html)
-        figure.write_image(file_path_pdf,format='pdf')
+            file_path_pdf = file_path + "\\" + file_name + ".pdf"
+            # file_path_html = file_path + "\\" + file_name + ".html"
+        # figure.write_html(file_path_html)
+        figure.write_image(file_path_pdf, format="pdf")
 
     else:
         raise ValueError("figure has to be a plt.Figure or go.Figure")

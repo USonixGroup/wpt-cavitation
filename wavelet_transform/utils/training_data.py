@@ -266,8 +266,11 @@ def generate_data(r_measure, *params):
     BD_obj.solver()
 
     # Calculate pressure radiated (proportional to measured voltage)
-    BD_obj.calculate_p_radiated(r_measure)
-    data = BD_obj.p_radiated
+    BD_obj.calculate_p_radiated_vokurka(r_measure)
+    data = BD_obj.p_radiated_vokurka
+
+    # BD_obj.calculate_p_radiated(r_measure)
+    # data = BD_obj.p_radiated
 
     return data
 

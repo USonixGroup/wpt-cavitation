@@ -22,8 +22,8 @@ def preprocess(data, window=False):
     d = data.copy()
     if window is True:
         win_func = sig.windows.blackmanharris(len(d), sym=False)
-        data_windowed = d * win_func  # / np.std(win_func)
-        data_windowed = (data_windowed - np.mean(data_windowed)) / np.std(data_windowed)
+        data_windowed = d * win_func / np.std(win_func)
+        data_windowed = data_windowed - np.mean(data_windowed)
         return data_windowed
     else:
         data = (data - np.mean(data)) / np.std(data)
