@@ -211,7 +211,7 @@ def heisenberg(
         vmax=vmax,
     )
     ax.set_ylabel("$f_c$ [MHz]", fontsize=fsize)
-    ax.set_xlabel("t [$\mathrm{\mu s}$]", fontsize=fsize)  # noqa
+    ax.set_xlabel(r"t [$\mathrm{\mu s}$]", fontsize=fsize)  # noqa
     ax.set_title(title, fontsize=fsize)
     # ax.set_yscale("log")
 
@@ -763,7 +763,7 @@ def plot_centers(classifying_metrics, centers, label_map=None, xlabel_user=None)
         ), "each cluster must be labelled"
         ylabel = "Magnitude [DL]"
         if "energy" in metric:
-            ylabel = "Magnitude [$\mathrm{unit}^2$]"
+            ylabel = r"Magnitude [$\mathrm{unit}^2$]"
         if ("log" in metric) and ("energy" in metric):
             ylabel = "Magnitude [dB]"
         if "entropy" in metric:

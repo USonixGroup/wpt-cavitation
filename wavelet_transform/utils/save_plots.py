@@ -16,7 +16,7 @@ def save_figure(figure, file_name, file_path=None):
     """
 
     if isinstance(figure, plt.Figure):
-        if not file_path:
+        if file_path is None:
             file_path = get_path(file_name, ".pdf")
         else:
             file_path = file_path + "\\" + file_name + ".pdf"
