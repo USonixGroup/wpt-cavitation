@@ -13,7 +13,7 @@ all: manuscript_jasa.pdf
 
 manuscript_jasa.pdf: $(LaTeXSources)
 	pdflatex $(basename $@).tex
-	bibtex $(basename $@)
+	bibtex $(basename $@).aux
 	pdflatex $(basename $@).tex
 	pdflatex $(basename $@).tex
 #	dvips -P pdf $(basename $@).dvi
