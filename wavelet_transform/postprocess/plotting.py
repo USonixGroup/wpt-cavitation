@@ -327,7 +327,7 @@ def get_label(label_no, label_map):
         raise ValueError("label_map must be a dictionary of label_no: label")
 
 
-def get_reconstructions_by_group(tr_obj, labels, freq_threshold):
+def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1):
     signal_length = len(tr_obj.data)
     n_clusters = len(set(labels))
     # List reconstructions by group
@@ -385,7 +385,7 @@ def plot_reconstructions_by_group(
     n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, freq_threshold
+        transform_object, labels, freq_threshold=1
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
@@ -499,7 +499,7 @@ def plot_fft_by_group(
     n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, freq_threshold
+        transform_object, labels, freq_threshold=1
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph

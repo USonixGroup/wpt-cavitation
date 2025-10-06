@@ -40,8 +40,8 @@ def inv_dwt(transform_object: Transform):
 
 def inv_dwpt(transform_object: Transform, level=None, **kwargs):
     """
-    calls the single level idwt function from the pywt library recursively
-    to find the inverse transform from a list of packet nodes at a given level.
+    Calls the single level idwt function recursively to find the inverse
+    transform of a list of packet nodes at a given level.
 
     Parameters
     ----------
@@ -218,7 +218,7 @@ class InverseTransform:
         if leaf_nodes is False:
             nodes = self.transform_object.get_level(level, order=order)
         elif leaf_nodes is True:
-            nodes = self.transform_object.get_leaf_nodes(order=order)
+            nodes = self.transform_object.get_leaf_nodes(order, freq_threshold)
         total_energy = tr_obj.total_energy(0)
         for node in nodes:
             assert isinstance(node, Node)
