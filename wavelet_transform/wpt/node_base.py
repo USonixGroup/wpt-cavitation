@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 class NodeBase:
     """
-    Base class for nodes, contains the implementations for convolution, calculating frequency
-    ranges, and identifying nodes.
+    Base class for nodes, contains the implementations for convolution, calculating
+    frequency ranges, and identifying nodes.
     """
 
     def __init__(self, parent, a_d, transform_object: "Transform"):
@@ -174,7 +174,8 @@ class NodeBase:
         elif isinstance(id, (float)):
             if self.frequency_range is None:
                 error = """
-                call transform_object.calc_frequencies() or svd_object .calc_frequencies() before finding node by frequency
+                call transform_object.calc_frequencies() or svd_object 
+                .calc_frequencies() before finding node by frequency
                 """
                 raise AttributeError(error)
             freq_range = self.frequency_range

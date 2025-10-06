@@ -405,11 +405,11 @@ def plot_reconstructions_by_group(
     elif isinstance(t_plot, (np.ndarray)):
         data_len = len(t_plot)
         xvals = t_plot.copy()
-        xvals *= 10**6  # get time in microseconds
+        xvals *= 10 ** 6  # get time in microseconds
         x_label = "t [&mu;s]"
     elif isinstance(t_plot, (float, int)):
         xvals = np.arange(0, data_len / t_plot, 1 / t_plot)
-        xvals *= 10**6  # get time in microseconds
+        xvals *= 10 ** 6  # get time in microseconds
         x_label = "t [&mu;s]"
     elif isinstance(t_plot, dict):
         x_label = list(t_plot.keys())[0]

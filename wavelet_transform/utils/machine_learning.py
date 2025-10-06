@@ -55,9 +55,10 @@ def train_k_means(
     scale_data=True,
 ):
     """
-    Trains a k-means algorithm based on a set of training data given by wpt_df and classifying metrics
-    no_clusters can be kept at None to choose an optimal number of clusters by silhouette score.
-    use_pca can be set to True to apply pca to the normalised data set before training the algorithm.
+    Trains a k-means algorithm based on a set of training data given by wpt_df
+    and classifying metrics no_clusters can be kept at None to choose an optimal
+    number of clusters by silhouette score. use_pca can be set to True to apply
+    pca to the normalised data set before training the algorithm.
 
     Parameters
     ----------
@@ -66,8 +67,8 @@ def train_k_means(
     classifying_metrics: list of str
         list of classifying metrics to index wpt_df with.
     no_clusters: int or tuple
-        The number of clusters to use. specify None to automatically choose the best number of
-        clusters using the silhouette score.
+        The number of clusters to use. specify None to automatically choose the best
+        number of clusters using the silhouette score.
     use_pca: bool
         whether to use pca in the analysis
     kmeans_params: dict

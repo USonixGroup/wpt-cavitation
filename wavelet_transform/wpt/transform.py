@@ -31,8 +31,8 @@ def dwpt(
     min_entropy: bool
         set to True to perform the minimum entropy decomposition
     min_level: int
-        force the minimum entropy decomposition to decompose the signal to a certain level.
-        this is 0 by default.
+        force the minimum entropy decomposition to decompose the signal to a
+        certain level. This is 0 by default.
 
     Returns
     -------

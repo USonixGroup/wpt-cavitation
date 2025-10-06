@@ -5,12 +5,12 @@ from wavelet_transform.utils.extensions import psd
 
 
 def crest_factor(array):
-    rms = np.sqrt(sum(array**2) / len(array))
+    rms = np.sqrt(sum(array ** 2) / len(array))
     return max(abs(array)) / rms
 
 
 def energy(array):
-    return np.sum(array**2)
+    return np.sum(array ** 2)
 
 
 def log_energy(array):
@@ -41,7 +41,7 @@ def entropy(array, total_energy=None):
     "Calculate the wavelet energy entropy within a node of coefficients"
     if not isinstance(array, np.ndarray):
         raise ValueError("input array must be np.ndarray")
-    energy = array**2
+    energy = array ** 2
     if total_energy is None:
         total_energy = np.sum(energy)
         if total_energy == 0:

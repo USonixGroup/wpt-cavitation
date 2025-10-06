@@ -12,7 +12,10 @@ def add_0s(number, i):
 def get_data(voltage, exp_no, duty_cycle, acd=True):
     num = add_0s(exp_no, 5)
     pe = "PE_" if acd is True else ""
-    file = f"../ACD-sept 2024/C1{pe}{voltage}mVpp_1p1MHz_5p5kHzPRF_{duty_cycle}perDC{num}.dat"
+    file = (
+        f"../ACD-sept 2024/C1{pe}{voltage}mVpp_1p1"
+        f"MHz_5p5kHzPRF_{duty_cycle}perDC{num}.dat"
+    )
 
     with open(file, "r") as file:
         lines = np.loadtxt(file)

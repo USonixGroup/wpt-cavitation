@@ -112,7 +112,7 @@ class Transform:
         if level is None:
             level = self.max_level()
         nodes = self.get_level(level, order="natural")  # order must be natural
-        full_level_nodes = [None for _ in range(2**level)]
+        full_level_nodes = [None for _ in range(2 ** level)]
         for node in nodes:
             full_level_nodes[node.node_number] = node
         return full_level_nodes
