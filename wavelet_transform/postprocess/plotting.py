@@ -14,7 +14,8 @@ margine_value = 0  # zero margine for plotly plots
 margine_top_value = 50
 
 
-def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1):
+def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1, 
+               font_dict={'family':'Computer Modern Serif','color':'black','size':12}):
     """
     Separately plots the data from a provided list of nodes.
 

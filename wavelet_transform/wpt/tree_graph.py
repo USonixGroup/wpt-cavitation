@@ -133,7 +133,7 @@ class TreeGraph:
             node_shape="s",
             alpha=0.8,
             linewidths=4,
-            width=4,
+            width=5,
             edge_color="green",
             style="solid",
         )
