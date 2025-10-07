@@ -120,15 +120,16 @@ class TransformResults:
         Keyword Arguments
         -----------------
         nodes: list of: str, int, and/or node objects
-            List of nodes to reconstruct. Can specify a path e.g. "ad" or the node number (0-indexed)
+            List of nodes to reconstruct. Can specify a path e.g. "ad" or the node
+            number (0-indexed)
         nodes_to_leave: list of str or list of int
             List of nodes to leave out of reconstruction.
         frequencies: list
-            List of frequenices (int or float) to reconstruct. Only nodes containing these frequencies
-            will be reconstructed.
+            List of frequenices (int or float) to reconstruct. Only nodes containing
+            these frequencies will be reconstructed.
         frequencies_to_leave: list
-            List of frequenices (int or float) to leave out of reconstruction. Nodes containing these
-            frequencies will not be reconstructed.
+            List of frequenices (int or float) to leave out of reconstruction. Nodes
+            containing these frequencies will not be reconstructed.
         min_energy: float or int
             The minimum energy a node must have to be added to the reconstruction.
         max_energy: float or int
@@ -150,7 +151,11 @@ class TransformResults:
                 continue
             if any(isinstance(i, float) for i in _list):
                 raise ValueError(
-                    """Nodes are defined by strings, integers, or node objects. Use kwargs "frequencies" or "frequencies_to_leave" to sort using frequencies """
+                    """
+                    Nodes are defined by strings, integers, or node objects.
+                    Use kwargs "frequencies" or "frequencies_to_leave" to sort
+                    using frequencies
+                    """
                 )
         # Convert frequencies to floats for compatibility with Node.match_id()
         frequencies = to_list(kwargs.get("frequencies"), convert_to_float=True)

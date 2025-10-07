@@ -5,7 +5,6 @@ from scipy.integrate import ode
 class BubbleDynamics(object):
     """
     An object created for bubble dynamics calculations.
-    The Gilmore implementation can be checked against the results presented in the same paper, too.
 
     Parameters
     ----------
@@ -14,33 +13,34 @@ class BubbleDynamics(object):
     Rdot_init: int
         the initial bubble's wall velocity in m/s
     frequency: int
-        a reference frequency for non-dimensionalisation. Should be close to sonication freuqencies.
+        reference frequency for non-dimensionalisation. Set near sonication freuqency.
     time: array
         the time array of the sonication signal in seconds.
     deltat: float
         the time step (delta t) of the time array of the sonication signal in seconds.
     r_measure: float
-        the distansound_speede from the bubble centre to calculate the radiated pressure using
-        Akulichev equation, in m.
+        the distansound_speede from the bubble centre to calculate the radiated pressure
+        using Akulichev equation, in m.
     medium_parameters: dict {
         'A','B','nTaitEq','sound_speed','density','sigma','mu','vapour_pressure','gamma','p0'
     }
         a dictionary insound_speedluding the physical properties of the bubble's medium.
         Default is water at room temperature.
-        A, B, nTaitEq: constant in the pressure-density state equation of water (adiabatic condition),
-        the equation is p = A(rho/rho_0)**nTaitEq - B , Church used the B =A-1 relationship
+        A, B, nTaitEq: constant in the pressure-density state equation of water
+        (adiabatic condition), the equation is p = A(rho/rho_0)**nTaitEq - B ,
+        Church used the B = A-1 relationship.
         sound_speed:speed of sound in m/s,
         density:density in kg/m^3
         sigma: equilibrium gas/shell surface tension in nTaitEq/m
         mu: medium viscosity in Pa.s
         vapour_pressure: vapour pressure of the gas in bubble in Pa.
-        gamma: gas constant in the equation of state for gas in the bubble (dimensionless).
-        The default is adiabatic water vapour constant.
+        gamma: gas constant in the equation of state for gas in the bubble
+        (dimensionless). The default is adiabatic water vapour constant.
         p0:medium referensound_speede (static) pressure in Pa.
 
     Returns
     -------
-    bubble dynamics_object: an object containing the results from solving the Gilmore model
+    bubble dynamics_object: an object containing the results from the Gilmore model
     """
 
     def __init__(
@@ -134,7 +134,9 @@ class BubbleDynamics(object):
         nTaitEq = self.medium_parameters["nTaitEq"]
         dtau = omega * self.deltat
         A_RecDiff_coeff = 2 * nsigma / np0
-        B_RecDiff_coeff = nomega**2 * nrho / (3 * self.medium_parameters["gamma"] * np0)
+        B_RecDiff_coeff = (
+            nomega ** 2 * nrho / (3 * self.medium_parameters["gamma"] * np0)
+        )
 
         self.ND_params = {
             "nsound_speed": nsound_speed,
@@ -184,7 +186,8 @@ class BubbleDynamics(object):
         time_delay: float
             defines the centre of the pulse
         pulse_width: int
-            the width of the sonication pulse, using a Gaussian envelope to pulse the signal.
+            the width of the sonication pulse, using a Gaussian envelope to pulse
+            the signal.
         phase_shift: float
             constant phase shift added to all harmonics
         phase_initial: float
@@ -301,12 +304,12 @@ class BubbleDynamics(object):
         )
 
         # Calculate the speed of sound at the bubble wall location in the fluid,
-        # accounting for the compressibility of the fluid. See the Gilmore model for detail.
+        # accounting for the compressibility of the fluid. See Gilmore model for detail.
         nsound_speed_instantaneous = np.sqrt(
             self.ND_params["nsound_speed"] ** 2
             + (self.ND_params["nTaitEq"] - 1) * enthalpy_integral
         )
-        # Determine maximum value of acoustic Mach number. Used to classify bubble dynamics.
+        # Determine maximum value of acoustic Mach number too classify bubble dynamics.
         Mach_number = np.abs(solution[:, 1]) / self.ND_params["nsound_speed"]
         speed_ratio = nsound_speed_instantaneous / self.ND_params["nsound_speed"]
 
@@ -332,11 +335,13 @@ class BubbleDynamics(object):
         y: array, float
             a 2-element array of [R,Rdot] at instant t,
         ND_params: dict
-            dictionary of nondimensionalised parameters to be used for building the Gilmore model
+            dictionary of nondimensionalised parameters to be used for building the
+            Gilmore model
         gamma: float
             the constant in the vapour equation of state
         pac_wave: PacWave
-            an object containing a list of pulse functions representing the incident wave
+            an object containing a list of pulse functions representing the incident
+            wave
 
         Returns
         -------
@@ -401,7 +406,7 @@ class BubbleDynamics(object):
         eta_term1 = -1 * enthalpy_dt_term1 / nsound_speed_at_R
         eta_term2 = -1 * enthalpy_dt_term2 / nsound_speed_at_R
         eta_term3 = (
-            (3 * nsound_speed_at_R - X1) * X1**2 / (nsound_speed_at_R - X1) / 2 / R
+            (3 * nsound_speed_at_R - X1) * X1 ** 2 / (nsound_speed_at_R - X1) / 2 / R
         )
         eta_term4 = (
             -1 * (nsound_speed_at_R + X1) * enthalpy / (nsound_speed_at_R - X1) / R
@@ -413,8 +418,9 @@ class BubbleDynamics(object):
     def calculate_p_radiated(self, r_measure):
         """
         Calculating the radiated pressure from oscillating bubble using Akulichev model.
-        See Akulichev 1971 chapter (high intensity ultrasound fields book, Rozenberg 1971),
-        or the following paper: Bailey, 2011: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3259669/
+        See Akulichev chapter (high intensity ultrasound fields book, Rozenberg 1971)
+        or the following paper:
+        Bailey, 2011: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3259669/
 
         Parameters
         ----------
@@ -432,7 +438,7 @@ class BubbleDynamics(object):
         #     self.R + 0.5 * self.Rdot**2
         # )
 
-        nG_bubble = self.R * (self.enthalpy_integral + 0.5 * self.Rdot**2)
+        nG_bubble = self.R * (self.enthalpy_integral + 0.5 * self.Rdot ** 2)
 
         nP_rad = (
             self.ND_params["nA"]
@@ -455,14 +461,15 @@ class BubbleDynamics(object):
 
     def calculate_p_radiated_vokurka(self, r_measure):
         """
-        Calculating the radiated pressure from oscillating bubble using the model derived
-        by Vokurka. Refer to Tim Leighton, The Acoustic Bubbles, chapter 3, eqs(3.114, 3.115), page 151.
+        Calculating the radiated pressure from oscillating bubble using the model
+        derived by Vokurka. Refer to Tim Leighton, The Acoustic Bubbles, chapter 3,
+        eqs(3.114, 3.115), page 151.
 
         Parameters
         ----------
         r_measure: float
-            distance r from the bubble centre to calculate the radiated pressure (acoustic emission),
-            in meters.
+            distance r from the bubble centre to calculate the radiated pressure
+            (acoustic emission), in meters.
 
         Returns
         -------
@@ -480,8 +487,8 @@ class BubbleDynamics(object):
         )
 
         nP_rad = (self.ND_params["nrho"] * self.R / nr_measure) * (
-            self.R * self.Rddot + 2 * self.Rdot**2
-        ) - (self.ND_params["nrho"] * self.Rdot**2 / 2) * (self.R / nr_measure) ** 4
+            self.R * self.Rddot + 2 * self.Rdot ** 2
+        ) - (self.ND_params["nrho"] * self.Rdot ** 2 / 2) * (self.R / nr_measure) ** 4
 
         self.p_radiated_vokurka = nP_rad + self.ND_params["np0"]
 
@@ -510,7 +517,8 @@ class PacWave:
 class WaveFunc:
     """
     A function representing a component of the incident wave. The pulse for nonlinear
-    waves is calculated using the formulation derived by AYME, CARSTENSE, see here for the paper:
+    waves is calculated using the formulation derived by AYME, CARSTENSE, see here for
+    the paper:
     https://pubmed.ncbi.nlm.nih.gov/2922882/
     """
 

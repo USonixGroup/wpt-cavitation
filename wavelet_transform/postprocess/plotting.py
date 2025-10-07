@@ -327,7 +327,7 @@ def get_label(label_no, label_map):
         raise ValueError("label_map must be a dictionary of label_no: label")
 
 
-def get_reconstructions_by_group(tr_obj, labels, freq_threshold):
+def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1):
     signal_length = len(tr_obj.data)
     n_clusters = len(set(labels))
     # List reconstructions by group
@@ -355,10 +355,11 @@ def plot_reconstructions_by_group(
     fig_width=1000,
 ):
     """
-    Reconstruct each node from the level of transform used to train the clustering algorithm
-    and plot the summation of those belonging to the same cluster.
+    Reconstruct each node from the level of transform used to train the clustering
+    algorithm and plot the summation of those belonging to the same cluster.
 
-    Assumes that the labels are arranged in frequency order by default. Always uses leaf nodes.
+    Assumes that the labels are arranged in frequency order by default. Always uses
+    leaf nodes.
 
     Parameters
     ----------
@@ -370,8 +371,10 @@ def plot_reconstructions_by_group(
         the number of clusters used. If set to None, the number of clusters will be
         derived from the number of unique elements in the list of labels.
     t_plot: dict, array-like, float, int
-        time array for plotting. if this is a float or int, it will be assumed to represent the
-        sampling rate in sample/s. if it is an array, it is assumed it is time array in s. if it is a dict, the key of the dict is used for the label and the value MUST be an array for the axis.
+        time array for plotting. if this is a float or int, it will be assumed to
+        represent the sampling rate in sample/s. if it is an array, it is assumed it is
+        time array in s. if it is a dict, the key of the dict is used for the label and
+        the value MUST be an array for the axis.
     freq_threshold: float, optional
         frequency threshold for reconstruction
     label_map: dict int: str
@@ -385,7 +388,7 @@ def plot_reconstructions_by_group(
     n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, freq_threshold
+        transform_object, labels, freq_threshold=1
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
@@ -402,11 +405,11 @@ def plot_reconstructions_by_group(
     elif isinstance(t_plot, (np.ndarray)):
         data_len = len(t_plot)
         xvals = t_plot.copy()
-        xvals *= 10**6  # get time in microseconds
+        xvals *= 10 ** 6  # get time in microseconds
         x_label = "t [&mu;s]"
     elif isinstance(t_plot, (float, int)):
         xvals = np.arange(0, data_len / t_plot, 1 / t_plot)
-        xvals *= 10**6  # get time in microseconds
+        xvals *= 10 ** 6  # get time in microseconds
         x_label = "t [&mu;s]"
     elif isinstance(t_plot, dict):
         x_label = list(t_plot.keys())[0]
@@ -499,7 +502,7 @@ def plot_fft_by_group(
     n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, freq_threshold
+        transform_object, labels, freq_threshold=1
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
@@ -605,7 +608,7 @@ def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold=
     tr_obj: Transform
         object containing nodes
     feature: str or func
-        str - the chosen feature calculated on the wavelet coefficients (see Node class for options)
+        str - the feature calculated on the wavelet coefficients (see Node class)
         func - calculate the feature on the reconstructed signal
     threshold: float
         the numerical threshold to sort the nodes by
@@ -713,13 +716,6 @@ def plot_clustering(
         ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=fsize)
         ax.set_title(title, fontsize=fsize)
 
-    # a2s = lambda xarray: ["%.2f" % x for x in xarray]
-    # x_ticks = np.linspace(min(centers[metrics_to_plot[0]]), 10*max(centers[metrics_to_plot[0]]),10)
-    # y_ticks = np.linspace(min(centers[metrics_to_plot[1]]), 10*max(centers[metrics_to_plot[1]]),10)
-    # z_ticks = np.linspace(min(centers[metrics_to_plot[2]]), max(centers[metrics_to_plot[2]]),10)
-    # ax.set_xticks(x_ticks,a2s(x_ticks),fontsize=tick_size)
-    # ax.set_yticks(y_ticks,a2s(y_ticks),fontsize=tick_size)
-    # ax.set_zticks(z_ticks,a2s(z_ticks),fontsize=tick_size)
     ax.xaxis.pane.fill = False
     ax.yaxis.pane.fill = False
     ax.zaxis.pane.fill = False
@@ -804,14 +800,14 @@ def plot_multiple_centers(
     error_bars=None,
 ):
     """
-    Plot the results for different sets of 'n' experiments. Input parameters are parallel
-    lists of length 'n' containing information about each experiment.
+    Plot the results for different sets of 'n' experiments. Input parameters are
+    parallel lists of length 'n' containing information about each experiment.
 
     Parameters
     ----------
     classifying_metrics: list of list
-        A list containing n lists. Each list contains the classifying metrics used in the
-        experiment.
+        A list containing n lists. Each list contains the classifying metrics used in
+        the experiment.
     centers: list of array
         Each array contains the clustering centers from each experiment.
     label_maps: list of dict

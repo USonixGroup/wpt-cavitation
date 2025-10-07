@@ -137,12 +137,14 @@ class BubbleDynamics(object):
         nTaitEq = self.medium_parameters["nTaitEq"]
         dtau = omega * self.deltat
         A_RecDiff_coeff = 2 * nsigma / np0
-        B_RecDiff_coeff = nomega**2 * nrho / (3 * self.medium_parameters["gamma"] * np0)
+        B_RecDiff_coeff = (
+            nomega ** 2 * nrho / (3 * self.medium_parameters["gamma"] * np0)
+        )
 
         # Calculating the linear (first order) resonance frequency of a bubble with R_init.
         # This equation ignores the viscosity and vapour pressure effects. Taken from Eq. 43, Neppiras 1970, Acoustic Cavitation.
         omega_resonance_sqrd = (
-            1 / (self.medium_parameters["density"] * self.R_init**2)
+            1 / (self.medium_parameters["density"] * self.R_init ** 2)
         ) * (
             3
             * self.medium_parameters["gamma"]
@@ -252,8 +254,7 @@ class BubbleDynamics(object):
         model_integrator.set_initial_value(
             initial_vals, self.ND_params["tau"][0]
         ).set_f_params(
-            self.ND_params,
-            self.medium_parameters["gamma"],
+            self.ND_params, self.medium_parameters["gamma"],
         )
 
         # allocating arrays for the solution, the first column is nR(t) and the second column is nRdot(t)
@@ -439,7 +440,7 @@ class BubbleDynamics(object):
         eta_term1 = -1 * enthalpy_dt_term1 / nsound_speed_at_R
         eta_term2 = -1 * enthalpy_dt_term2 / nsound_speed_at_R
         eta_term3 = (
-            (3 * nsound_speed_at_R - X1) * X1**2 / (nsound_speed_at_R - X1) / 2 / R
+            (3 * nsound_speed_at_R - X1) * X1 ** 2 / (nsound_speed_at_R - X1) / 2 / R
         )
         eta_term4 = (
             -1 * (nsound_speed_at_R + X1) * enthalpy / (nsound_speed_at_R - X1) / R
@@ -468,7 +469,7 @@ class BubbleDynamics(object):
         #     self.R + 0.5 * self.Rdot**2
         # )
 
-        nG_bubble = self.R * (self.enthalpy_integral + 0.5 * self.Rdot**2)
+        nG_bubble = self.R * (self.enthalpy_integral + 0.5 * self.Rdot ** 2)
 
         nP_rad = (
             self.ND_params["nA"]
@@ -512,7 +513,7 @@ class BubbleDynamics(object):
         )
 
         nP_rad = (self.ND_params["nrho"] * self.R / nr_measure) * (
-            self.R * self.Rddot + 2 * self.Rdot**2
-        ) - (self.ND_params["nrho"] * self.Rdot**2 / 2) * (self.R / nr_measure) ** 4
+            self.R * self.Rddot + 2 * self.Rdot ** 2
+        ) - (self.ND_params["nrho"] * self.Rdot ** 2 / 2) * (self.R / nr_measure) ** 4
 
         self.p_radiated_vokurka = nP_rad + self.ND_params["np0"]

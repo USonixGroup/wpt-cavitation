@@ -53,7 +53,7 @@ class Node(NodeBase):
         downsampled valid or same convolution.
         """
         # Calculate addition length to trim due to level
-        scale_factor = 2 * (1 - 2**-level)
+        scale_factor = 2 * (1 - 2 ** -level)
 
         # Calculate trim length based on mode
         if mode == "valid":

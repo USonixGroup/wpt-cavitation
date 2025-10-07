@@ -40,8 +40,8 @@ def inv_dwt(transform_object: Transform):
 
 def inv_dwpt(transform_object: Transform, level=None, **kwargs):
     """
-    calls the single level idwt function from the pywt library recursively
-    to find the inverse transform from a list of packet nodes at a given level.
+    Calls the single level idwt function recursively to find the inverse
+    transform of a list of packet nodes at a given level.
 
     Parameters
     ----------
@@ -53,15 +53,16 @@ def inv_dwpt(transform_object: Transform, level=None, **kwargs):
     Keyword Arguments
     -----------------
     nodes: list of str or list of int
-        List of nodes to reconstruct. Can specify a path e.g. "ad" or the node number (0-indexed)
+        List of nodes to reconstruct. Can specify a path e.g. "ad" or the node number
+        (0-indexed)
     nodes_to_leave: list of str or list of int
         List of nodes to leave out of reconstruction.
     frequencies: list
-        List of frequenices (int or float) to reconstruct. Only nodes containing these frequencies
-        will be reconstructed.
+        List of frequenices (int or float) to reconstruct. Only nodes containing these
+        frequencies will be reconstructed.
     frequencies_to_leave: list
-        List of frequenices (int or float) to leave out of reconstruction. Nodes containing these
-        frequencies will not be reconstructed.
+        List of frequenices (int or float) to leave out of reconstruction. Nodes
+        containing these frequencies will not be reconstructed.
     min_energy: float or int
         The minimum energy a node must have to be added to the reconstruction.
     max_energy: float or int
@@ -97,7 +98,6 @@ def inv_dwpt(transform_object: Transform, level=None, **kwargs):
                 output.append(None)
                 continue
             c = idwt(approx, detail, rec_filt_approx, rec_filt_detail)
-            # c = pyidwt(approx, detail, transform_object.wavelet, transform_object.mode)
             output.append(c)
         input = output.copy()
     return output[0][: len(transform_object.data)]
@@ -184,7 +184,8 @@ class InverseTransform:
         keep_ratio=1,
     ):
         """
-        Perform the inverse transform on each node then calculate statistical measures on each.
+        Perform the inverse transform on each node,
+        calculate statistical metrics for each.
 
         Parameters
         ----------
@@ -201,8 +202,8 @@ class InverseTransform:
         Returns
         -------
         info: pd.DataFrame
-            A dataframe containing statistical measures calculated from the reconstruction
-            coefficients at each node.
+            A dataframe containing statistical measures calculated from the
+            reconstruction coefficients at each node.
         """
 
         tr_obj = self.transform_object
@@ -218,7 +219,7 @@ class InverseTransform:
         if leaf_nodes is False:
             nodes = self.transform_object.get_level(level, order=order)
         elif leaf_nodes is True:
-            nodes = self.transform_object.get_leaf_nodes(order=order)
+            nodes = self.transform_object.get_leaf_nodes(order, freq_threshold)
         total_energy = tr_obj.total_energy(0)
         for node in nodes:
             assert isinstance(node, Node)
