@@ -28,8 +28,3 @@ def preprocess(data, window=False):
     else:
         data = (data - np.mean(data)) / np.std(data)
         return data
-
-
-def unwindow(data):
-    win_func = sig.windows.blackmanharris(len(data), sym=False)
-    return data.copy() / win_func

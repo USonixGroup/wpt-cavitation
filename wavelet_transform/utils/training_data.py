@@ -373,17 +373,16 @@ def generate_training_data(
         return wpt_df
 
 
-def add_noise(data, signal2noise, display_std_noise=False):
+def add_noise(data, signal2noise):
     """
     Add noise to a signal with a given signal to noise ratio.
     Returns the noisy data.
     """
-    data_to_noise_power_ratio = 10 ** (signal2noise / 20)
+    data_to_noise_power_ratio = 10 ** (signal2noise / 10)
     power_noise = np.var(data) / data_to_noise_power_ratio
     std_noise = np.sqrt(power_noise)
+    
     noise = np.random.normal(0, std_noise, len(data))
     data_noisy = data.copy() + noise
 
-    if display_std_noise is True:
-        print("std_noise:", std_noise)
     return data_noisy
