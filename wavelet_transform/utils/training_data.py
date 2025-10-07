@@ -17,7 +17,7 @@ from wavelet_transform.utils.extensions import sci_form
 
 # Get path to bubble dynamics folder in docs
 FILE_PATH = os.path.abspath(__file__)
-RELATIVE_PATH = "../../../docs/bubble_dynamics_data"
+RELATIVE_PATH = "../../../data/bubble_dynamics_data"
 FOLDER_PATH = os.path.abspath(os.path.join(FILE_PATH, RELATIVE_PATH))
 
 # Create folder if it doesn't exist
