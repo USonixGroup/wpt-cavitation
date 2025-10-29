@@ -48,15 +48,15 @@ def dataset1(dataset):
 
     if dataset == "5-10":
         # i = [50, 100], n = 3, (i = 50, i_lo = [2500::5000])
-        file = "../PCD data/TestID5-10W per cm2 intensity/C1test00" + num + ".txt"
+        file = "../data/PCD data/TestID5-10W per cm2 intensity/C1test00" + num + ".txt"
 
     elif dataset == "5-34":
         # i = [00 - 21], n = 2, (i = 00, i_lo = [2150::5000])
-        file = "../PCD data/TestID5-34W per cm2 intensity/C2test016" + num + ".txt"
+        file = "../data/PCD data/TestID5-34W per cm2 intensity/C2test016" + num + ".txt"
 
     elif dataset == "6-12":
         # i = [01 - 20], n = 2, (i = 01, i_lo = [0::5000])
-        file = "../PCD data/TestID6-12W per cm2 intensity/C1test000" + num + ".txt"
+        file = "../data/PCD data/TestID6-12W per cm2 intensity/C1test000" + num + ".txt"
     dfb = pd.read_csv(file, sep=",", header=None)
 
     data = dfb.iloc[:, -1]
@@ -69,7 +69,7 @@ def dataset1(dataset):
 
 def dataset2(dataset):
     voltage, frequency = dataset
-    file = "../PCD data for paper/Test2_HIFU_NoVial_" + str(voltage) + "mVpp_Modf.mat"
+    file = "../data/PCD data for paper/Test2_HIFU_NoVial_" + str(voltage) + "mVpp_Modf.mat"
     print("imported data from file:", file)
     data = sio.loadmat(file)
     signal = data["c" + str(frequency)]  # + "hat"]  # Get c1hat, c5hat, c10hat
@@ -81,7 +81,7 @@ def dataset2(dataset):
 def dataset3(dataset):
     exp_number = add_0s(dataset, 2)  # dataset represents experiment number
     file = (
-        "../PCD data - 2MHz FUS - 16 Nov 2023/C2pcdNovial000" + str(exp_number) + ".txt"
+        "../data/PCD data - 2MHz FUS - 16 Nov 2023/C2pcdNovial000" + str(exp_number) + ".txt"
     )
     dfb = pd.read_csv(file, sep=",", header=None)
 
@@ -98,7 +98,7 @@ def dataset4(dataset):
 
     # Open corresponding c1 and c2 files
     files = [
-        f"../PCD measurements for WPT paper-09Dec2023/C{i}{file_id}.txt" for i in (1, 2)
+        f"../data/PCD measurements for WPT paper-09Dec2023/C{i}{file_id}.txt" for i in (1, 2)
     ]
     print("loaded files are: ", files)
     dfb = [pd.read_csv(file, sep=",", header=None) for file in files]
