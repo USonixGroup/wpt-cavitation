@@ -1,9 +1,9 @@
-from pywt import Wavelet as pywtWavelet
+from pywt import Wavelet as pywtWavelet  # type: ignore
+from typing import Optional
 
 from wavelet_transform.wpt.transform_node import BaseNode, Node
 from wavelet_transform.wpt.transform_results import TransformResults
 from wavelet_transform.wpt.tree_graph import TreeGraph
-
 
 class Transform:
     """
@@ -27,7 +27,7 @@ class Transform:
         self.mode = mode
         self.data = data
         self.base_node = BaseNode(data, self)  # initialise base node
-        self.levels = {0: [self.base_node]}  # initialise list of all nodes
+        self.levels: dict[int, list[BaseNode | Node]] = {0: [self.base_node]}  # initialise list of all nodes
         self.filter_bank = self.pywt_filter_bank(self.wavelet)
         self.sampling_rate = None  # for calculating the frequency range of each node
         self.tree = TreeGraph(self)
@@ -94,7 +94,7 @@ class Transform:
         nodes: list
             list of nodes in selected level
         """
-        if order not in ["natural", "freq"]:
+        if not isinstance(order, str):
             raise ValueError("order must be 'nutaral' or 'freq")
         level = self.max_level() if level is None else level
         if order == "natural":
@@ -103,6 +103,8 @@ class Transform:
             nodes = self.levels[level].copy()
             nodes.sort(key=lambda x: x.norm_frequency_range[0])
             return nodes
+        else:
+            raise ValueError("order must be 'natural' or 'freq'")
 
     def get_full_level(self, level=None):
         """
@@ -112,7 +114,7 @@ class Transform:
         if level is None:
             level = self.max_level()
         nodes = self.get_level(level, order="natural")  # order must be natural
-        full_level_nodes = [None for _ in range(2 ** level)]
+        full_level_nodes: list[Optional[Node]] = [None for _ in range(2 ** level)]
         for node in nodes:
             full_level_nodes[node.node_number] = node
         return full_level_nodes
@@ -161,17 +163,17 @@ class Transform:
         return node
 
     def add_node(self, node: Node):
-        "appends a node to node list"
+        "Appends a node to node list."
         self.levels.setdefault(node.level, list()).append(node)
 
     @classmethod
     def pywt_filter_bank(cls, wavelet):
-        "obtains the filter coefficients from the pywt filter bank function"
+        "Obtains the filter coefficients from the pywt filter bank function."
         w = pywtWavelet(wavelet)
         return w.filter_bank
 
     def max_level(self):
-        "returns the last level of transform"
+        "Returns the maximum level of transform as an integer."
         return list(self.levels.keys())[-1]
 
     # ------------------ Generate Additional Data ----------------
