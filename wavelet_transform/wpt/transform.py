@@ -93,16 +93,16 @@ def _min_entropy_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold)
     for level in range(max_level):
         for node in transform.get_level(level):
             # If a node has 0 entropy, it does not need to be further decomposed
-            if node.entropy == 0:
+            if node.level_entropy <= 1e-14:  # small threshold for numerical errors
                 continue
             # Create nodes from parent node
             node1 = transform.create_node(node, "a")
             node2 = transform.create_node(node, "d")
             # Check if the entropy has decreased
-            entropy = node1.level_entropy + node2.level_entropy
+            children_entropy = node1.level_entropy + node2.level_entropy
 
             # Perform decomposition with a given minimum level.
-            if (node.level_entropy > entropy) or (level in range(min_level)):
+            if (node.level_entropy > children_entropy) or (level <= min_level):
                 # Add nodes if they have lower combined entropy than their parent
                 if node1.norm_frequency_range[0] < freq_threshold:
                     transform.add_node(node1)
