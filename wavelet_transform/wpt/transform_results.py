@@ -32,8 +32,11 @@ class TransformResults:
             list of nodes containing the results for the dwt
         """
         results = []
+        nodes = []  # avoid unbound error
         # Append all of the relevant detail nodes
-        for level in range(1, len(self.tr_obj.levels)):
+        for level in range(1, self.tr_obj.max_level()+1):
+            if 1 not in [i for i in self.tr_obj.node_numbers(level)]:
+                raise ValueError("call dwt_results on full transform")
             nodes = self.tr_obj.get_level(level)
             detail_node = nodes[1]
             results.insert(0, detail_node)
@@ -67,6 +70,9 @@ class TransformResults:
             raise ValueError(
                 f"transform has no level {level}. max level is: {max_level}"
             )
+        if not isinstance(leaf_nodes, bool):
+            raise ValueError("leaf_nodes must be bool")
+        
         if level is None:
             level = self.tr_obj.max_level()
 
@@ -75,7 +81,7 @@ class TransformResults:
             raise ValueError("leaf_nodes argument must be boolean")
         if leaf_nodes is False:
             nodes = self.tr_obj.get_level(level, order=order)
-        elif leaf_nodes is True:
+        else:
             nodes = self.tr_obj.get_leaf_nodes(order=order)
         short_node_len = len(nodes[0].data_keep)
         for node in nodes:
