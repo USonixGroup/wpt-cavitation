@@ -89,6 +89,7 @@ def inv_dwpt(transform_object: Transform, level=None, **kwargs):
     rec_filt_detail = filter_bank[3]
 
     input = coeffs
+    output = []
     for _ in range(levels):
         output = []
         for i in range(int(len(input) / 2)):
@@ -159,7 +160,7 @@ def packet_nodes_for_rec(transform_object: Transform, level, **kwargs):
 
     # check if any nodes are remaining after filtering
     if node_list.count(None) == len(node_list):
-        raise ValueError("could not found any nodes matching input arguments")
+        raise ValueError("could not find any nodes matching input arguments")
     return node_list
 
 
@@ -172,8 +173,8 @@ class InverseTransform:
     def inv_dwpt(self, levels, **kwargs):
         return inv_dwpt(self.transform_object, levels, **kwargs)
 
-    def inv_dwt(self, levels, **kwargs):
-        return inv_dwt(self.transform_object, levels, **kwargs)
+    def inv_dwt(self):
+        return inv_dwt(self.transform_object)
 
     def info(
         self,
@@ -218,7 +219,7 @@ class InverseTransform:
             raise ValueError("leaf_nodes argument must be boolean")
         if leaf_nodes is False:
             nodes = self.transform_object.get_level(level, order=order)
-        elif leaf_nodes is True:
+        else:
             nodes = self.transform_object.get_leaf_nodes(order, freq_threshold)
         total_energy = tr_obj.total_energy(0)
         for node in nodes:
