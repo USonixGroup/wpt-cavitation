@@ -171,7 +171,7 @@ class TreeGraph:
 
             colour_dict = {
                 i: self.colour_dict[i]
-                for i in sorted(self.colour_dict.keys())[: n_clusters + 1]
+                for i in sorted(self.colour_dict.keys())[: n_clusters + 1]  # type:ignore
             }
 
             # Get relevant clusters
