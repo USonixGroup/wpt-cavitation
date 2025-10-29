@@ -1,6 +1,6 @@
 import numpy as np
 
-from wavelet_transform.test.synthetic_data import find_time_indices
+from wavelet_transform.utils.synthetic_data import find_time_indices
 
 
 def sci_form(number, dp=3):
