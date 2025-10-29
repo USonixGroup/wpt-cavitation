@@ -41,6 +41,8 @@ def entropy(array, total_energy=None):
     "Calculate the wavelet energy entropy within a node of coefficients"
     if not isinstance(array, np.ndarray):
         raise ValueError("input array must be np.ndarray")
+    if len(array) == 0:
+        raise ValueError("empty array")
     energy = array ** 2
     if total_energy is None:
         total_energy = np.sum(energy)
@@ -55,7 +57,7 @@ def spectral_entropy(array):
     # Calculate the power spectrum
     half_length_array = int(len(array) / 2)
     power_spectrum = psd(array)  # np.abs(fft(array)) ** 2
-    norm_spectrum = power_spectrum / np.sum(power_spectrum)
+    norm_spectrum = power_spectrum / np.sum(power_spectrum)  # type: ignore
 
     spectral_entropy = -sum(0 if i == 0 else i * np.log2(i) for i in norm_spectrum)
     spectral_entropy /= np.log2(half_length_array)
