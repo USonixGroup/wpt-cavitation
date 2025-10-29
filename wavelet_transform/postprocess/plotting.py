@@ -1,10 +1,12 @@
-from wavelet_transform.utils.extensions import sci_form, psd, to_dB, eng_form_plot
-import wavelet_transform.wpt.inverse_transform as inv
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from scipy.interpolate import interp1d
 from itertools import cycle
+
+from wavelet_transform.utils.extensions import sci_form, psd, to_dB, eng_form_plot
+import wavelet_transform.wpt.inverse_transform as inv
 from wavelet_transform.wpt.tree_graph import TreeGraph
 
 fsize = 24  # font size
@@ -195,6 +197,8 @@ def heisenberg(
         pad_func = interpolate_data
     elif padding == "repeat":
         pad_func = repeat_data
+    else:
+        raise ValueError("invalid padding parameter")
     # Add node data to a matrix
     data = np.zeros((len(nodes_per_row), len_data))
     for i, node in enumerate(reversed(nodes_per_row)):
@@ -329,18 +333,35 @@ def get_label(label_no, label_map):
 
 
 def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1):
+    """
+    Get reconstructions of nodes grouped by their cluster labels.
+    
+    Parameters
+    ----------
+    tr_obj : Transform
+        The transform object containing the nodes to reconstruct
+    labels : list
+        The cluster labels for each node. Can be any integers, not necessarily consecutive
+    freq_threshold : float, optional
+        Frequency threshold for node filtering, by default 1
+        
+    Returns
+    -------
+    dict
+        Dictionary mapping cluster labels to their reconstructed signals
+    """
     signal_length = len(tr_obj.data)
-    n_clusters = len(set(labels))
-    # List reconstructions by group
-    reconstructions = [np.zeros(signal_length) for _ in range(n_clusters)]
+    unique_labels = sorted(set(labels))
+    
+    # Dictionary to store reconstructions by label
+    reconstructions = {label: np.zeros(signal_length) for label in unique_labels}
 
     # Sum all reconstructions belonging to the same group
     for node, assignment in zip(
         tr_obj.get_leaf_nodes(freq_threshold=freq_threshold), labels
     ):  # natural order
         rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
-        i = assignment  # shorten name for readability
-        reconstructions[i] = reconstructions[i] + rec_signal
+        reconstructions[assignment] = reconstructions[assignment] + rec_signal
 
     return reconstructions
 
@@ -349,7 +370,7 @@ def plot_reconstructions_by_group(
     transform_object,
     labels,
     t_plot=None,
-    freq_threshold=None,
+    freq_threshold=1,
     label_map=None,
     title="Reconstructed nodes by group",
     fig_height=400,
@@ -367,10 +388,7 @@ def plot_reconstructions_by_group(
     transform_object: Transform
         transform object from this library
     labels: list
-        list of labels from training. Must be a power of 2
-    no_clusters: int
-        the number of clusters used. If set to None, the number of clusters will be
-        derived from the number of unique elements in the list of labels.
+        list of labels from training. Can contain any integer labels
     t_plot: dict, array-like, float, int
         time array for plotting. if this is a float or int, it will be assumed to
         represent the sampling rate in sample/s. if it is an array, it is assumed it is
@@ -379,30 +397,33 @@ def plot_reconstructions_by_group(
     freq_threshold: float, optional
         frequency threshold for reconstruction
     label_map: dict int: str
-        relabel cluster numbers to a string
+        relabel cluster numbers to a string. If not provided, will use the actual cluster
+        numbers as labels.
 
     Returns
     -------
     fig: plotly.graph_objects.Figure
         The Plotly figure object.
     """
-    n_clusters = len(set(labels))
+    # Get unique labels in their original order of appearance
+    unique_labels = sorted(set(labels))
+    n_clusters = len(unique_labels)
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, freq_threshold=1
+        transform_object, labels, freq_threshold
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
     lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
     linestyles = cycle(lines)
-    line_width = [3] * n_clusters + [1]
+    line_width = [3] * n_clusters + [1]  # wider lines for cluster reconstructions
 
     fig = go.Figure()
 
     data_len = len(transform_object.data)
     if t_plot is None:
         xvals = np.arange(data_len)
-        x_label = ["x"]
+        x_label = "x"
     elif isinstance(t_plot, (np.ndarray)):
         data_len = len(t_plot)
         xvals = t_plot.copy()
@@ -416,6 +437,8 @@ def plot_reconstructions_by_group(
         x_label = list(t_plot.keys())[0]
         xvals = list(t_plot.values())[0]
         data_len = len(xvals)
+    else:
+        raise ValueError("invalid data type for t_plot")
     fig.add_trace(
         go.Scatter(
             x=xvals,
@@ -426,14 +449,14 @@ def plot_reconstructions_by_group(
         )
     )
 
-    # Iterate through clusters
-    for i in range(n_clusters):
+    # Plot each cluster's reconstruction
+    for i, label in enumerate(unique_labels):
         fig.add_trace(
             go.Scatter(
                 x=xvals,
-                y=reconstructions[i][0:data_len],
+                y=reconstructions[label][0:data_len],
                 mode="lines",
-                name=get_label(i, label_map),
+                name=get_label(label, label_map),
                 line=dict(color=colours[i], dash=next(linestyles), width=line_width[i]),
             )
         )
@@ -482,7 +505,7 @@ def plot_fft_by_group(
     xlims=None,
     ylims=None,
     fundamental_freq=None,
-    freq_threshold=None,
+    freq_threshold=1,
     label_map=None,
     title="PSD comparison",
     fig_height=400,
@@ -503,7 +526,7 @@ def plot_fft_by_group(
     n_clusters = len(set(labels))
 
     reconstructions = get_reconstructions_by_group(
-        transform_object, labels, freq_threshold=1
+        transform_object, labels, freq_threshold=freq_threshold
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
@@ -521,7 +544,7 @@ def plot_fft_by_group(
     fig.add_trace(
         go.Scatter(
             x=freq,
-            y=10 * np.log10(psd_original),
+            y=to_dB(psd_original),
             mode="lines",
             name="Original Signal",
             line=dict(color="blue", dash="solid", width=line_width[-1]),
@@ -537,7 +560,7 @@ def plot_fft_by_group(
         fig.add_trace(
             go.Scatter(
                 x=freq,
-                y=10 * np.log10(psd_rec),
+                y=to_dB(psd_rec),
                 mode="lines",
                 name=get_label(i, label_map),
                 line=dict(color=colours[i], dash=next(linestyles), width=line_width[i]),
@@ -548,7 +571,7 @@ def plot_fft_by_group(
         fig.add_trace(
             go.Scatter(
                 x=freq,
-                y=10 * np.log10(psd(sum(reconstructions))),
+                y=to_dB(psd(sum(reconstructions.values()))),
                 mode="lines",
                 name="full reconstruction",
                 line=dict(dash="dot", color="blue", width=line_width[-1]),
@@ -652,6 +675,8 @@ def plot_clustering(
     label_map=None,
     levels=None,
 ):
+    if not isinstance(data_train, pd.DataFrame):
+        raise ValueError("training data must be a pd.DataFrame")
     colours = list(TreeGraph.colour_dict.values())[1:]
 
     px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
@@ -686,7 +711,7 @@ def plot_clustering(
             scatter = ax.scatter(
                 data_train.loc[mask, metrics_to_plot[0]],
                 data_train.loc[mask, metrics_to_plot[1]],
-                data_train.loc[mask, metrics_to_plot[2]],
+                data_train.loc[mask, metrics_to_plot[2]],  # type:ignore
                 c=colours[center],
                 marker=level_markers[level],
                 label=f"{level}",
@@ -717,15 +742,15 @@ def plot_clustering(
         ax.set_zlabel(metrics_to_plot[2].capitalize(), fontsize=fsize)
         ax.set_title(title, fontsize=fsize)
 
-    ax.xaxis.pane.fill = False
-    ax.yaxis.pane.fill = False
+    ax.xaxis.pane.fill = False  # type: ignore
+    ax.yaxis.pane.fill = False  # type: ignore
     ax.zaxis.pane.fill = False
 
     # Now set color to white (or whatever is "invisible")
-    ax.xaxis.pane.set_edgecolor("w")
-    ax.yaxis.pane.set_edgecolor("w")
+    ax.xaxis.pane.set_edgecolor("w")  # type: ignore
+    ax.yaxis.pane.set_edgecolor("w")  # type: ignore
     ax.zaxis.pane.set_edgecolor("w")
-    ax.set_box_aspect(None, zoom=0.92)
+    ax.set_box_aspect(None, zoom=0.92)  # type: ignore
     if not all(i == 0 for i in levels):
         ax.legend(handles=legend_elements, title="Node level")
     fig.tight_layout()
@@ -796,9 +821,9 @@ def plot_multiple_centers(
     classifying_metrics,
     centers,
     label_maps,
-    exp_labels=None,
+    exp_labels,
+    error_bars,
     bar_width=0.2,
-    error_bars=None,
 ):
     """
     Plot the results for different sets of 'n' experiments. Input parameters are
@@ -848,6 +873,7 @@ def plot_multiple_centers(
             try:
                 metric_index = classifying_metrics[j].index(metric)
             except ValueError:  # metric was not used in this algorithm
+                print(f"warning: metric [{metric}] not found.")
                 continue
             center_data = center[:, metric_index]
             error_data = error_bars[j]
