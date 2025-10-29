@@ -16,54 +16,17 @@ from sklearn.mixture import GaussianMixture
 evaluations = []
 evaluations_std = []
 
-
-class noScale:
-    "Replacement for standard scaler if no scaling is required"
-
-    def fit_transform(self, data):
-        return data
-
-    def inverse_transform(self, data):
-        return data
-
-
-class minScaler:
-    "Scales columns according to their minimum value"
-
-    def __init__(self):
-        self.min_datas = None  # ndarray tracking minimums for inverse transform
-
-    def fit_transform(self, data):
-        data = np.array(data)
-        n_columns = data.shape[1]
-        self.min_datas = np.zeros(n_columns)
-        for i in range(n_columns):
-            col_data = data[:, i]
-            min_data = np.min(col_data)
-            self.min_datas[i] = min_data
-            data[:, i] = col_data / min_data
-        return data
-
-    def inverse_transform(self, data):
-        for i in range(len(self.min_datas)):
-            data[:, i] *= self.min_datas[i]
-        return data
-
-
-def train_k_means(
+def fit_k_means(
     wpt_df,
     classifying_metrics,
     no_clusters,
     *,
-    use_pca=False,
     kmeans_params=None,
-    scale_data=True,
 ):
     """
-    Trains a k-means algorithm based on a set of training data given by wpt_df
+    Fits a k-means algorithm based on a set of training data given by wpt_df
     and classifying metrics no_clusters can be kept at None to choose an optimal
-    number of clusters by silhouette score. use_pca can be set to True to apply
-    pca to the normalised data set before training the algorithm.
+    number of clusters by silhouette score.
 
     Parameters
     ----------
@@ -74,14 +37,8 @@ def train_k_means(
     no_clusters: int or tuple
         The number of clusters to use. specify None to automatically choose the best
         number of clusters using the silhouette score.
-    use_pca: bool
-        whether to use pca in the analysis
     kmeans_params: dict
         passes parameters into sklearn.KMeans.
-    scale_data: bool or str
-        set to True to use sklearn.preprocessing.StandardScaler.
-        set to False to skip scaling.
-        set to 'min' to scale by the minimum value in each metric.
     """
     if kmeans_params is None:
         raise ValueError("no kmeans parameters specified")
@@ -89,53 +46,28 @@ def train_k_means(
     data_train = wpt_df[classifying_metrics]
 
     scaler = StandardScaler()
-    if scale_data is False:
-        scaler = noScale()
-    elif scale_data == "min":
-        scaler = minScaler()
 
     data_train_normalised = scaler.fit_transform(data_train.to_numpy())
-
-    if use_pca is True:
-        pca = PCA(n_components=3)
-        data_train_normalised = pca.fit_transform(data_train_normalised)
-
     if isinstance(no_clusters, int):
         kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
         labels = kmeans.fit_predict(data_train_normalised)
     elif isinstance(no_clusters, tuple):
         # Find optimal numbemr of clusters using silhouette score
         algorithms = []
-        algorithms_export = []
         for no_clusters in range(*no_clusters):
             kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
             labels = kmeans.fit_predict(data_train_normalised)
             silhouette_score = metrics.silhouette_score(data_train_normalised, labels)
-            homogeneity = metrics.homogeneity_score(labels,kmeans.labels_)
-            completeness = metrics.completeness_score(labels,kmeans.labels_)
-            vmeasure = metrics.v_measure_score(labels,kmeans.labels_)
-            adjusted_rand_index = metrics.adjusted_rand_score(labels,kmeans.labels_)
             algorithms.append((silhouette_score,kmeans, labels))
-            algorithms_export.append((silhouette_score,
-                               homogeneity,
-                               completeness,
-                               vmeasure,
-                               adjusted_rand_index,
-                               kmeans, labels))
         i = max(algorithms, key=lambda x: x[0])
         _, kmeans, labels = i
     else:
         raise ValueError("no_clusters must be an int or tuple")
 
     centers = kmeans.cluster_centers_
-    if use_pca is False:
-        centers = scaler.inverse_transform(centers)
-        centers_df = pd.DataFrame(centers, columns=classifying_metrics)
-        return data_train, labels, data_train_normalised, centers_df, scaler, kmeans, algorithms_export
-        
-    if use_pca is True:
-        centers = scaler.inverse_transform(pca.inverse_transform(centers))
-        return data_train, labels, data_train_normalised, centers, scaler, kmeans, pca, algorithms_export
+    centers = scaler.inverse_transform(centers)
+    centers_df = pd.DataFrame(centers, columns=classifying_metrics)
+    return data_train, labels, data_train_normalised, centers_df, scaler, kmeans
 
 
 def fit_and_evaluate(km, X, labels, name=None, n_runs=5):
@@ -183,8 +115,7 @@ def assess_parameter(
     values,
     wpt_df,
     classifying_metrics,
-    no_clusters=None,
-    use_pca=False,
+    no_clusters,
 ):
     kmeans_params = {
         "init": "k-means++",
@@ -196,7 +127,7 @@ def assess_parameter(
     }
 
     # Get labels to compare against
-    _, ground_truth, *_ = train_k_means(
+    _, ground_truth, *_ = fit_k_means(
         wpt_df,
         classifying_metrics,
         no_clusters=no_clusters,
@@ -208,12 +139,11 @@ def assess_parameter(
         # Set parameter of interest
         kmeans_params[parameter_of_interest] = value
 
-        # Train k-means
-        _, labels, *_ = train_k_means(
+        # Fit k-means
+        _, labels, *_ = fit_k_means(
             wpt_df,
             classifying_metrics,
-            no_clusters=None,
-            use_pca=use_pca,
+            no_clusters=no_clusters,
             kmeans_params=kmeans_params,
         )
 
@@ -240,7 +170,7 @@ class Cmeans:
         data_train_normalised = scaler.fit_transform(data_train)
 
         # Fuzzy C-Means clustering
-        cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
+        cntr, u, u0, d, jm, p, fpc = fuzz.cmeans(
             data_train_normalised.T,
             c=n_clusters,
             m=m,
@@ -265,11 +195,14 @@ class Cmeans:
     def test(self, new_entry):
         "New entry should be a set of data with the same features used to train the algorithm"
 
+        if self.n_clusters is None:
+            raise ValueError("n_clusters is None, run train() before test()")
+        
         # Standardize the new entry using the same scaler
         new_entry_normalized = self.scaler.transform(new_entry)
 
         # Predict membership using the cluster centers and membership matrix
-        new_u, *_ = fuzz.cluster.cmeans_predict(
+        new_u, *_ = fuzz.cmeans_predict(
             new_entry_normalized.T,
             self.cntr,
             m=self.m,
@@ -290,7 +223,10 @@ class Cmeans:
         return new_labels, new_membership_matrix, membership_results
 
     def membership_results(self):
+        if self.n_clusters is None:
+            raise ValueError("n_clusters is None, run train() before test()")
         n_clusters = self.n_clusters
+        
         labels = self.labels
         for i in range(n_clusters):
             print(f"label {i} count:", list(labels).count(i))
