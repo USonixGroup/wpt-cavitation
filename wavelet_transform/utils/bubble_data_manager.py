@@ -116,8 +116,6 @@ def get_data(
             "sampling rate": SAMPLING_RATE,
         }
         # Save the data for future use
-        if data is None:  # Failed data generation
-            return None
         with open(file_path, "wb") as file:
             pickle.dump(file_data, file)
 
@@ -147,10 +145,6 @@ def _generate_data_for_storage(r_measure, *parameters):
     parameters which cannot be changed to generate data for storage.
     """
     data = generate_data(r_measure, *parameters)
-
-    if np.isnan(np.array(data)).any():
-        raise ValueError("nan found in data")
-
     return data
 
 
@@ -167,9 +161,9 @@ def generate_data(r_measure, *params):
     BD_obj.calculate_p_radiated_vokurka(r_measure)
     data = BD_obj.p_radiated_vokurka
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(y=BD_obj.R, mode='lines', name='Bubble Radius'))
-    fig.show()
+    if np.isnan(np.array(data)).any():
+        raise ValueError("nan found in data")
+    
     return data
 
 
