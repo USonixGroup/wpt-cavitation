@@ -14,7 +14,7 @@ def get_training_data(
     levels,
     mode,
     std_noise,
-    min_entropy=False,
+    best_basis=None,
     min_level=0,
     freq_threshold=None,
     window=False,
@@ -35,10 +35,10 @@ def get_training_data(
         Padding mode for wavelet transform
     std_noise: float
         Standard deviation of noise to add to signals
-    min_entropy: bool, optional
-        Whether to use minimum entropy decomposition
+    best_basis: str or None, optional
+        Whether to use best basis decomposition
     min_level: int, optional
-        Minimum level for entropy decomposition
+        Minimum level for best basis decomposition
     freq_threshold: float, optional
         Frequency threshold for node filtering
     window: bool, optional
@@ -79,7 +79,7 @@ def get_training_data(
                 levels=levels,
                 wavelet=wavelet,
                 mode=mode,
-                min_entropy=min_entropy,
+                best_basis=best_basis,
                 min_level=min_level,
                 freq_threshold=freq_threshold,
                 window=window,
@@ -98,7 +98,7 @@ def _process_single_parameter_set(
     levels,
     wavelet,
     mode,
-    min_entropy,
+    best_basis,
     min_level,
     freq_threshold,
     window=False,
@@ -132,7 +132,7 @@ def _process_single_parameter_set(
         levels,
         wavelet,
         mode,
-        min_entropy=min_entropy,
+        best_basis=best_basis,
         min_level=min_level,
         freq_threshold=freq_threshold,
     )

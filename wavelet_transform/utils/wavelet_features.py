@@ -6,7 +6,7 @@ def extract_wavelet_features(
     wavelet="haar",
     mode="symmetric",
     *,
-    min_entropy=False,
+    best_basis=None,
     min_level=0,
     include_tr_obj=False,
     freq_threshold=1.0,
@@ -29,10 +29,10 @@ def extract_wavelet_features(
 
     Keyword Arguments
     -----------------
-    min_entropy: bool
-        whether to use the minimum entropy decomposition
+    best_basis: str or None
+        whether to use the best basis decomposition
     min_level: int
-        the minimum level of decomposition for the minimum entropy decomposition
+        the minimum level of decomposition for the best basis decomposition
     freq_threshold: float
         between 0 - 1. nodes with normalised frequency range (a, b) where a and b are
         between 0 and 1 will be removed if b > freq_threshold.
@@ -57,7 +57,7 @@ def extract_wavelet_features(
         levels,
         wavelet,
         mode,
-        min_entropy=min_entropy,
+        best_basis=best_basis,
         min_level=min_level,
         freq_threshold=freq_threshold,
     )
