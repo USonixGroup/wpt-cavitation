@@ -52,13 +52,12 @@ def entropy(array, total_energy=None):
     entropy = -sum(0 if i == 0 else i * np.log(i) for i in norm_energy)
     return entropy
 
-
+# import plotly.graph_objects as go
 def spectral_entropy(array):
     # Calculate the power spectrum
-    half_length_array = int(len(array) / 2)
-    power_spectrum = psd(array)  # np.abs(fft(array)) ** 2
+    power_spectrum = psd(array)  # np.abs(fft(array)[<half_length_array>]) ** 2 / (len(array) / 2)
     norm_spectrum = power_spectrum / np.sum(power_spectrum)  # type: ignore
 
     spectral_entropy = -sum(0 if i == 0 else i * np.log2(i) for i in norm_spectrum)
-    spectral_entropy /= np.log2(half_length_array)
+    spectral_entropy /= np.log2(len(norm_spectrum))
     return spectral_entropy
