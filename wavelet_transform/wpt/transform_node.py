@@ -72,20 +72,6 @@ class Node(NodeBase):
 
     # ----- Node info -----
     @property
-    def node_number(self):
-        "Converts path into node number then stores it for subsequent calls"
-        if not hasattr(self, "_node_number"):
-            path = self.path
-            node_no = 0
-            bit = 1
-            for i in reversed(path):
-                if i == "d":
-                    node_no += bit
-                bit *= 2
-            self._node_number = node_no
-        return self._node_number
-
-    @property
     def energy(self):
         if not hasattr(self, "_energy"):
             self._energy = energy(self.data_keep)
