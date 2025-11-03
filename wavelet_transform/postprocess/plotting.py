@@ -360,7 +360,7 @@ def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1):
     for node, assignment in zip(
         tr_obj.get_leaf_nodes(freq_threshold=freq_threshold), labels
     ):  # natural order
-        rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
+        rec_signal = inv.inv_node(node)
         reconstructions[assignment] = reconstructions[assignment] + rec_signal
 
     return reconstructions
@@ -370,7 +370,7 @@ def plot_reconstructions_by_group(
     transform_object,
     labels,
     t_plot=None,
-    freq_threshold=1,
+    freq_threshold=1.,
     label_map=None,
     title="Reconstructed nodes by group",
     fig_height=400,
@@ -505,7 +505,7 @@ def plot_fft_by_group(
     xlims=None,
     ylims=None,
     fundamental_freq=None,
-    freq_threshold=1,
+    freq_threshold=1.,
     label_map=None,
     title="PSD comparison",
     fig_height=400,
@@ -653,7 +653,7 @@ def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold=
 
     # Sum all reconstructions belonging to the same group
     for node in tr_obj.get_leaf_nodes(freq_threshold=freq_threshold):  # natural order
-        rec_signal = inv.inv_dwpt(tr_obj, level=node.level, nodes=node)
+        rec_signal = inv.inv_node(node)
         _feature = (
             getattr(node, feature) if isinstance(feature, str) else feature(rec_signal)
         )

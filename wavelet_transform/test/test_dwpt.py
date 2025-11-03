@@ -139,7 +139,7 @@ class TestWaveletTransforms(unittest.TestCase):
         # Calculate frequencies for each node
         for node in nodes:
             # Reconstruct signal from this node
-            rec = inv.inv_dwpt(transform, nodes=node)
+            rec = inv.inv_node(node)
             fft_results, frequencies = fft(rec, sampling_rate)
             fft_results = abs(fft_results)
             
