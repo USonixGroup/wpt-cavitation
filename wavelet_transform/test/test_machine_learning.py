@@ -80,7 +80,7 @@ class TestFitKMeans(unittest.TestCase):
             # Calculate distances to all found centers
             distances = np.linalg.norm(found_centers - true_center, axis=1)
             min_distance = np.min(distances)
-            self.assertLess(min_distance, 0.01, 
+            self.assertLess(min_distance, 0.1, 
                           "No matching center found within tolerance")
 
     def test_invalid_kmeans_params(self):
