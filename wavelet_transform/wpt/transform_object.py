@@ -72,7 +72,7 @@ class Transform:
 
     @best_basis.setter
     def best_basis(self, value):
-        assert isinstance(value, bool)
+        assert isinstance(value, str)
         self._best_basis = value
 
     # -------------------- Functions used for Transform ---------------
