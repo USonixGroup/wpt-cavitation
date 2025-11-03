@@ -22,7 +22,7 @@ def dwt(data, max_level, wavelet="haar", mode="symmetric"):
     transform: an object containing the results from the transform
     """
     filter_coeffs = Transform.pywt_filter_bank(wavelet)
-    max_level_check(data, max_level, len(filter_coeffs))
+    max_level_check(data, max_level)
 
     if isinstance(data, list):
         data = np.array(data)
