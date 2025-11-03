@@ -45,7 +45,7 @@ class Transform:
                 "mode": self.mode,
                 "data": self.data,
                 "min_level": self.min_level,
-                "min_entropy": self.min_entropy,
+                "best_basis": self.best_basis,
             }
         return self._parameters
 
@@ -63,17 +63,17 @@ class Transform:
         self._min_level = value
 
     @property
-    def min_entropy(self):
-        "Whether or not the minimum entropy transform has been used"
-        if not hasattr(self, "_min_entropy"):
+    def best_basis(self):
+        "Whether or not the best basis transform has been used"
+        if not hasattr(self, "_best_basis"):
             return False
         else:
-            return self._min_entropy
+            return self._best_basis
 
-    @min_entropy.setter
-    def min_entropy(self, value):
+    @best_basis.setter
+    def best_basis(self, value):
         assert isinstance(value, bool)
-        self._min_entropy = value
+        self._best_basis = value
 
     # -------------------- Functions used for Transform ---------------
 
@@ -91,11 +91,11 @@ class Transform:
 
         Returns
         -------
-        nodes: list
+        nodes: list of Node
             list of nodes in selected level
         """
         if not isinstance(order, str):
-            raise ValueError("order must be 'nutaral' or 'freq")
+            raise ValueError("order must be 'natural' or 'freq'")
         level = self.max_level() if level is None else level
         if order == "natural":
             return self.levels.get(level, [])
@@ -121,7 +121,7 @@ class Transform:
 
     def get_leaf_nodes(self, order="natural", freq_threshold=None):
         """
-        Get the leaf nodes in the tree. Ordered by frequency.
+        Get the leaf nodes in the tree. Ordered by node number or frequency.
         Frequency threshold is the normalised frequency threshold.
         """
         leaf_nodes = [
@@ -190,11 +190,46 @@ class Transform:
         if not hasattr(self, "_total_energy"):
             self._total_energy = sum(node.energy for node in self.get_level(level))
         return self._total_energy
+    
+    # ---------------- Find Nodes by Frequency ----------------
+    
+    def get_node_at_frequency(self, frequency: float, level="leaf"):
+        """
+        Finds a node in a transform at a given level that contains the specified
+        frequency in its frequency range.
+
+        Parameters
+        ----------
+        frequency: float
+            the frequency to calculate the reconstruction range for
+        level: int or "leaf"
+            the level of the transform
+
+        Returns
+        -------
+        Node
+            the node that contains the specified frequency
+        """
+
+        if level == "leaf":
+            # If level is "leaf", find the leaf node containing the frequency
+            nodes = self.get_leaf_nodes()
+        elif isinstance(level, int):
+            if level <= 0:
+                raise ValueError("Level must be positive integer")
+            if level > self.max_level():
+                raise ValueError("Level exceeds maximum level of transform")
+            # If level is an integer, find the node at that level containing the frequency
+            nodes = self.get_level(level)
+        else:
+            raise ValueError("Level must be a positive integer or 'leaf'")
+
+        for node in nodes:
+            if node.match_id(frequency):
+                return node
+        raise ValueError("No node found containing the specified frequency")
 
     # ---------------- Generate Results ----------------
-
-    def find_nodes(self, node_list, **kwargs):
-        return self.results.find_nodes(node_list, **kwargs)
 
     def dwt_results(self):
         return self.results.dwt_results()
