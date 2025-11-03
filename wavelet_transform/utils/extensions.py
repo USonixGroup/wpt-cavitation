@@ -41,15 +41,15 @@ def fft(array, sampling_rate=None, fundamental_freq=None):
     return a matching array of frequency. If the fundamental frequency is also passed,
     the frequency array will be normalised.
     """
-    signal_length = len(array)
+    n = len(array)
 
     # Calculate FFT with numpy, take the first half of the FFT of the signal
     #  i.e., positive freqs, and normalise by setting norm=forward
-    fft = np.fft.fft(array, norm="forward")[0 : int(signal_length / 2)]
+    fft = np.fft.fft(array, norm="forward")[0 : int(n / 2)]
 
     if sampling_rate is not None:
-        freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[
-            0 : int(signal_length / 2)
+        freq = np.fft.fftfreq(n, d=1 / sampling_rate)[
+            0 : int(n / 2)
         ]
         if fundamental_freq is not None:
             freq /= fundamental_freq
@@ -64,16 +64,16 @@ def psd(array, sampling_rate=None, fundamental_freq=None):
     function will return a matching array of frequency. If the fundamental frequency is
     also passed, the frequency array will be normalised.
     """
-    signal_length = len(array)
+    n = len(array)
 
     # Calculate FFT with numpy, take the first half of the FFT of the signal,
     # i.e., positive freqs, and normalise by setting norm=forward
-    fft = np.fft.fft(array, norm=None)[0 : int(signal_length / 2)]
-    psd = np.abs(fft) ** 2 / (signal_length / 2)
+    fft = np.fft.fft(array, norm=None)[0 : int(n / 2)]
+    psd = np.abs(fft) ** 2 / (n / 2)
 
     if sampling_rate is not None:
-        freq = np.fft.fftfreq(signal_length, d=1 / sampling_rate)[
-            0 : int(signal_length / 2)
+        freq = np.fft.fftfreq(n, d=1 / sampling_rate)[
+            0 : int(n / 2)
         ]
         if fundamental_freq is not None:
             freq /= fundamental_freq
