@@ -76,8 +76,6 @@ class TestBubbleDynamicsFormulations(unittest.TestCase):
         aku_k = kurtosis(p_akul)
         vok_k = kurtosis(p_vok)
 
-        print(p_akul)
-
         # Threshold chosen to detect numerical blow-ups (very conservative)
         KURTOSIS_THRESHOLD = 100
         self.assertTrue(np.isfinite(aku_k), msg=f"Akulichev kurtosis not finite: {aku_k}")
