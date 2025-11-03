@@ -12,15 +12,11 @@ class TestTrainingData(unittest.TestCase):
         sampling_rate = 50e6
         std_noise = 0.01
 
-        # Set length of data to keep
-        sample_time = 20 / 1.5e6
-        data_len = int(sample_time * sampling_rate)
-
         # Parameters for the wavelet transform
         wavelet = "db30"
         levels = 6  # max level for the transform
         mode = "symmetric"
-        use_min_entropy = False
+        best_basis = None
         min_level = 0
 
         freq_threshold = 15e6 / (sampling_rate / 2)
@@ -31,7 +27,7 @@ class TestTrainingData(unittest.TestCase):
             levels,
             mode,
             std_noise,
-            min_entropy=use_min_entropy,
+            best_basis=best_basis,
             min_level=min_level,
             freq_threshold=freq_threshold,
         )
