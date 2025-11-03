@@ -136,37 +136,6 @@ class NodeBase:
 
     # -------------- Finding Nodes ----------------
 
-    def match_ids(self, id):
-        """
-        determines whether the node contains the specified frequency in its
-        frequency range or has the specified path
-
-        Paremeters
-        ----------
-        id: float or string or list of floats or strings
-            can be a frequency or path e.g. 'aa'. can also be a list of ids to
-            match. Frequencies must be floats. integers are interpreted as node numbers.
-
-        Returns
-        -------
-        match: boolean
-            whether the node matches the id
-
-        Raises
-        ------
-        AttributeError: error
-            raised when trying to match by frequencies and the sampling rate
-            has not been supplied
-        """
-        if not isinstance(id, list):
-            id = [id]
-
-        for i in id:
-            if self.match_id(i):
-                return True
-        else:
-            return False
-
     def match_id(self, id):
         "determines whether the node matches a given id"
         if isinstance(id, str):
