@@ -43,3 +43,26 @@ def add_noise(data, signal2noise):
     data_noisy = data.copy() + noise
 
     return data_noisy
+
+def len_full_cycles(sampling_rate, frequency, length):
+    """
+    Calculate the length required to trim data to a whole number of cycles.
+    Returns the new length.
+    Parameters
+    ----------
+    sampling_rate: float
+        sampling rate of the data
+    frequency: float
+        frequency of the signal
+    length: int
+        original length of the data array
+
+    Returns
+    -------
+    new_len: int
+        length of data trimmed to whole number of cycles
+    """
+    ppw = sampling_rate / frequency
+    new_len = int(length / ppw) * ppw
+    new_len = max(new_len, ppw)
+    return new_len
