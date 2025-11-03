@@ -1,6 +1,7 @@
 from .transform_object import Transform
 import numpy as np
-
+import wavelet_transform.wpt.inverse_transform as inv
+import wavelet_transform.utils.statistical_features as sf
 
 def dwpt(
     data,
@@ -8,7 +9,7 @@ def dwpt(
     wavelet="haar",
     mode="symmetric",
     *,
-    min_entropy=False,
+    best_basis=None,
     min_level=0,
     freq_threshold=np.inf,
 ):
@@ -28,11 +29,14 @@ def dwpt(
         the wavelet to use in the transform. see pywavelets docs for options
     mode: string
         the extension mode for the signal. see numpy for options
-    min_entropy: bool
-        set to True to perform the minimum entropy decomposition
+    best_basis: str or None
+        perform best basis decomposition "min_entropy" or "energy". If False,
+        performs full decomposition.
     min_level: int
-        force the minimum entropy decomposition to decompose the signal to a
+        force the best basis decomposition to decompose the signal to a
         certain level. This is 0 by default.
+    freq_threshold: float
+        the nodes with norm_freq_range above this threshold will not be kept
 
     Returns
     -------
@@ -49,21 +53,19 @@ def dwpt(
         data = np.array(data)
 
     # Create approximamtion and detail nodes for each node in the last level
-    if min_entropy is False:
+    if best_basis is None:
         transform = _dwpt(data, max_level, wavelet, mode, freq_threshold)
 
-    # Minimum entropy decomposition
-    elif min_entropy is True:
-        transform = _min_entropy_dwpt(
-            data, max_level, wavelet, mode, min_level, freq_threshold
+    # Best basis decomposition
+    elif isinstance(best_basis, str):
+        transform = _best_basis_dwpt(
+            data, max_level, wavelet, mode, min_level, freq_threshold, best_basis
         )
 
     else:
-        raise ValueError("min_entropy: bool")
+        raise ValueError("best_basis must be None or a string")
 
-    assert transform.get_level(
-        1
-    ), "transform has no decompositions, try setting a minimum level"
+    assert transform.get_level(1), "transform has no decompositions"
 
     transform.min_level = min_level
     return transform
@@ -84,12 +86,12 @@ def _dwpt(data, max_level, wavelet, mode, freq_threshold):
     return transform
 
 
-def _min_entropy_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold):
+def _best_basis_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold, best_basis="min_entropy"):
     if not isinstance(min_level, int):
         raise ValueError("min_level must be an integer")
 
     transform = Transform(data, wavelet, mode)
-    transform.min_entropy = True
+    transform.best_basis = best_basis
     for level in range(max_level):
         for node in transform.get_level(level):
             # If a node has 0 entropy, it does not need to be further decomposed
@@ -98,11 +100,9 @@ def _min_entropy_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold)
             # Create nodes from parent node
             node1 = transform.create_node(node, "a")
             node2 = transform.create_node(node, "d")
-            # Check if the entropy has decreased
-            children_entropy = node1.level_entropy + node2.level_entropy
 
             # Perform decomposition with a given minimum level.
-            if (node.level_entropy > children_entropy) or (level <= min_level):
+            if level < min_level or _split_condition(node, node1, node2, transform, best_basis):
                 # Add nodes if they have lower combined entropy than their parent
                 if node1.norm_frequency_range[0] < freq_threshold:
                     transform.add_node(node1)
@@ -110,6 +110,34 @@ def _min_entropy_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold)
                     transform.add_node(node2)
 
     return transform
+
+def _split_condition(node, node1, node2, tr_obj, condition):
+    if condition == "min_entropy":
+        return _min_entropy_condition(node, node1, node2)
+    elif condition == "energy":
+        return _energy_condition(node, node1, node2, tr_obj.get_level(0)[0])
+
+
+def _min_entropy_condition(node, node1, node2):
+    # Split on lower shannon entropy
+    if (node1.level_entropy + node2.level_entropy) < node.level_entropy:
+        return True
+    return False
+
+def _energy_condition(node, node1, node2, base_node):
+    # Don't split on low energy
+    if node.energy < base_node.energy * 0.01:
+        return False
+    
+    # Split on unbalanced energy
+    energy_threshold = 1.5
+    if (node1.average_energy / node2.average_energy > energy_threshold
+        or node2.average_energy / node1.average_energy > energy_threshold
+    ):
+        return True
+
+    return False
+
 
 
 def dwt(data, max_level, wavelet="haar", mode="symmetric"):
