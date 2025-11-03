@@ -1,7 +1,44 @@
 from .transform_object import Transform
 import numpy as np
-import wavelet_transform.wpt.inverse_transform as inv
-import wavelet_transform.utils.statistical_features as sf
+
+# ----- Discrete Wavelet Transform -----
+def dwt(data, max_level, wavelet="haar", mode="symmetric"):
+    """
+    discrete wavelet transform
+
+    Parameters
+    ----------
+    data: array_like
+        an array containing the data to be transformed
+    max_level: int
+        the number of levels of transform to perform
+    wavelet: string
+        the wavelet to use in the transform. see pywavelets docs for options
+    mode: string
+        the extension mode for the signal. see numpy for options
+
+    Returns
+    -------
+    transform: an object containing the results from the transform
+    """
+    filter_coeffs = Transform.pywt_filter_bank(wavelet)
+    max_level_check(data, max_level, len(filter_coeffs))
+
+    if isinstance(data, list):
+        data = np.array(data)
+
+    transform = Transform(data, wavelet, mode)
+
+    for level in range(max_level):
+        # get approx node in the last level
+        node = transform.get_level(level)[0]
+        # store in output array for next level
+        transform.create_node(node, "a")
+        transform.create_node(node, "d")
+
+    return transform
+
+# ----- Discrete Wavelet Packet Transform -----
 
 def dwpt(
     data,
@@ -43,11 +80,10 @@ def dwpt(
     transform: an object containing the results from the transform
     """
 
-    filter_len = len(Transform.pywt_filter_bank(wavelet)[0])
     if max_level is None:
-        max_level = calc_max_level(data, filter_len)
+        max_level = calc_max_level(data)
     else:
-        max_level_check(data, max_level, filter_len)
+        max_level_check(data, max_level)
 
     if isinstance(data, list):
         data = np.array(data)
@@ -94,15 +130,15 @@ def _best_basis_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold, 
     transform.best_basis = best_basis
     for level in range(max_level):
         for node in transform.get_level(level):
-            # If a node has 0 entropy, it does not need to be further decomposed
-            if node.level_entropy <= 1e-14:  # small threshold for numerical errors
-                continue
             # Create nodes from parent node
             node1 = transform.create_node(node, "a")
             node2 = transform.create_node(node, "d")
 
             # Perform decomposition with a given minimum level.
-            if level < min_level or _split_condition(node, node1, node2, transform, best_basis):
+            if (
+                level < min_level 
+                or _split_condition(node, node1, node2, transform, best_basis)
+            ):
                 # Add nodes if they have lower combined entropy than their parent
                 if node1.norm_frequency_range[0] < freq_threshold:
                     transform.add_node(node1)
@@ -111,7 +147,8 @@ def _best_basis_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold, 
 
     return transform
 
-def _split_condition(node, node1, node2, tr_obj, condition):
+def _split_condition(node, node1, node2, tr_obj:Transform, condition):
+    """Choose condition to call splitting function"""
     if condition == "min_entropy":
         return _min_entropy_condition(node, node1, node2)
     elif condition == "energy":
@@ -119,12 +156,18 @@ def _split_condition(node, node1, node2, tr_obj, condition):
 
 
 def _min_entropy_condition(node, node1, node2):
+    """Split condition based on shannon entropy"""
+    # If a node has 0 entropy, it does not need to be further decomposed
+    if node.level_entropy <= 1e-14:  # small threshold for numerical errors
+        return False
+    
     # Split on lower shannon entropy
     if (node1.level_entropy + node2.level_entropy) < node.level_entropy:
         return True
     return False
 
 def _energy_condition(node, node1, node2, base_node):
+    """Split condition based on energy distribution"""
     # Don't split on low energy
     if node.energy < base_node.energy * 0.01:
         return False
@@ -139,45 +182,10 @@ def _energy_condition(node, node1, node2, base_node):
     return False
 
 
-
-def dwt(data, max_level, wavelet="haar", mode="symmetric"):
-    """
-    discrete wavelet transform
-
-    Parameters
-    ----------
-    data: array_like
-        an array containing the data to be transformed
-    max_level: int
-        the number of levels of transform to perform
-    wavelet: string
-        the wavelet to use in the transform. see pywavelets docs for options
-    mode: string
-        the extension mode for the signal. see numpy for options
-
-    Returns
-    -------
-    transform: an object containing the results from the transform
-    """
-    filter_coeffs = Transform.pywt_filter_bank(wavelet)
-    max_level_check(data, max_level, len(filter_coeffs))
-
-    if isinstance(data, list):
-        data = np.array(data)
-
-    transform = Transform(data, wavelet, mode)
-
-    for level in range(max_level):
-        # get approx node in the last level
-        node = transform.get_level(level)[0]
-        # store in output array for next level
-        transform.create_node(node, "a")
-        transform.create_node(node, "d")
-
-    return transform
+# ----- Utility functions -----
 
 
-def max_level_check(data, level, filter_len=None):
+def max_level_check(data, level):
     """
     checks if there are too many levels
 
@@ -194,7 +202,7 @@ def max_level_check(data, level, filter_len=None):
         when the number of levels is too high
     """
     max_level = calc_max_level(data)
-    rec_max_level = calc_max_level(data, filter_len)
+    rec_max_level = calc_max_level(data)
     error_message = f"""
     too many levels. length of data is length of data is: {len(data)}
     the maximum level is: {max_level}
@@ -205,22 +213,6 @@ def max_level_check(data, level, filter_len=None):
         print(f"WARNING: recommended max level is {rec_max_level}")
 
 
-def calc_max_level(data, filter_len=None):
+def calc_max_level(data):
     "Get the maximum decomposition level for a 1-dimensional array of data"
-
-    # Check that there are fewer nodes at max level than data points
-    if filter_len is None:
-        max_level = 0
-        sections = 1
-        while sections < len(data):
-            max_level += 1
-            sections *= 2
-        return max_level
-    # Check that max level node oontains more coeffs than filter
-    else:
-        max_level = 0
-        len_ = len(data)
-        while len_ > filter_len:
-            len_ = int(len_ / 2)
-            max_level += 1
-        return max_level
+    return int(np.log2(len(data)))
