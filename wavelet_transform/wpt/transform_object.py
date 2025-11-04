@@ -234,8 +234,8 @@ class Transform:
     def dwt_results(self):
         return self.results.dwt_results()
 
-    def info(self, level=None, order="natural", leaf_nodes=False):
-        return self.results.info(level, order, leaf_nodes)
+    def info(self, level=None, order="natural", leaf_nodes=False, keep_ratio=1.):
+        return self.results.info(level, order, leaf_nodes, keep_ratio=keep_ratio)
 
     @property
     def keep_ratio(self):

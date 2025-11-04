@@ -45,7 +45,7 @@ class TransformResults:
         results.insert(0, approx_node)
         return results
 
-    def info(self, level=None, order="natural", leaf_nodes=False):
+    def info(self, level=None, order="natural", leaf_nodes=False, keep_ratio=1.):
         """
         Returns a dataframe with information about each node in a specified level
         of the transform.
@@ -58,6 +58,9 @@ class TransformResults:
             "natural" or "freq" (see self.get_level())
         leaf_nodes: bool
             display info about the leaf nodes of the transform.
+        keep_ratio: float
+            between 0-1. Represents the ratio of coefficients kept in each node.
+            does not affect the keep_ratio of the transform object itself.
 
         Returns
         -------
@@ -84,6 +87,9 @@ class TransformResults:
         else:
             nodes = self.tr_obj.get_leaf_nodes(order=order)
         short_node_len = len(nodes[0].data_keep)
+
+        old_keep_ratio = self.tr_obj.keep_ratio  # store old keep ratio
+        self.tr_obj.keep_ratio = keep_ratio  # temporarily set keep ratio
         for node in nodes:
             assert isinstance(node, Node)
             node_len = len(node.data_keep)
@@ -112,4 +118,5 @@ class TransformResults:
         if short_node_len < 500:
             print(f"WARNING: short node data. Shortest node data is ({short_node_len})")
         info = pd.DataFrame(info_data)
+        self.tr_obj.keep_ratio = old_keep_ratio  # restore old keep ratio
         return info
