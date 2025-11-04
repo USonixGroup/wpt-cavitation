@@ -21,8 +21,10 @@ def dwt(data, max_level, wavelet="haar", mode="symmetric"):
     -------
     transform: an object containing the results from the transform
     """
-    filter_coeffs = Transform.pywt_filter_bank(wavelet)
-    max_level_check(data, max_level)
+    if max_level is None:
+        max_level = calc_max_level(data)
+    else:
+        max_level_check(data, max_level)
 
     if isinstance(data, list):
         data = np.array(data)
@@ -33,8 +35,8 @@ def dwt(data, max_level, wavelet="haar", mode="symmetric"):
         # get approx node in the last level
         node = transform.get_level(level)[0]
         # store in output array for next level
-        transform.create_node(node, "a")
-        transform.create_node(node, "d")
+        transform.add_node(transform.create_node(node, "a"))
+        transform.add_node(transform.create_node(node, "d"))
 
     return transform
 
@@ -79,7 +81,6 @@ def dwpt(
     -------
     transform: an object containing the results from the transform
     """
-
     if max_level is None:
         max_level = calc_max_level(data)
     else:
@@ -101,7 +102,8 @@ def dwpt(
     else:
         raise ValueError("best_basis must be None or a string")
 
-    assert transform.get_level(1), "transform has no decompositions"
+    if not transform.get_level(1):
+        print("warning: transform has no decompositions")
 
     transform.min_level = min_level
     return transform
