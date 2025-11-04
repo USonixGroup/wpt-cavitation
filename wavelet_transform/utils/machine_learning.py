@@ -52,10 +52,10 @@ def fit_k_means(
         kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
         labels = kmeans.fit_predict(data_train_normalised)
     elif isinstance(no_clusters, tuple):
-        # Find optimal numbemr of clusters using silhouette score
+        # Find optimal number of clusters using silhouette score
         algorithms = []
-        for no_clusters in range(*no_clusters):
-            kmeans = KMeans(n_clusters=no_clusters, **kmeans_params)
+        for n_clusters in range(no_clusters[0], no_clusters[1] + 1):
+            kmeans = KMeans(n_clusters=n_clusters, **kmeans_params)
             labels = kmeans.fit_predict(data_train_normalised)
             silhouette_score = metrics.silhouette_score(data_train_normalised, labels)
             algorithms.append((silhouette_score,kmeans, labels))
