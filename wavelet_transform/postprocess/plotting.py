@@ -758,6 +758,96 @@ def plot_clustering(
 
     return fig
 
+def plotly_clustering(
+    data_train,
+    centers,
+    labels,
+    metrics_to_plot,
+    title="Clustering results",
+    label_map=None,
+    levels=None,
+):
+    if not isinstance(data_train, pd.DataFrame):
+        raise ValueError("training data must be a pd.DataFrame")
+
+    colours = list(TreeGraph.colour_dict.values())[1:]  # use your existing colour dict
+
+    # Handle levels and markers
+    if levels is not None:
+        if not isinstance(levels, list):
+            raise ValueError("levels must be a list")
+        if len(levels) != data_train.shape[0]:
+            raise ValueError("Number of levels doesn't match number of nodes")
+        unique_levels = sorted(set(levels))
+        level_markers = _get_level_markers()
+        if len(unique_levels) > len(level_markers):
+            raise ValueError(
+                f"too many unique levels ({len(unique_levels)}), "
+                f"max supported ({len(level_markers)})"
+            )
+        max_level = max(unique_levels)
+        level_markers = {max_level - k: v for k, v in level_markers.items()}
+    else:
+        level_markers = {0: "circle"}
+        levels = [0 for _ in range(data_train.shape[0])]
+        unique_levels = [0]
+
+    fig = go.Figure()
+
+    # Scatter each cluster + level combination
+    for center in range(centers.shape[0]):
+        for level in unique_levels:
+            mask = (labels == center) & (np.array(levels) == level)
+            if np.any(mask):
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=data_train.loc[mask, metrics_to_plot[0]],
+                        y=data_train.loc[mask, metrics_to_plot[1]],
+                        z=data_train.loc[mask, metrics_to_plot[2]],
+                        mode="markers",
+                        marker=dict(
+                            color=colours[center],
+                            symbol=level_markers[level],
+                            size=3,
+                            opacity=0.9,
+                        ),
+                        name=f"Cluster {center}, Level {level}",
+                        showlegend=False if all(i == 0 for i in levels) else True,
+                    )
+                )
+
+        # Add cluster centers
+        fig.add_trace(
+            go.Scatter3d(
+                x=[centers.loc[center, metrics_to_plot[0]]],
+                y=[centers.loc[center, metrics_to_plot[1]]],
+                z=[centers.loc[center, metrics_to_plot[2]]],
+                mode="markers+text",
+                marker=dict(color="red", symbol="x", size=3),
+                text=[get_label(center, label_map)],
+                textposition="top center",
+                name=f"Center {center}",
+            )
+        )
+
+    # Layout and appearance
+    fig.update_layout(
+        title=title,
+        scene=dict(
+            xaxis_title=metrics_to_plot[0].capitalize(),
+            yaxis_title=metrics_to_plot[1].capitalize(),
+            zaxis_title=metrics_to_plot[2].capitalize(),
+            # xaxis=dict(showbackground=False),
+            # yaxis=dict(showbackground=False),
+            # zaxis=dict(showbackground=False),
+        ),
+        margin=dict(l=0, r=0, t=50, b=0),
+        showlegend=not all(i == 0 for i in levels),
+    )
+
+    fig.show()
+    return fig
+
 
 def _get_level_markers():
     level_markers = {
