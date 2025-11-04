@@ -115,7 +115,7 @@ class InverseTransform:
         order="natural",
         leaf_nodes=False,
         freq_threshold=1,
-        keep_ratio=1,
+        keep_ratio=1.,
     ):
         """
         Perform the inverse transform on each node,
