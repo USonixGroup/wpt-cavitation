@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from wavelet_transform.utils.wavelet_features import extract_wavelet_features
+from wavelet_transform.wpt.transform import Transform
 
 
 class TestWaveletFeatures(unittest.TestCase):
@@ -11,7 +12,8 @@ class TestWaveletFeatures(unittest.TestCase):
         t = np.linspace(0, 1, 256, endpoint=False)
         x = np.sin(2 * np.pi * 5 * t)
 
-        df = extract_wavelet_features(x, levels=3, wavelet="haar", mode="symmetric")
+        df, tr = extract_wavelet_features(x, levels=3, wavelet="haar", mode="symmetric")
+        assert isinstance(df, pd.DataFrame)
         self.assertIsInstance(df, pd.DataFrame)
         # expect at least one row and some columns
         self.assertGreater(df.shape[0], 0)
@@ -25,8 +27,9 @@ class TestWaveletFeatures(unittest.TestCase):
         t = np.linspace(0, 1, 1024, endpoint=False)
         x = np.sin(2 * np.pi * 50 * t)
 
-        # Default transform object is created inside extract_wavelet_features when include_tr_obj=True
-        df, tr = extract_wavelet_features(x, levels=4, wavelet="db4", mode="symmetric", include_tr_obj=True)
+        # Default transform object is created inside extract_wavelet_features
+        df, tr = extract_wavelet_features(x, levels=4, wavelet="db4", mode="symmetric")
+        assert isinstance(tr, Transform)
 
         # pick a non-base node to ensure level-dependent trimming is exercised
         node = tr.get_level(3, order="natural")[0]
@@ -73,7 +76,8 @@ class TestWaveletFeatures(unittest.TestCase):
         t = np.linspace(0, 1, 1024, endpoint=False)
         x = np.sin(2 * np.pi * 50 * t)
 
-        df, tr = extract_wavelet_features(x, levels=4, wavelet="db4", mode="symmetric", include_tr_obj=True)
+        df, tr = extract_wavelet_features(x, levels=4, wavelet="db4", mode="symmetric")
+        assert isinstance(tr, Transform)
 
         # test a few leaf nodes
         leaf_nodes = tr.get_level(3, order="natural")
@@ -119,7 +123,8 @@ class TestWaveletFeatures(unittest.TestCase):
         t = np.linspace(0, 1, 1024, endpoint=False)
         x = np.sin(2 * np.pi * 50 * t)
 
-        df, tr = extract_wavelet_features(x, levels=4, wavelet="db4", mode="symmetric", include_tr_obj=True)
+        df, tr = extract_wavelet_features(x, levels=4, wavelet="db4", mode="symmetric")
+        assert isinstance(tr, Transform)
 
         leaf_nodes = tr.get_level(3, order="natural")
         for node in leaf_nodes[:3]:

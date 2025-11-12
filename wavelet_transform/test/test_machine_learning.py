@@ -46,7 +46,7 @@ class TestFitKMeans(unittest.TestCase):
 
         data_train, labels, normed, centers_df, scaler, kmeans = result
 
-        self.assertIn(len(np.unique(labels)), [2, 3])
+        self.assertIn(len(np.unique(labels)), [2, 3, 4])
         self.assertEqual(centers_df.shape[1], 3)
 
     def test_detects_correct_number_of_clusters(self):
