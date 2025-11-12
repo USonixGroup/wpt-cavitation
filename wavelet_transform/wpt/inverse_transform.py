@@ -1,12 +1,10 @@
-from pywt import waverec  # , idwt as pyidwt
 import numpy as np
 import pandas as pd
 import scipy.signal as sp
 
 from wavelet_transform.wpt.transform_object import Transform
-import wavelet_transform.utils.statistical_features as stats
 from wavelet_transform.wpt.transform_node import Node
-
+from wavelet_transform.wpt.metrics import METRIC_REGISTRY, compute_metric_for_data, display_name
 
 # ---------------- Inverse Transforms -----------------
 def inv_dwt(transform_object: Transform):
@@ -114,8 +112,11 @@ class InverseTransform:
         level=None,
         order="natural",
         leaf_nodes=False,
-        freq_threshold=1,
+        freq_threshold=1.,
         keep_ratio=1.,
+        *,
+        include_node_info=False,
+        metrics=None
     ):
         """
         Perform the inverse transform on each node,
@@ -154,34 +155,40 @@ class InverseTransform:
             nodes = self.transform_object.get_level(level, order=order)
         else:
             nodes = self.transform_object.get_leaf_nodes(order, freq_threshold)
+
         total_energy = tr_obj.total_energy(0)
         for node in nodes:
             assert isinstance(node, Node)
-            # Calculate inverse transform
-            if node.norm_frequency_range[1] > freq_threshold:
+            # Skip nodes above frequency threshold
+            if not node.is_in_threshold(freq_threshold):
                 continue
+
+            # Calculate inverse transform
             inverse = inv_node(node)
             inverse = self._trim(inverse, keep_ratio)
-            info_data.append(
-                {
-                    "level": node.level,
-                    "node number": node.node_number,
-                    "norm frequency range": node.norm_frequency_range,
-                    "frequency range": node.freq_range,
-                    "centre frequency": np.average(node.numeric_freq_range),
-                    "energy": stats.energy(inverse),
-                    "log energy": stats.log_energy(inverse),
-                    "average energy": stats.avg_energy(inverse),
-                    "log average energy": stats.log_avg_energy(inverse),
-                    "kurtosis": stats.kurtosis(inverse),
-                    "crest factor": stats.crest_factor(inverse),
-                    "skewness": stats.skewness(inverse),
-                    "abs skewness": stats.abs_skewness(inverse),
-                    "entropy": stats.entropy(inverse),
-                    "spectral entropy": stats.spectral_entropy(inverse),
-                    "level entropy": stats.entropy(inverse, total_energy),
-                }
-            )
+
+            # base/static fields
+            row = {
+                "level": node.level,
+                "node number": node.node_number,
+                "norm frequency range": node.norm_frequency_range,
+                "centre frequency": np.average(node.numeric_freq_range),
+            } if include_node_info else {}
+
+            # populate metric fields using the central helper which encapsulates
+            # how metrics map to functions and how special cases are handled.
+            if metrics is not None:
+                # replace spaces with underscores in metric names
+                metrics = [m.replace(" ", "_") for m in metrics]
+                for metric_name in metrics:
+                    display = display_name(metric_name)
+                    row[display] = compute_metric_for_data(inverse, metric_name, total_energy)
+            else:
+                for attr_name in METRIC_REGISTRY.keys():
+                    display = display_name(attr_name)
+                    row[display] = compute_metric_for_data(inverse, attr_name, total_energy)
+
+            info_data.append(row)
         info = pd.DataFrame(info_data)
         return info
 

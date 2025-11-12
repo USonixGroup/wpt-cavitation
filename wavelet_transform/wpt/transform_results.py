@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from numpy import average
 
-from wavelet_transform.utils.extensions import to_list
 from wavelet_transform.wpt.transform_node import Node
 
 if TYPE_CHECKING:
@@ -45,7 +44,16 @@ class TransformResults:
         results.insert(0, approx_node)
         return results
 
-    def info(self, level=None, order="natural", leaf_nodes=False, keep_ratio=1.):
+    def info(
+            self, 
+            level=None, 
+            order="natural", 
+            leaf_nodes=False, 
+            keep_ratio=1.,
+            *,
+            include_node_info=False,
+            metrics=None
+        ):
         """
         Returns a dataframe with information about each node in a specified level
         of the transform.
@@ -61,6 +69,10 @@ class TransformResults:
         keep_ratio: float
             between 0-1. Represents the ratio of coefficients kept in each node.
             does not affect the keep_ratio of the transform object itself.
+
+        metrics: list or None
+            list of metric names to include in the dataframe. If None, includes all
+            available metrics.
 
         Returns
         -------
@@ -95,26 +107,30 @@ class TransformResults:
             node_len = len(node.data_keep)
             if node_len < short_node_len:
                 short_node_len = node_len
-            info_data.append(
-                {
-                    "level": node.level,
-                    "node number": node.node_number,
-                    "norm frequency range": node.norm_frequency_range,
-                    "frequency range": node.freq_range,
-                    "centre frequency": average(node.numeric_freq_range),
-                    "energy": node.energy,
-                    "log energy": node.log_energy,
-                    "average energy": node.average_energy,
-                    "log average energy": node.log_average_energy,
-                    "kurtosis": node.kurtosis,
-                    "crest factor": node.crest_factor,
-                    "skewness": node.skewness,
-                    "abs skewness": node.abs_skewness,
-                    "entropy": node.entropy,
-                    "spectral entropy": node.spectral_entropy,
-                    "level entropy": node.level_entropy,
-                }
-            )
+
+            # start with static fields
+            row = {
+                "level": node.level,
+                "node number": node.node_number,
+                "norm frequency range": node.norm_frequency_range,
+                "centre frequency": average(node.numeric_freq_range),
+            } if include_node_info else {}
+
+            # populate metrics from the Node.metrics property
+            if metrics is not None:
+                # replace spaces with underscores in metric names
+                metrics = [m.replace(" ", "_") for m in metrics]
+                metrics_dict = {}
+                for metric_name in metrics:
+                    metrics_dict[metric_name] = node.metric(metric_name)
+            else:
+                metrics_dict = getattr(node, "metrics")
+
+            for attr_name, value in metrics_dict.items():
+                display_name = attr_name.replace("_", " ")
+                row[display_name] = value
+
+            info_data.append(row)
         if short_node_len < 500:
             print(f"WARNING: short node data. Shortest node data is ({short_node_len})")
         info = pd.DataFrame(info_data)
