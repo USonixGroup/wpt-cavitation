@@ -117,14 +117,13 @@ def _dwpt(data, max_level, wavelet, mode, freq_threshold):
             # Create nodes
             node1 = create_node(node, "a")
             node2 = create_node(node, "d")
-            if node1.norm_frequency_range[0] < freq_threshold:
-                transform.add_node(node1)
-            if node2.norm_frequency_range[0] < freq_threshold:
-                transform.add_node(node2)
+            for node_to_add in (node1, node2):
+                if node_to_add.is_in_threshold(freq_threshold):
+                    transform.add_node(node_to_add)
     return transform
 
 
-def _best_basis_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold, best_basis="min_entropy"):
+def _best_basis_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold, best_basis):
     if not isinstance(min_level, int):
         raise ValueError("min_level must be an integer")
 
@@ -142,10 +141,9 @@ def _best_basis_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold, 
                 or _split_condition(node, node1, node2, transform, best_basis)
             ):
                 # Add nodes if they have lower combined entropy than their parent
-                if node1.norm_frequency_range[0] < freq_threshold:
-                    transform.add_node(node1)
-                if node2.norm_frequency_range[0] < freq_threshold:
-                    transform.add_node(node2)
+                for node_to_add in (node1, node2):
+                    if node_to_add.norm_frequency_range[1] < freq_threshold:
+                        transform.add_node(node_to_add)
 
     return transform
 
@@ -160,25 +158,34 @@ def _split_condition(node, node1, node2, tr_obj:Transform, condition):
 def _min_entropy_condition(node, node1, node2):
     """Split condition based on shannon entropy"""
     # If a node has 0 entropy, it does not need to be further decomposed
-    if node.level_entropy <= 1e-14:  # small threshold for numerical errors
+    if node.metric("level_entropy") <= 1e-14:  # small threshold for numerical errors
         return False
     
     # Split on lower shannon entropy
-    if (node1.level_entropy + node2.level_entropy) < node.level_entropy:
+    if (node1.metric("level_entropy") + node2.metric("level_entropy")) < node.metric("level_entropy"):
         return True
     return False
 
 def _energy_condition(node, node1, node2, base_node):
     """Split condition based on energy distribution"""
     # Don't split on low energy
-    if node.energy < base_node.energy * 0.01:
+    if node.metric("energy") < base_node.metric("energy") * 0.05:
         return False
     
     # Split on unbalanced energy
     energy_threshold = 1.5
-    if (node1.average_energy / node2.average_energy > energy_threshold
-        or node2.average_energy / node1.average_energy > energy_threshold
-    ):
+    energy_cond = (
+        node1.metric("average_energy") / node2.metric("average_energy") > energy_threshold
+        or node2.metric("average_energy") / node1.metric("average_energy") > energy_threshold
+    )
+
+    # Split on unbalanced kurtosis
+    kurtosis_threshold = 1.5
+    kurtosis_cond = (
+        node1.metric("kurtosis") / node2.metric("kurtosis") > kurtosis_threshold
+        or node2.metric("kurtosis") / node1.metric("kurtosis") > kurtosis_threshold
+    )
+    if energy_cond or kurtosis_cond:
         return True
 
     return False
@@ -187,7 +194,7 @@ def _energy_condition(node, node1, node2, base_node):
 # ----- Utility functions -----
 
 
-def max_level_check(data, level):
+def max_level_check(data, level, filter_len=None):
     """
     checks if there are too many levels
 
@@ -203,8 +210,8 @@ def max_level_check(data, level):
     ValueError:
         when the number of levels is too high
     """
-    max_level = calc_max_level(data)
-    rec_max_level = calc_max_level(data)
+    max_level = calc_max_level(data, filter_len)
+    rec_max_level = calc_max_level(data, filter_len)
     error_message = f"""
     too many levels. length of data is length of data is: {len(data)}
     the maximum level is: {max_level}
@@ -212,9 +219,13 @@ def max_level_check(data, level):
     if level > max_level:
         raise ValueError(error_message)
     if level > rec_max_level:
-        print(f"WARNING: recommended max level is {rec_max_level}")
+        print(f"WARNING: recommended max level is {rec_max_level}. "
+              f"Packets at high levels have less data than the length of the wavelet filter")
 
 
-def calc_max_level(data):
+def calc_max_level(data, filter_len=None):
     "Get the maximum decomposition level for a 1-dimensional array of data"
+    if filter_len is not None:
+        min_data_len = filter_len
+        return int(np.floor(np.log2(len(data) / min_data_len)))
     return int(np.log2(len(data)))
