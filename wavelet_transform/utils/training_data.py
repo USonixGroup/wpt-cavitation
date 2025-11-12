@@ -19,6 +19,9 @@ def get_training_data(
     freq_threshold=None,
     window=False,
     parameter_ranges=None,
+    *,
+    include_node_info=True,
+    metrics=None
 ):
     """
     Generate training data from bubble dynamics signals with wavelet features.
@@ -83,6 +86,8 @@ def get_training_data(
                 min_level=min_level,
                 freq_threshold=freq_threshold,
                 window=window,
+                include_node_info=include_node_info,
+                metrics=metrics,
             ),
             paramlist,
         )
@@ -102,6 +107,9 @@ def _process_single_parameter_set(
     min_level,
     freq_threshold,
     window=False,
+    *,
+    include_node_info=True,
+    metrics=None,
 ):
     """
     Process a single set of bubble parameters to generate training data.
@@ -127,7 +135,7 @@ def _process_single_parameter_set(
     data = preprocess(data, window=window)
 
     # Extract wavelet features
-    features = extract_wavelet_features(
+    features, tr = extract_wavelet_features(
         data,
         levels,
         wavelet,
@@ -135,6 +143,8 @@ def _process_single_parameter_set(
         best_basis=best_basis,
         min_level=min_level,
         freq_threshold=freq_threshold,
+        include_node_info=include_node_info,
+        metrics=metrics
     )
 
     if isinstance(features, tuple):
