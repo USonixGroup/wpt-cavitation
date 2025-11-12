@@ -1,7 +1,5 @@
 import numpy as np
 
-from wavelet_transform.utils.synthetic_data import find_time_indices
-
 
 def sci_form(number, dp=3):
     """
@@ -24,15 +22,21 @@ def eng_form_plot(number, power, dp=3):
     n /= 10 ** inc
     return f"{n:.{dp}f}"
 
+def auto_eng_form(number, dp=3):
+    """
+    Returns a string of the engineering form of a number
+    """
+    if number == 0:
+        return f"{0:.{dp}f}e0"
 
-def to_list(x, *, convert_to_float=None):
-    "handling keyword arguments"
-    if x is None:
-        return None
-    x = [x] if not isinstance(x, list) else x
-    if convert_to_float is True:
-        x = [float(i) if isinstance(i, int) else i for i in x]
-    return x
+    sci_form_number = sci_form(number, dp)
+    n, p = sci_form_number.split("e")
+    n, p = float(n), float(p)
+
+    eng_p = int(p) - (int(p) % 3)
+    inc = eng_p - p
+    n /= 10 ** inc
+    return f"{n:.{dp}f}e{eng_p}"
 
 
 def fft(array, sampling_rate=None, fundamental_freq=None):
@@ -103,3 +107,26 @@ def trim_data(data, t, t_lims, return_time=False):
         return data, t
 
     return data
+
+def find_time_indices(t, delay, end):
+    delay_index = find_delay_index(t, delay)
+    end_index = find_end_index(t, end)
+    return delay_index, end_index
+
+
+def find_delay_index(t, delay):
+    "finds the index of the start of the delayed signal"
+    for delay_index in range(len(t)):
+        if t[delay_index] > delay:
+            return delay_index
+    raise ValueError("index not found")
+
+
+def find_end_index(t, end):
+    "finds the index of the end of the cut off signal"
+    end_index = len(t) - 1
+    for _ in range(len(t)):
+        if t[end_index] < end:
+            return end_index
+        end_index -= 1
+    raise ValueError("index not found")
