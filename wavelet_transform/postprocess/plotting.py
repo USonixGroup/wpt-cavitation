@@ -16,118 +16,6 @@ margine_value = 0  # zero margine for plotly plots
 margine_top_value = 50
 
 
-def plot_nodes(nodes, ax, sampling_rate, rows=None, columns=1, 
-               font_dict={'family':'Computer Modern Serif','color':'black','size':12}):
-    """
-    Separately plots the data from a provided list of nodes.
-
-    Parameters
-    ----------
-    nodes: list
-        list of nodes to plot the data for
-    ax: axis
-        ax from fig,ax = plt.subplots()
-    nyquist_frequency:  float
-        1/2*sampling rate
-    rows: int
-        the number of rows to create
-    columns: int
-        the number of columns to create
-    """
-    if not rows:  # default number of rows
-        rows = round(len(nodes))
-    section_counter = 1
-
-    nyquist_frequency = sampling_rate / 2
-    for row in range(rows):
-        for column in range(columns):
-            # plot coefficients
-            try:
-                node = nodes[section_counter - 1]
-            except IndexError:
-                break
-            if rows == 1:
-                axis = ax[column]
-            elif columns == 1:
-                axis = ax[row]
-            else:
-                axis = ax[row, column]
-            axis.plot(node.data)
-
-            # set labels
-            axis.set_xlabel("coefficient number", fontsize=fsize)
-            axis.set_ylabel("magnitude", fontsize=fsize)
-            axis.grid(True)
-
-            lower_frequency = node.norm_frequency_range[0] * nyquist_frequency
-            upper_frequency = node.norm_frequency_range[1] * nyquist_frequency
-
-            lf = sci_form(lower_frequency)
-            uf = sci_form(upper_frequency)
-
-            n = len(nodes)
-
-            title = f"""
-            Coefficients, {lf}-{uf} Hz
-            energy: {sci_form(node.energy)} [section {section_counter} of {n}]
-            """
-            axis.set_title(title, fontsize=fsize)
-            section_counter += 1
-
-
-def plot_all_final_nodes(nodes, ax, title=""):
-    "Concatenate the data from all of the nodes and plot"
-    output = np.array([])
-    for node in nodes:
-        output = np.concatenate((output, node.data))
-    ax.plot(output)
-    ax.set_title(f"Coefficients {title}", fontsize=fsize)
-    ax.set_xlabel("Coefficient Number", fontsize=fsize)
-    ax.set_ylabel("Coefficient", fontsize=fsize)
-    ax.grid(True)
-
-
-def plot_wave(data, t_plot, ax, title=""):
-    "Plots the data"
-    ax.plot(t_plot, data)
-    ax.set_xlabel("Time [s]", fontsize=fsize)
-    ax.set_ylabel("Magnitude [mV]", fontsize=fsize)
-    ax.set_title(f"Data {title}", fontsize=fsize)
-    ax.grid(True)
-
-
-def plot_frequencies(frequencies, ax, title=""):
-    "Creates a histogram of the frequencies present in the synthetic data"
-    if frequencies:
-        ax.hist(frequencies)
-        ax.set_title(f"Frequency Distribution {title}", fontsize=fsize)
-        ax.set_xlabel("Frequency [Hz]", fontsize=fsize)
-        ax.set_ylabel("Frequency of frequency", fontsize=fsize)
-        ax.grid(True)
-
-
-def plot_energy_vs_freq(transform_obj, sampling_rate=None, ax=None, title=""):
-    "Plot the energy vs frequency for each packet in the last transform level"
-    if sampling_rate:
-        transform_obj.calc_frequencies(sampling_rate)
-    nodes = transform_obj.get_level(order="freq")
-    energy = transform_obj.info(order="freq")["energy"]
-    frequencies = []
-    for node in nodes:
-        freq_range = node.frequency_range
-        frequencies.append(1 / 2 * (freq_range[0] + freq_range[1]))
-    if ax:
-        ax.plot(frequencies, energy)
-        ax.set_title(f"Energy vs Subband Frequency {title}", fontsize=fsize)
-        ax.set_xlabel("Frequencies [Hz]", fontsize=fsize)
-        ax.set_ylabel("Energy (arbitrary)", fontsize=fsize)
-    else:
-        plt.plot(frequencies, energy)
-        plt.title(f"Energy vs Subband Frequency {title}", fontsize=fsize)
-        plt.xlabel("Frequencies [Hz]", fontsize=fsize)
-        plt.ylabel("Energy (arbitrary)", fontsize=fsize)
-
-
 def heisenberg(
     transform_object,
     t_end=1,
@@ -332,7 +220,7 @@ def get_label(label_no, label_map):
         raise ValueError("label_map must be a dictionary of label_no: label")
 
 
-def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1):
+def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1.):
     """
     Get reconstructions of nodes grouped by their cluster labels.
     
@@ -341,7 +229,8 @@ def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1):
     tr_obj : Transform
         The transform object containing the nodes to reconstruct
     labels : list
-        The cluster labels for each node. Can be any integers, not necessarily consecutive
+        The cluster labels for each node. Can be any integers, not necessarily 
+        consecutive.
     freq_threshold : float, optional
         Frequency threshold for node filtering, by default 1
         
@@ -354,7 +243,9 @@ def get_reconstructions_by_group(tr_obj, labels, freq_threshold=1):
     unique_labels = sorted(set(labels))
     
     # Dictionary to store reconstructions by label
-    reconstructions = {label: np.zeros(signal_length) for label in unique_labels}
+    reconstructions: dict[int, np.ndarray] = {
+        label: np.zeros(signal_length) for label in unique_labels
+    }
 
     # Sum all reconstructions belonging to the same group
     for node, assignment in zip(
@@ -649,13 +540,13 @@ def get_reconstructions_by_threshold(tr_obj, feature, threshold, freq_threshold=
         raise ValueError("feature must be a string or a function")
     signal_length = len(tr_obj.data)
     # List reconstructions
-    reconstructions = [np.zeros(signal_length) for _ in range(2)]
+    reconstructions: list[np.ndarray] = [np.zeros(signal_length) for _ in range(2)]
 
     # Sum all reconstructions belonging to the same group
     for node in tr_obj.get_leaf_nodes(freq_threshold=freq_threshold):  # natural order
         rec_signal = inv.inv_node(node)
         _feature = (
-            getattr(node, feature) if isinstance(feature, str) else feature(rec_signal)
+            node.metric(feature) if isinstance(feature, str) else feature(rec_signal)
         )
         i = 0 if _feature > threshold else 1  # shorten name for readability
         reconstructions[i] = reconstructions[i] + rec_signal
@@ -763,14 +654,14 @@ def plotly_clustering(
     centers,
     labels,
     metrics_to_plot,
-    title="Clustering results",
     label_map=None,
     levels=None,
+    nodes=None,
 ):
     if not isinstance(data_train, pd.DataFrame):
         raise ValueError("training data must be a pd.DataFrame")
 
-    colours = list(TreeGraph.colour_dict.values())[1:]  # use your existing colour dict
+    colours = list(TreeGraph.colour_dict.values())[1:]  # existing colour dict
 
     # Handle levels and markers
     if levels is not None:
@@ -794,11 +685,43 @@ def plotly_clustering(
 
     fig = go.Figure()
 
-    # Scatter each cluster + level combination
+    # === Build hover info if nodes are provided ===
+    hover_texts = None
+    if nodes is not None:
+        hover_texts = []
+        for node in nodes:
+            freq_range = getattr(node, "numeric_freq_range")
+            freq_str = f"{freq_range[0]:.2e} – {freq_range[1]:.2e}"
+            hover_texts.append(
+                f"Node (l, n): ({getattr(node,'level', 'N/A')}, {getattr(node, 'node_number', 'N/A')})<br>"
+                f"Freq range: {freq_str}"
+            )
+
+    # === Plot each cluster and level ===
     for center in range(centers.shape[0]):
+        # === Cluster centers ===
+        center_label = get_label(center, label_map)
+        fig.add_trace(
+            go.Scatter3d(
+                x=[centers.loc[center, metrics_to_plot[0]]],
+                y=[centers.loc[center, metrics_to_plot[1]]],
+                z=[centers.loc[center, metrics_to_plot[2]]],
+                mode="markers+text",
+                marker=dict(color="red", symbol="x", size=5),
+                text=[center_label],
+                textposition="top center",
+                name=f"Center {center_label}",
+                hoverinfo="skip",
+                hovertemplate=None
+            )
+        )
         for level in unique_levels:
             mask = (labels == center) & (np.array(levels) == level)
             if np.any(mask):
+                hover_subset = None
+                if hover_texts is not None:
+                    hover_subset = np.array(hover_texts)[mask]
+
                 fig.add_trace(
                     go.Scatter3d(
                         x=data_train.loc[mask, metrics_to_plot[0]],
@@ -806,43 +729,28 @@ def plotly_clustering(
                         z=data_train.loc[mask, metrics_to_plot[2]],
                         mode="markers",
                         marker=dict(
-                            color=colours[center],
+                            color=colours[center % len(colours)],
                             symbol=level_markers[level],
-                            size=3,
+                            size=4,
                             opacity=0.9,
                         ),
+                        hoverinfo="text" if hover_subset is not None else "skip",
+                        hovertext=hover_subset,
                         name=f"Cluster {center}, Level {level}",
                         showlegend=False if all(i == 0 for i in levels) else True,
                     )
                 )
 
-        # Add cluster centers
-        fig.add_trace(
-            go.Scatter3d(
-                x=[centers.loc[center, metrics_to_plot[0]]],
-                y=[centers.loc[center, metrics_to_plot[1]]],
-                z=[centers.loc[center, metrics_to_plot[2]]],
-                mode="markers+text",
-                marker=dict(color="red", symbol="x", size=3),
-                text=[get_label(center, label_map)],
-                textposition="top center",
-                name=f"Center {center}",
-            )
-        )
-
-    # Layout and appearance
+    # === Layout ===
     fig.update_layout(
-        title=title,
         scene=dict(
             xaxis_title=metrics_to_plot[0].capitalize(),
             yaxis_title=metrics_to_plot[1].capitalize(),
             zaxis_title=metrics_to_plot[2].capitalize(),
-            # xaxis=dict(showbackground=False),
-            # yaxis=dict(showbackground=False),
-            # zaxis=dict(showbackground=False),
         ),
-        margin=dict(l=0, r=0, t=50, b=0),
+        margin=dict(l=0, r=0, t=40, b=0),
         showlegend=not all(i == 0 for i in levels),
+        hovermode="closest",
     )
 
     fig.show()
@@ -1106,4 +1014,7 @@ def relabel(labels, centers, metric, ascending=False):
     center_mapping = {k: v for v, k in enumerate(ordered_centers.index.tolist())}
     ordered_labels = np.array([center_mapping[i] for i in labels])
     ordered_centers = ordered_centers.reset_index()
+
+    assert len(ordered_centers) == len(centers), "number of centers changed during relabelling"
+    assert len(ordered_labels) == len(labels), "number of labels changed during relabelling"
     return ordered_centers, ordered_labels
