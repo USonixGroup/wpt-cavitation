@@ -60,7 +60,7 @@ class TestWaveletTransforms(unittest.TestCase):
         
         # Calculate total energy of leaf nodes
         leaf_nodes = transform_zero.get_leaf_nodes()
-        leaf_energy = sum(node.energy for node in leaf_nodes)
+        leaf_energy = sum(node.metric("energy") for node in leaf_nodes)
         
         # Compare energies
         self.assertAlmostEqual(signal_energy, leaf_energy, places=10,
@@ -69,7 +69,7 @@ class TestWaveletTransforms(unittest.TestCase):
         # Test energy conservation at each level
         for level in range(1, self.levels + 1):
             level_nodes = transform_zero.get_level(level)
-            level_energy = sum(node.energy for node in level_nodes)
+            level_energy = sum(node.metric("energy") for node in level_nodes)
             self.assertAlmostEqual(signal_energy, level_energy, places=10,
                 msg=f"Energy not conserved at level {level}")
 
@@ -81,7 +81,7 @@ class TestWaveletTransforms(unittest.TestCase):
 
         # Get DWT results
         dwt_nodes = transform_zero.dwt_results()
-        dwt_energy = sum(node.energy for node in dwt_nodes)
+        dwt_energy = sum(node.metric("energy") for node in dwt_nodes)
         
         # Compare with original signal energy
         signal_energy = energy(self.data)
