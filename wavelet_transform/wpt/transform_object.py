@@ -75,7 +75,7 @@ class Transform:
         assert isinstance(value, str)
         self._best_basis = value
 
-    # -------------------- Functions used for Transform ---------------
+    # -------------------- Get Nodes ---------------
 
     def get_level(self, level=None, order="natural"):
         """
@@ -106,19 +106,6 @@ class Transform:
         else:
             raise ValueError("order must be 'natural' or 'freq'")
 
-    def get_full_level(self, level=None):
-        """
-        Fill out missing nodes in the level with None. Used for the inverse transform
-        with a minimum entropy decomposition.
-        """
-        if level is None:
-            level = self.max_level()
-        nodes = self.get_level(level, order="natural")  # order must be natural
-        full_level_nodes: list[Optional[Node]] = [None for _ in range(2 ** level)]
-        for node in nodes:
-            full_level_nodes[node.node_number] = node
-        return full_level_nodes
-
     def get_leaf_nodes(self, order="natural", freq_threshold=None):
         """
         Get the leaf nodes in the tree. Ordered by node number or frequency.
@@ -139,7 +126,7 @@ class Transform:
                     "frequency threshold must be normalised with the nyquist frequency"
                 )
             leaf_nodes = [
-                i for i in leaf_nodes if i.norm_frequency_range[1] <= freq_threshold
+                i for i in leaf_nodes if i.is_in_threshold(freq_threshold)
             ]
         if order not in ["freq", "natural"]:
             raise ValueError("order must be 'freq' or 'natural'")
@@ -147,10 +134,27 @@ class Transform:
         if order == "freq":
             leaf_nodes.sort(key=lambda x: x.norm_frequency_range[0])
         return leaf_nodes
+    
+    def get_node(self, level, id):
+        """
+        Finds and returns a node matching the given id.
+
+        Parameters
+        ----------
+        id: str, int, float, or Node
+            the identifier for the node. Can be the path (str), node number (int),
+            frequency (float), or the node object itself.
+        """
+        for node in self.get_level(level):
+            if node.match_id(id):
+                return node
+        raise ValueError("No node found matching the given id")
 
     def node_numbers(self, level=None):
         "Generator for node numbers"
         return (node.node_number for node in self.get_level(level))
+
+    # -------------------- Creating and Adding Nodes ----------------
 
     def create_node(self, parent, a_d):
         """
@@ -188,7 +192,7 @@ class Transform:
     def total_energy(self, level=None):
         "Return the total energy of all nodes in a level. Max level by default."
         if not hasattr(self, "_total_energy"):
-            self._total_energy = sum(node.energy for node in self.get_level(level))
+            self._total_energy = sum(float(node.metric("energy")) for node in self.get_level(level))
         return self._total_energy
     
     # ---------------- Find Nodes by Frequency ----------------
@@ -232,10 +236,56 @@ class Transform:
     # ---------------- Generate Results ----------------
 
     def dwt_results(self):
+        """
+        Retrieves the discrete wavelet transform (DWT) results from the transform.
+
+        Returns
+        -------
+        results: list of Node
+            a list of nodes related to the dwt
+        """
         return self.results.dwt_results()
 
-    def info(self, level=None, order="natural", leaf_nodes=False, keep_ratio=1.):
-        return self.results.info(level, order, leaf_nodes, keep_ratio=keep_ratio)
+    def info(
+            self, 
+            level=None, 
+            order="natural", 
+            leaf_nodes=False, 
+            keep_ratio=1.,
+            *,
+            include_node_info=False,
+            metrics=None
+        ):
+        """
+        Returns a dataframe with information about each node in a specified level
+        of the transform.
+
+        Parameters
+        ----------
+        level: int
+            the level of transform to display information for
+        order: str
+            "natural" or "freq" (see self.get_level())
+        leaf_nodes: bool
+            display info about the leaf nodes of the transform.
+        keep_ratio: float
+            between 0-1. Represents the ratio of coefficients kept in each node.
+            does not affect the keep_ratio of the transform object itself.
+
+        metrics: list or None
+            list of metric names to include in the dataframe. If None, includes all
+            available metrics.
+
+        Returns
+        -------
+        info: pd.DataFrame
+            A dataframe containing statistical measures calculated from the coefficients
+            at each node.
+        """
+        return self.results.info(
+            level, order, leaf_nodes, keep_ratio, 
+            metrics=metrics, include_node_info=include_node_info
+        )
 
     @property
     def keep_ratio(self):
@@ -266,7 +316,7 @@ class Transform:
 
     def plot_tree(
         self,
-        node_size=1500,
+        node_size="default",
         node_colour="skyblue",
         freq_threshold=None,
         graph_legend="Graph legend",
@@ -292,11 +342,12 @@ class Transform:
 
         keyword arguments
         -----------------
-        sampling_rate: float
-            supply the sampling rate to calculate frequencies for nodes. Will plot
-            normalised frequencies otherwise.
         order: str
             "natural" or "freq" to order the tree in natural or freuqency order
+        show_frequency: bool
+            whether to show the frequency ranges of each node on the plot
+        use_plotly: bool
+            whether to use plotly to generate the plot
         """
         self.tree.plot_tree(
             node_size, node_colour, freq_threshold, graph_legend, fig_name, **kwargs
