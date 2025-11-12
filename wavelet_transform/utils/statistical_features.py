@@ -3,6 +3,8 @@ import scipy.stats as sc
 
 from wavelet_transform.utils.extensions import psd
 
+# When adding metrics, add them to METRIC_REGISTRY in metrics.py
+# This will ensure that nodes can access them via the metric("metric_name") function
 
 def crest_factor(array):
     rms = np.sqrt(sum(array ** 2) / len(array))
@@ -61,3 +63,11 @@ def spectral_entropy(array):
     spectral_entropy = -sum(0 if i == 0 else i * np.log2(i) for i in norm_spectrum)
     spectral_entropy /= np.log2(len(norm_spectrum))
     return spectral_entropy
+
+def spectral_kurtosis(array):
+    # Calculate the power spectrum
+    power_spectrum = psd(array)  # np.abs(fft(array)[<half_length_array>]) ** 2 / (len(array) / 2)
+    norm_spectrum = power_spectrum / np.sum(power_spectrum)  # type: ignore
+
+    spectral_kurtosis = kurtosis(norm_spectrum)
+    return spectral_kurtosis
