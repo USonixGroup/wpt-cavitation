@@ -118,11 +118,11 @@ class NodeBase:
         if self.a_d == "d":
             hi_or_lo += 1
 
-        diff = upper_bound - lower_bound
+        mid = (upper_bound + lower_bound) / 2
         if hi_or_lo % 2 == 0:
-            upper_bound -= diff / 2
+            upper_bound = mid
         else:
-            lower_bound += diff / 2
+            lower_bound = mid
         return lower_bound, upper_bound
 
     def set_frequency_range(self, sampling_rate):
@@ -137,7 +137,7 @@ class NodeBase:
     # -------------- Finding Nodes ----------------
 
     def match_id(self, id):
-        "determines whether the node matches a given id"
+        "Determines whether the node matches a given id"
         if isinstance(id, str):
             return id == self.path
         elif isinstance(id, (float)):
@@ -153,7 +153,7 @@ class NodeBase:
             return id == self.node_number
         elif isinstance(id, self.__class__):
             return self == id
-        
+
     @property
     def node_number(self):
         "Converts path into node number then stores it for subsequent calls"
