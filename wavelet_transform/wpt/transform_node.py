@@ -1,19 +1,7 @@
 from wavelet_transform.wpt.node_base import NodeBase
 
 from wavelet_transform.utils.extensions import sci_form
-from wavelet_transform.utils.statistical_features import (
-    energy,
-    log_energy,
-    avg_energy,
-    log_avg_energy,
-    kurtosis,
-    skewness,
-    abs_skewness,
-    crest_factor,
-    entropy,
-    spectral_entropy,
-)
-
+from wavelet_transform.wpt.metrics import METRIC_REGISTRY, compute_metric_for_data
 
 class Node(NodeBase):
     "Extension on NodeBase which calculates statistical metrics based on the node data."
@@ -69,79 +57,49 @@ class Node(NodeBase):
         if not hasattr(self, "_data_len"):
             self._data_len = len(self.data)
         return self._data_len
-
-    # ----- Node info -----
+    
+    # ----- Statistical metrics -----
     @property
-    def energy(self):
-        if not hasattr(self, "_energy"):
-            self._energy = energy(self.data_keep)
-        return self._energy
-
-    @property
-    def log_energy(self):
-        if not hasattr(self, "_log_energy"):
-            self._log_energy = log_energy(self.data_keep)
-        return self._log_energy
-
-    @property
-    def average_energy(self):
-        if not hasattr(self, "_average_energy"):
-            self._average_energy = avg_energy(self.data_keep)
-        return self._average_energy
-
-    @property
-    def log_average_energy(self):
-        if not hasattr(self, "_log_average_energy"):
-            self._log_average_energy = log_avg_energy(self.data_keep)
-        return self._log_average_energy
-
-    @property
-    def kurtosis(self):
-        if not hasattr(self, "_kurtosis"):
-            self._kurtosis = kurtosis(self.data_keep)
-        return self._kurtosis
-
-    @property
-    def crest_factor(self):
-        if not hasattr(self, "_crest_factor"):
-            self._crest_factor = crest_factor(self.data_keep)
-        return self._crest_factor
-
-    @property
-    def skewness(self):
-        if not hasattr(self, "_skewness"):
-            self._skewness = skewness(self.data_keep)
-        return self._skewness
-
-    @property
-    def abs_skewness(self):
-        if not hasattr(self, "_abs_skewness"):
-            self._abs_skewness = abs_skewness(self.data_keep)
-        return self._abs_skewness
-
-    @property
-    def entropy(self):
-        "Calculate the entropy of the node (packet) normalised with its (packet) energy."
-        if not hasattr(self, "_entropy"):
-            self._entropy = entropy(self.data_keep)
-        return self._entropy
-
-    @property
-    def spectral_entropy(self):
-        if not hasattr(self, "_spectral_entropy"):
-            self._spectral_entropy = spectral_entropy(self.data_keep)
-        return self._spectral_entropy
-
-    @property
-    def level_entropy(self):
+    def metrics(self):
         """
-        Calculate the entropy of the node where each energy component is normalised with the
-        total energy of the transform
+        Compute a dictionary of all registered metrics for this node.
+
+        The registry (`METRIC_REGISTRY`) maps a metric key (node attribute name)
+        to a function name in `wavelet_transform.utils.statistical_features`.
+        This property computes each metric by calling the corresponding function
+        with `self.data_keep`. The special metric `level_entropy` requires the
+        total energy of the transform and is handled specially.
         """
-        total_energy = self.transform.total_energy(0)
-        if not hasattr(self, "_total_entropy"):
-            self._level_entropy = entropy(self.data_keep, total_energy)
-        return self._level_entropy
+        data = self.data_keep
+        metrics = {}
+        total_energy = None
+        # compute once for efficiency when level_entropy is requested
+        if "level_entropy" in METRIC_REGISTRY:
+            total_energy = self.transform.total_energy(0)
+        for metric_name in METRIC_REGISTRY.keys():
+            metrics[metric_name] = compute_metric_for_data(data, metric_name, total_energy)
+
+        return metrics
+    
+
+    def metric(self, metric_name):
+        """
+        Get a single metric by name.
+
+        Parameters
+        ----------
+        metric_name: str
+            The name of the metric to retrieve.
+        """
+        data = self.data_keep
+        metric_name = metric_name.replace(" ", "_")
+        total_energy = self.transform.total_energy(0) if metric_name == "level_entropy" else None
+        metric = compute_metric_for_data(data, metric_name, total_energy)
+        if not isinstance(metric, (int,float)):
+            raise ValueError(f"metric '{metric_name}' did not return a numeric value")
+        return metric
+    
+    # ----- Frequency range properties -----
 
     @property
     def freq_range(self):
@@ -162,6 +120,17 @@ class Node(NodeBase):
 
     def is_freq_calculated(self):
         return self.frequency_range is not None
+    
+    def is_in_threshold(self, freq_threshold):
+        """
+        Check if the node is within the frequency threshold.
+
+        Parameters
+        ----------
+        freq_threshold: float
+            The frequency threshold to check against.
+        """
+        return self.norm_frequency_range[1] <= freq_threshold
 
 
 class BaseNode(Node):
@@ -179,6 +148,6 @@ class BaseNode(Node):
         self.data = data
         self.path = ""
         self.level = 0
-        self.norm_frequency_range = (0, 1)
+        self.norm_frequency_range = (0., 1.)
         self.frequency_range = None
         self.transform = transform_object
