@@ -1,5 +1,6 @@
 import numpy as np
 
+from wavelet_transform.utils.extensions import find_time_indices, find_delay_index
 
 def sin(amplitude, frequency, phi, t):
     """
@@ -168,27 +169,3 @@ def transients(
         transient_array[i : i + j] += amp * np.hanning(j)
 
     return transient_array
-
-
-def find_time_indices(t, delay, end):
-    delay_index = find_delay_index(t, delay)
-    end_index = find_end_index(t, end)
-    return delay_index, end_index
-
-
-def find_delay_index(t, delay):
-    "finds the index of the start of the delayed signal"
-    for delay_index in range(len(t)):
-        if t[delay_index] > delay:
-            return delay_index
-    raise ValueError("index not found")
-
-
-def find_end_index(t, end):
-    "finds the index of the end of the cut off signal"
-    end_index = len(t) - 1
-    for _ in range(len(t)):
-        if t[end_index] < end:
-            return end_index
-        end_index -= 1
-    raise ValueError("index not found")
