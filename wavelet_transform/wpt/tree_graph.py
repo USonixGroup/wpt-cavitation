@@ -6,7 +6,8 @@ import numpy as np
 from networkx.drawing.nx_agraph import graphviz_layout, write_dot
 import networkx as nx
 
-from wavelet_transform.utils.extensions import sci_form
+import plotly.graph_objects as go
+from wavelet_transform.utils.extensions import auto_eng_form, sci_form
 
 if TYPE_CHECKING:
     from wavelet_transform.wpt.transform_object import Transform
@@ -33,7 +34,7 @@ class TreeGraph:
 
     def plot_tree(
         self,
-        node_size=1500,
+        node_size="default",
         node_colour="skyblue",
         freq_threshold=None,
         graph_legend="Graph legend",
@@ -46,21 +47,37 @@ class TreeGraph:
             raise ValueError("node_colour must be str or list")
 
         order = kwargs.get("order", "natural")
-        sampling_rate = kwargs.get("sampling_rate")
         show_frequency = kwargs.get("show_frequency", False)
+        use_plotly = kwargs.get("use_plotly", False)
 
         self.graph_nodes, self.graph_edges = self._get_nodes_and_edges(order)
-        self._generate_plot(
-            self.graph_nodes,
-            self.graph_edges,
-            node_size,
-            node_colour,
-            freq_threshold,
-            graph_legend,
-            fig_name,
-            sampling_rate,
-            show_frequency,
-        )
+
+        if use_plotly:
+            if node_size == "default":
+                node_size = 20
+            self._generate_plot_plotly(
+                self.graph_nodes,
+                self.graph_edges,
+                node_size,
+                node_colour,
+                freq_threshold,
+                graph_legend,
+                fig_name,
+                show_frequency,
+            )
+        else:
+            if node_size == "default":
+                node_size = 1500
+            self._generate_plot(
+                self.graph_nodes,
+                self.graph_edges,
+                node_size,
+                node_colour,
+                freq_threshold,
+                graph_legend,
+                fig_name,
+                show_frequency,
+            )
 
     # ---------------- Getting Nodes & Edges ----------------
 
@@ -91,7 +108,6 @@ class TreeGraph:
         freq_threshold,
         graph_legend,
         fig_name,
-        sampling_rate=None,
         show_frequency=False,
     ):
         # Make networkx graph object
@@ -109,7 +125,7 @@ class TreeGraph:
         if isinstance(node_size, str):
             node_size = np.array(
                 list(
-                    getattr(node_attributes[i], node_size.replace(" ", "_")) for i in G
+                    getattr(node_attributes[i], "metric")(node_size.replace(" ", "_")) for i in G
                 )
             )
             node_size = (node_size - np.mean(node_size)) / np.std(node_size) + 1.5
@@ -139,26 +155,21 @@ class TreeGraph:
         )
 
         # Display frequency range of each node
-        sampling_rate = 1 if sampling_rate is None else sampling_rate
         labels = {
-            node: tuple(
-                sci_form(i * sampling_rate, 1)
-                for i in getattr(node_attributes[node], "norm_frequency_range")
-            )
-            for node in G
+            node: tuple(sci_form(i, 1) for i in getattr(node_attributes[node], "numeric_freq_range")) for node in G
         }
 
         if show_frequency is False:
             labels = {}
 
-        offset_pos = {node: (x, y - 20) for node, (x, y) in pos.items()}
+        offset_pos = {node: (x, y) for node, (x, y) in pos.items()}
         nx.draw_networkx_labels(
             G,
             offset_pos,
             labels=labels,
             font_size=20,
             font_color="black",
-            verticalalignment="top",
+            verticalalignment="bottom",
         )
 
         # Add legend for clusters
@@ -195,6 +206,142 @@ class TreeGraph:
             plt.savefig(fig_name + ".png", format="PNG")
             plt.savefig(fig_name + ".pdf", format="PDF")
             write_dot(G, fig_name + ".dot")
+
+    def _generate_plot_plotly(
+        self,
+        graph_nodes,
+        graph_edges,
+        node_size,
+        node_colour,
+        freq_threshold,
+        graph_legend,
+        fig_name,
+        show_frequency=False,
+    ):
+        # Build directed graph
+        G = nx.DiGraph()
+        G.add_nodes_from(graph_nodes)
+        G.add_edges_from(graph_edges)
+        node_attributes = nx.get_node_attributes(G, "node")
+
+        # Node colours
+        if isinstance(node_colour, list):
+            node_colour = self._get_colours(G, node_colour, freq_threshold)
+
+        # Node sizes
+        big_node_size = 50
+        node_size_vals = None
+        if isinstance(node_size, str):
+            node_size_vals = np.array(
+                [getattr(node_attributes[i], "metric")(node_size.replace(" ", "_")) for i in G]
+            )
+            node_size_vals = (node_size_vals - np.mean(node_size_vals)) / np.std(node_size_vals) + 1.5
+            node_size_vals *= big_node_size / np.max(node_size_vals)
+
+        # Node positions using graphviz layout
+        pos = graphviz_layout(G, prog="dot")
+        pos = {n: (x, -y) for n, (x, y) in pos.items()}
+
+        # Normalise pos
+        x_values = [x for x, y in pos.values()]
+        y_values = [y for x, y in pos.values()]
+        x_min, x_max = min(x_values), max(x_values)
+        y_min, y_max = min(y_values), max(y_values)
+        levels = self.tr_obj.max_level()
+        pos = {n: (
+            (x - x_min) / (x_max - x_min) * levels,
+            (y - y_min) / (y_max - y_min) * levels
+        ) for n, (x, y) in pos.items()}
+
+        # Reverse y-axis
+        pos = {n: (x, levels - y) for n, (x, y) in pos.items()}
+
+        # Edge trace
+        edge_x, edge_y = [], []
+        for u, v in G.edges():
+            x0, y0 = pos[u]
+            x1, y1 = pos[v]
+            edge_x += [x0, x1, None]
+            edge_y += [y0, y1, None]
+
+        edge_trace = go.Scatter(
+            x=edge_x, y=edge_y,
+            line=dict(width=2, color='rgba(50,150,50,0.5)'),
+            hoverinfo='none',
+            mode='lines'
+        )
+
+        # Node trace
+        node_x, node_y, hover_text = [], [], []
+        for i, node in enumerate(G.nodes()):
+            text = ""
+            x, y = pos[node]
+            node_x.append(x)
+            node_y.append(y)
+            node_obj = node_attributes.get(node)
+
+            # Add freqeuncy info to hover text
+            freq_range = ""
+            if show_frequency:
+                low, high = getattr(node_obj, "numeric_freq_range")
+                freq_range = f"<br>Freq: {auto_eng_form(low, 2)}–{auto_eng_form(high, 2)}"
+
+            text += f"Node {node}{freq_range}"
+
+            # Add metric info to hover text
+            if isinstance(node_size, str):
+                text += (
+                    f"<br>node size ({node_size}): "
+                    f"{
+                        auto_eng_form(
+                            getattr(node_obj, 'metric')(node_size.replace(' ', '_')), 2
+                        )
+                    }"
+                )
+
+            hover_text.append(text)
+
+        node_trace = go.Scatter(
+            x=node_x, y=node_y,
+            mode='markers',
+            hoverinfo='text',
+            marker=dict(
+                size=node_size if node_size_vals is None else node_size_vals,
+                color=node_colour,
+                line=dict(width=2, color='darkgreen'),
+                opacity=0.9,
+            ),
+            hovertext=hover_text
+        )
+
+        # Build the figure
+        fig = go.Figure(
+            data=[edge_trace, node_trace],
+            layout=go.Layout(
+                title=graph_legend,
+                title_x=0.5,
+                showlegend=False,
+                hovermode='closest',
+                margin=dict(b=20, l=20, r=20, t=40),
+                xaxis=dict(showgrid=False, zeroline=False),
+                yaxis=dict(showgrid=False, zeroline=False),
+            )
+        )
+
+        # Reverse y-axis
+        fig.update_yaxes(autorange="reversed")
+        # Hide x labels
+        fig.update_xaxes(showticklabels=False)
+
+        # Save to HTML or show
+        if fig_name:
+            fig.write_html(fig_name + ".html")
+        else:
+            fig.show()
+
+        # Store for later use if needed
+        self.Graph = G
+        self.Graph_plotly = fig
 
     def _get_colours(self, G, node_colour, freq_threshold):
         labels = []
