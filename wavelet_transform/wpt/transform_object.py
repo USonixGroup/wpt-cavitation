@@ -1,5 +1,5 @@
 from pywt import Wavelet as pywtWavelet  # type: ignore
-from typing import Optional
+from typing import Optional, Union
 
 from wavelet_transform.wpt.transform_node import BaseNode, Node
 from wavelet_transform.wpt.transform_results import TransformResults
@@ -141,11 +141,17 @@ class Transform:
 
         Parameters
         ----------
+        level: int or "leaf"
+            the level of the transform
         id: str, int, float, or Node
             the identifier for the node. Can be the path (str), node number (int),
             frequency (float), or the node object itself.
         """
-        for node in self.get_level(level):
+        if level == "leaf":
+            nodes = self.get_leaf_nodes()
+        else:
+            nodes = self.get_level(level)
+        for node in nodes:
             if node.match_id(id):
                 return node
         raise ValueError("No node found matching the given id")
@@ -190,10 +196,24 @@ class Transform:
                 node.set_frequency_range(self.sampling_rate)
 
     def total_energy(self, level=None):
-        "Return the total energy of all nodes in a level. Max level by default."
-        if not hasattr(self, "_total_energy"):
-            self._total_energy = sum(float(node.metric("energy")) for node in self.get_level(level))
-        return self._total_energy
+        """
+        Return the total energy of all nodes in a level. Max level by default.
+        Adds metric to cache for future use.
+        """
+        if level is None:
+            level = self.max_level()
+        if not hasattr(self, "_total_energy"):  # initialise cache
+            # annotate cache as possibly holding floats or None so type checkers accept assignments
+            self._total_energy: dict[int, Optional[float]] = (
+                {i: None for i in self.levels.keys()}
+            )
+        if self._total_energy.get(level) is not None:  # check cache
+            return self._total_energy[level]
+        else:
+            self._total_energy[level] = sum(
+                float(node.metric("energy")) for node in self.get_level(level)
+            )
+        return self._total_energy[level]
     
     # ---------------- Find Nodes by Frequency ----------------
     
@@ -248,9 +268,8 @@ class Transform:
 
     def info(
             self, 
-            level=None, 
+            level:Optional[Union[int, str, None]]="leaf", 
             order="natural", 
-            leaf_nodes=False, 
             keep_ratio=1.,
             *,
             include_node_info=False,
@@ -262,12 +281,11 @@ class Transform:
 
         Parameters
         ----------
-        level: int
-            the level of transform to display information for
+        level: int or "leaf" or None
+            the level of transform to display information for. If `level` is
+            "leaf", displays info for leaf nodes. If None, displays info for max level.
         order: str
             "natural" or "freq" (see self.get_level())
-        leaf_nodes: bool
-            display info about the leaf nodes of the transform.
         keep_ratio: float
             between 0-1. Represents the ratio of coefficients kept in each node.
             does not affect the keep_ratio of the transform object itself.
@@ -283,7 +301,7 @@ class Transform:
             at each node.
         """
         return self.results.info(
-            level, order, leaf_nodes, keep_ratio, 
+            level, order, keep_ratio, 
             metrics=metrics, include_node_info=include_node_info
         )
 
@@ -311,6 +329,19 @@ class Transform:
             if value > 1 or value < 0:
                 raise ValueError("keep_ratio must be between 0-1")
         self._keep_ratio = value
+
+    @property
+    def ref_psd(self):
+        """
+        Calculate and return the reference power spectral density (PSD) array
+        for the transform data.
+
+        Returns
+        -------
+        ref_array: np.ndarray
+            The reference PSD array.
+        """
+        return self.results.ref_psd
 
     # ---------------- Plot Tree Diagram ---------------
 
