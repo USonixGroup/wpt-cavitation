@@ -28,7 +28,7 @@ def save_data(
     centers,
     labels,
     sampling_rate=None,
-    freq_threshold=1,
+    freq_threshold=1.,
     **kwargs
 ):
     file_path = os.path.join(FOLDER_PATH, str(result_id) + ".pkl")
