@@ -4,7 +4,9 @@ import scipy.signal as sp
 
 from wavelet_transform.wpt.transform_object import Transform
 from wavelet_transform.wpt.transform_node import Node
-from wavelet_transform.wpt.metrics import METRIC_REGISTRY, compute_metric_for_data, display_name
+from wavelet_transform.wpt.metrics import (
+    METRIC_REGISTRY, SPECIAL_METRICS, compute_metric_for_data, display_name, get_data, get_ref
+)
 
 # ---------------- Inverse Transforms -----------------
 def inv_dwt(transform_object: Transform):
@@ -109,9 +111,8 @@ class InverseTransform:
 
     def info(
         self,
-        level=None,
+        level="leaf",
         order="natural",
-        leaf_nodes=False,
         freq_threshold=1.,
         keep_ratio=1.,
         *,
@@ -124,8 +125,9 @@ class InverseTransform:
 
         Parameters
         ----------
-        level: int
-            the level of transform to display information for
+        level: int or str or None
+            the level of transform to display information for. If "leaf", displays 
+            info for leaf nodes. If None, displays info for max level.
         order: str
             "natural" or "freq" (see Transform.get_level())
         leaf_nodes: bool
@@ -141,31 +143,30 @@ class InverseTransform:
             reconstruction coefficients at each node.
         """
 
-        tr_obj = self.transform_object
-
         # Return data from transform object at level 0
         if level == 0:
             return self.transform_object.info(level=0, order=order)
 
         # Reconstruct each node separately
         info_data = []
-        if not isinstance(leaf_nodes, bool):
-            raise ValueError("leaf_nodes argument must be boolean")
-        if leaf_nodes is False:
+
+        # Accept integer levels, None (meaning max level), or the string 'leaf'
+        if level == "leaf":
+            nodes = self.transform_object.get_leaf_nodes(order=order)
+        elif level is None or isinstance(level, int):
             nodes = self.transform_object.get_level(level, order=order)
         else:
-            nodes = self.transform_object.get_leaf_nodes(order, freq_threshold)
+            raise ValueError("level must be an int, None, or 'leaf'")
 
-        total_energy = tr_obj.total_energy(0)
         for node in nodes:
             assert isinstance(node, Node)
             # Skip nodes above frequency threshold
-            if not node.is_in_threshold(freq_threshold):
+            if node.is_in_threshold(freq_threshold) is False:
                 continue
 
             # Calculate inverse transform
             inverse = inv_node(node)
-            inverse = self._trim(inverse, keep_ratio)
+            inverse_trim = self._trim(inverse, keep_ratio)
 
             # base/static fields
             row = {
@@ -179,14 +180,17 @@ class InverseTransform:
             # how metrics map to functions and how special cases are handled.
             if metrics is not None:
                 # replace spaces with underscores in metric names
-                metrics = [m.replace(" ", "_") for m in metrics]
-                for metric_name in metrics:
-                    display = display_name(metric_name)
-                    row[display] = compute_metric_for_data(inverse, metric_name, total_energy)
+                _metrics = [m.replace(" ", "_") for m in metrics]
             else:
-                for attr_name in METRIC_REGISTRY.keys():
-                    display = display_name(attr_name)
-                    row[display] = compute_metric_for_data(inverse, attr_name, total_energy)
+                _metrics = METRIC_REGISTRY.keys()
+
+            for metric in _metrics:
+                display = display_name(metric)
+                reference = get_ref(metric, self.transform_object)
+                data = get_data(inverse, inverse_trim, metric)
+                row[display] = compute_metric_for_data(
+                    data, metric, reference
+                )
 
             info_data.append(row)
         info = pd.DataFrame(info_data)

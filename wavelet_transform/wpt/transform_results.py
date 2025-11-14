@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 import pandas as pd
 from numpy import average
 
@@ -45,14 +45,14 @@ class TransformResults:
         return results
 
     def info(
-            self, 
-            level=None, 
-            order="natural", 
-            leaf_nodes=False, 
+            self,
+            level:Optional[Union[int, str, None]]="leaf",
+            order="natural",
             keep_ratio=1.,
             *,
             include_node_info=False,
-            metrics=None
+            metrics=None,
+            freq_threshold=1.,
         ):
         """
         Returns a dataframe with information about each node in a specified level
@@ -60,12 +60,12 @@ class TransformResults:
 
         Parameters
         ----------
-        level: int
-            the level of transform to display information for
+        level: int, None, or "leaf"
+            the level of transform to display information for. If `level` is
+            `None`, uses the transform's max level. If `level` is the string
+            `'leaf'`, information for leaf nodes is returned.
         order: str
             "natural" or "freq" (see self.get_level())
-        leaf_nodes: bool
-            display info about the leaf nodes of the transform.
         keep_ratio: float
             between 0-1. Represents the ratio of coefficients kept in each node.
             does not affect the keep_ratio of the transform object itself.
@@ -81,28 +81,31 @@ class TransformResults:
             at each node.
         """
         max_level = self.tr_obj.max_level()
-        if isinstance(level, int) and level > max_level and leaf_nodes is False:
-            raise ValueError(
-                f"transform has no level {level}. max level is: {max_level}"
-            )
-        if not isinstance(leaf_nodes, bool):
-            raise ValueError("leaf_nodes must be bool")
-        
-        if level is None:
-            level = self.tr_obj.max_level()
 
-        info_data = []
-        if not isinstance(leaf_nodes, bool):
-            raise ValueError("leaf_nodes argument must be boolean")
-        if leaf_nodes is False:
-            nodes = self.tr_obj.get_level(level, order=order)
-        else:
+        # Accept integer levels, None (meaning max level), or the string 'leaf'
+        if level == "leaf":
             nodes = self.tr_obj.get_leaf_nodes(order=order)
+        else:
+            # treat None as max level
+            if level is None:
+                level_to_use = self.tr_obj.max_level()
+            else:
+                if not isinstance(level, int):
+                    raise ValueError("level must be an int, None, or 'leaf'")
+                level_to_use = level
+            if level_to_use > max_level:
+                raise ValueError(
+                    f"transform has no level {level_to_use}. max level is: {max_level}"
+                )
+            nodes = self.tr_obj.get_level(level_to_use, order=order)
+        info_data = []
         short_node_len = len(nodes[0].data_keep)
 
         old_keep_ratio = self.tr_obj.keep_ratio  # store old keep ratio
         self.tr_obj.keep_ratio = keep_ratio  # temporarily set keep ratio
         for node in nodes:
+            if node.is_in_threshold(freq_threshold) is False:
+                continue
             assert isinstance(node, Node)
             node_len = len(node.data_keep)
             if node_len < short_node_len:
@@ -136,3 +139,12 @@ class TransformResults:
         info = pd.DataFrame(info_data)
         self.tr_obj.keep_ratio = old_keep_ratio  # restore old keep ratio
         return info
+    
+    @property
+    def ref_psd(self):
+        """Return the reference PSD for spectral metrics."""
+        from wavelet_transform.utils.extensions import psd
+        if not hasattr(self, "_ref_psd"):
+            data = self.tr_obj.get_node(0, 0).data
+            self._ref_psd = psd(data)
+        return self._ref_psd
