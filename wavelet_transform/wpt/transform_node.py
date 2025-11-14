@@ -1,7 +1,7 @@
 from wavelet_transform.wpt.node_base import NodeBase
 
 from wavelet_transform.utils.extensions import sci_form
-from wavelet_transform.wpt.metrics import METRIC_REGISTRY, compute_metric_for_data
+from wavelet_transform.wpt.metrics import METRIC_REGISTRY, compute_metric_for_data, get_data, get_ref
 
 class Node(NodeBase):
     "Extension on NodeBase which calculates statistical metrics based on the node data."
@@ -91,10 +91,9 @@ class Node(NodeBase):
         metric_name: str
             The name of the metric to retrieve.
         """
-        data = self.data_keep
         metric_name = metric_name.replace(" ", "_")
-        total_energy = self.transform.total_energy(0) if metric_name == "level_entropy" else None
-        metric = compute_metric_for_data(data, metric_name, total_energy)
+        reference = get_ref(metric_name, self.transform)
+        metric = compute_metric_for_data(self.data_keep, metric_name, reference)
         if not isinstance(metric, (int,float)):
             raise ValueError(f"metric '{metric_name}' did not return a numeric value")
         return metric

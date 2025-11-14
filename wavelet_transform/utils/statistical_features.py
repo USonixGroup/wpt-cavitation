@@ -55,18 +55,33 @@ def entropy(array, total_energy=None):
     return entropy
 
 # import plotly.graph_objects as go
-def spectral_entropy(array):
+def spectral_entropy(array, ref_psd=None):
+    """
+    Calculate the spectral entropy of the input array.
+    If ref_psd is provided, the power spectrum is limited to the minimum
+    of the power spectra of the two arrays.
+    """
     # Calculate the power spectrum
     power_spectrum = psd(array)  # np.abs(fft(array)[<half_length_array>]) ** 2 / (len(array) / 2)
+    if ref_psd is not None:
+        try:
+            power_spectrum = np.minimum(power_spectrum, ref_psd)
+        except ValueError:
+            raise ValueError("shape mismatch between power_spectrum and ref_psd. corrected_spectral_entropy does not work for wavelet coefficients")
     norm_spectrum = power_spectrum / np.sum(power_spectrum)  # type: ignore
 
     spectral_entropy = -sum(0 if i == 0 else i * np.log2(i) for i in norm_spectrum)
     spectral_entropy /= np.log2(len(norm_spectrum))
     return spectral_entropy
 
-def spectral_kurtosis(array):
+def spectral_kurtosis(array, ref_psd=None):
     # Calculate the power spectrum
     power_spectrum = psd(array)  # np.abs(fft(array)[<half_length_array>]) ** 2 / (len(array) / 2)
+    if ref_psd is not None:
+        try:
+            power_spectrum = np.minimum(power_spectrum, ref_psd)
+        except ValueError:
+            raise ValueError("shape mismatch between power_spectrum and ref_psd. corrected_spectral_kurtosis does not work for wavelet coefficients")
     norm_spectrum = power_spectrum / np.sum(power_spectrum)  # type: ignore
 
     spectral_kurtosis = kurtosis(norm_spectrum)
