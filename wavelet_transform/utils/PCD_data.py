@@ -46,6 +46,7 @@ def dataset1(dataset):
     # Get raw data
     num = add_0s(i, n)
 
+    file = None
     if dataset == "5-10":
         # i = [50, 100], n = 3, (i = 50, i_lo = [2500::5000])
         file = "../data/PCD data/TestID5-10W per cm2 intensity/C1test00" + num + ".txt"
@@ -57,6 +58,8 @@ def dataset1(dataset):
     elif dataset == "6-12":
         # i = [01 - 20], n = 2, (i = 01, i_lo = [0::5000])
         file = "../data/PCD data/TestID6-12W per cm2 intensity/C1test000" + num + ".txt"
+    if file is None:
+        raise ValueError("invalid dataset name")
     dfb = pd.read_csv(file, sep=",", header=None)
 
     data = dfb.iloc[:, -1]
