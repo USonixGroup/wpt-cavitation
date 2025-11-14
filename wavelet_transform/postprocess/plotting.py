@@ -391,7 +391,8 @@ def plot_reconstructions_by_group(
 def plot_fft_by_group(
     transform_object,
     labels,
-    sampling_rate,
+    sampling_rate=None,
+    *,
     clusters=None,
     xlims=None,
     ylims=None,
@@ -402,14 +403,45 @@ def plot_fft_by_group(
     fig_height=400,
     fig_width=1000,
     plot_full_reconstruction=False,
+    correct_psd=False,
 ):
     """
     Plot PSDs of reconstructed signals and original signal.
 
-    Paramters (incomplete)
+    Parameters
     ---------
+    transform_object: Transform
+        transform object from this library
+    labels: list of int
+        list of labels from clustering.
+
+    keyword arguments
+    -----------------
+    sampling_rate: float
+        sampling rate of the original signal in samples/second.
+        used to calculate the frequency axis.
     clusters: list of int
         a list of clusters to plot.
+    xlims: list of float
+        x axis limits for the plot
+    ylims: list of float
+        y axis limits for the plot
+    fundamental_freq: float
+        fundamental frequency of the original signal.
+        used to normalise the frequency axis.
+    freq_threshold: float
+        frequency threshold for reconstruction
+    label_map: dict int: str
+        relabel cluster numbers to a string. If not provided, will use the actual cluster
+        numbers as labels.
+    title: str
+        figure title
+    fig_height: int
+        figure height in pixels
+    fig_width: int
+        figure width in pixels
+    plot_full_reconstruction: bool
+        whether to plot the full reconstruction or not
     """
     if isinstance(clusters, int):
         clusters = [clusters]
@@ -448,6 +480,8 @@ def plot_fft_by_group(
 
     for i in clusters:
         psd_rec = psd(reconstructions[i])
+        if correct_psd is True:
+            psd_rec = np.minimum(psd_rec, psd_original)  # correct for numerical errors
         fig.add_trace(
             go.Scatter(
                 x=freq,
@@ -481,7 +515,7 @@ def plot_fft_by_group(
                 else "f / f<sub>0</sub> [DL]"
             ),
             tickfont=dict(size=tick_size),
-            range=xlims if xlims is not None else None,
+            range=xlims,
         ),
         yaxis=dict(title="Magnitude [dB]", tickfont=dict(size=tick_size), range=ylims),
         legend=dict(title="", traceorder="normal", font=dict(size=fsize)),
