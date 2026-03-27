@@ -21,7 +21,8 @@ def get_training_data(
     parameter_ranges=None,
     *,
     include_node_info=True,
-    metrics=None
+    metrics=None,
+    keep_ratio="full"
 ):
     """
     Generate training data from bubble dynamics signals with wavelet features.
@@ -61,9 +62,9 @@ def get_training_data(
     """
     if parameter_ranges is None:
         parameter_ranges = {
-            'R_init': [i * 1e-6 for i in range(1, 9, 2)],  # 1-9 microns
+            'R_init': [i * 1e-6 for i in range(1, 9, 2)],  # 1-7 microns
             'frequency': [i * 1e5 for i in range(5, 20, 2)],  # 0.5-2 MHz
-            'pac': [-i * 1e3 for i in range(100, 3000, 500)]  # -100 to -3000 kPa
+            'pac': [-i * 1e3 for i in range(100, 3000, 500)]  # -100 to -2600 kPa
         }
 
     paramlist = list(itertools.product(
@@ -88,6 +89,7 @@ def get_training_data(
                 window=window,
                 include_node_info=include_node_info,
                 metrics=metrics,
+                keep_ratio=keep_ratio
             ),
             paramlist,
         )
@@ -110,6 +112,7 @@ def _process_single_parameter_set(
     *,
     include_node_info=True,
     metrics=None,
+    keep_ratio="full"
 ):
     """
     Process a single set of bubble parameters to generate training data.
@@ -144,7 +147,8 @@ def _process_single_parameter_set(
         min_level=min_level,
         freq_threshold=freq_threshold,
         include_node_info=include_node_info,
-        metrics=metrics
+        metrics=metrics,
+        keep_ratio=keep_ratio
     )
 
     if isinstance(features, tuple):
