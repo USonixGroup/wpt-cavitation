@@ -266,6 +266,9 @@ def plot_reconstructions_by_group(
     title="Reconstructed nodes by group",
     fig_height=400,
     fig_width=1000,
+    *,
+    xrange=None,
+    yrange=None,
 ):
     """
     Reconstruct each node from the level of transform used to train the clustering
@@ -305,9 +308,12 @@ def plot_reconstructions_by_group(
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
+    # Order linestyles so solid lines are used first (plotted earlier/beneath)
+    # and dotted/dashed styles are used later (plotted on top) to avoid masking.
+    lines = ["solid", "dot", "dash", "dashdot", "longdash", "longdashdot"]
     linestyles = cycle(lines)
-    line_width = [3] * n_clusters + [1]  # wider lines for cluster reconstructions
+    # Slightly reduce line weight so traces don't overpower plots
+    line_width = [2] * n_clusters + [1]  # cluster reconstructions slightly thinner
 
     fig = go.Figure()
 
@@ -357,8 +363,8 @@ def plot_reconstructions_by_group(
         height=fig_height,
         font_size=fsize,
         title=title,
-        xaxis=dict(title=x_label, tickfont=dict(size=tick_size)),
-        yaxis=dict(title="Magnitude", tickfont=dict(size=tick_size)),
+        xaxis=dict(title=x_label, tickfont=dict(size=tick_size), range=xrange),
+        yaxis=dict(title="Magnitude", tickfont=dict(size=tick_size), range=yrange),
         legend=dict(title="", traceorder="normal", font=dict(size=fsize)),
         plot_bgcolor="white",
         margin=go.layout.Margin(
@@ -453,9 +459,12 @@ def plot_fft_by_group(
     )
 
     colours = TreeGraph.colour_dict  # Get colours for each cluster from tree graph
-    lines = ["dot", "dashdot", "solid", "dot", "dash", "longdash", "longdashdot"]
+    # Order linestyles so solid lines are used first (plotted earlier/beneath)
+    # and dotted/dashed styles are used later (plotted on top) to avoid masking.
+    lines = ["solid", "dot", "dash", "dashdot", "longdash", "longdashdot", "dot"]
     linestyles = cycle(lines)
-    line_width = [3] * n_clusters + [1]
+    # Slightly reduce line weight so traces don't overpower plots
+    line_width = [2] * n_clusters + [1]
 
     fig = go.Figure()
 
@@ -749,6 +758,7 @@ def plotly_clustering(
                 hovertemplate=None
             )
         )
+        # === Cluster members ===
         for level in unique_levels:
             mask = (labels == center) & (np.array(levels) == level)
             if np.any(mask):
@@ -765,7 +775,7 @@ def plotly_clustering(
                         marker=dict(
                             color=colours[center % len(colours)],
                             symbol=level_markers[level],
-                            size=4,
+                            size=8,
                             opacity=0.9,
                         ),
                         hoverinfo="text" if hover_subset is not None else "skip",
@@ -781,6 +791,7 @@ def plotly_clustering(
             xaxis_title=metrics_to_plot[0].capitalize(),
             yaxis_title=metrics_to_plot[1].capitalize(),
             zaxis_title=metrics_to_plot[2].capitalize(),
+            aspectmode="cube",
         ),
         margin=dict(l=0, r=0, t=40, b=0),
         showlegend=not all(i == 0 for i in levels),
@@ -837,7 +848,14 @@ def plot_centers(classifying_metrics, centers, label_map=None, xlabel_user=None)
             xvals = [i for i in range(n_clusters)]
             label_angle = 0
 
+        # Special case for average energy metric
+        if metric == "average energy":
+            yvals = to_dB(yvals)
+            ylabel = "Magnitude [dB]"
+
         ax[i].bar(xvals, yvals, color=colours)
+        ax[i].set_xticks(xvals)
+        ax[i].set_xticklabels(xvals)
         ax[i].set_title(f"{metric.capitalize()}", fontsize=fsize)
         ax[i].set_xlabel(xlabel, fontsize=fsize)
         ax[i].set_ylabel(ylabel, fontsize=fsize)
