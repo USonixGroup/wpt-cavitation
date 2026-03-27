@@ -47,7 +47,7 @@ def get_data(
     frequency,
     pac,
     sampling_rate,
-    n_cycles=50,
+    n_cycles=100,
     r_measure=R_MEASURE,
     return_time=False,
     **kwargs,
