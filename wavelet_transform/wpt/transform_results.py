@@ -48,7 +48,7 @@ class TransformResults:
             self,
             level:Optional[Union[int, str, None]]="leaf",
             order="natural",
-            keep_ratio=1.,
+            keep_ratio:Union[str, float, int]=1.,
             *,
             include_node_info=False,
             metrics=None,
@@ -104,7 +104,7 @@ class TransformResults:
         old_keep_ratio = self.tr_obj.keep_ratio  # store old keep ratio
         self.tr_obj.keep_ratio = keep_ratio  # temporarily set keep ratio
         for node in nodes:
-            if node.is_in_threshold(freq_threshold) is False:
+            if not node.is_in_threshold(freq_threshold):
                 continue
             assert isinstance(node, Node)
             node_len = len(node.data_keep)

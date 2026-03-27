@@ -130,6 +130,17 @@ class Node(NodeBase):
             The frequency threshold to check against.
         """
         return self.norm_frequency_range[1] <= freq_threshold
+    
+    def can_be_in_threshold(self, freq_threshold):
+        """
+        Check if the node can have children within the frequency threshold.
+
+        Parameters
+        ----------
+        freq_threshold: float
+            The frequency threshold to check against.
+        """
+        return self.norm_frequency_range[0] < freq_threshold
 
 
 class BaseNode(Node):

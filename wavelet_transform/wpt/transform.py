@@ -118,7 +118,8 @@ def _dwpt(data, max_level, wavelet, mode, freq_threshold):
             node1 = create_node(node, "a")
             node2 = create_node(node, "d")
             for node_to_add in (node1, node2):
-                if node_to_add.is_in_threshold(freq_threshold):
+                # Check if node can have children in threshold
+                if node_to_add.can_be_in_threshold(freq_threshold):
                     transform.add_node(node_to_add)
     return transform
 
@@ -142,7 +143,7 @@ def _best_basis_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold, 
             ):
                 # Add nodes if they have lower combined entropy than their parent
                 for node_to_add in (node1, node2):
-                    if node_to_add.norm_frequency_range[1] < freq_threshold:
+                    if node_to_add.can_be_in_threshold(freq_threshold):
                         transform.add_node(node_to_add)
 
     return transform
