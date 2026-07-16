@@ -175,18 +175,14 @@ def _energy_condition(node, node1, node2, base_node):
     
     # Split on unbalanced energy
     energy_threshold = 1.5
-    energy_cond = (
-        node1.metric("average_energy") / node2.metric("average_energy") > energy_threshold
-        or node2.metric("average_energy") / node1.metric("average_energy") > energy_threshold
-    )
+    energy_ratio = node1.metric("average_energy") / node2.metric("average_energy")
+    if energy_ratio > energy_threshold or energy_ratio < 1 / energy_threshold:
+        return True
 
     # Split on unbalanced kurtosis
     kurtosis_threshold = 1.5
-    kurtosis_cond = (
-        node1.metric("kurtosis") / node2.metric("kurtosis") > kurtosis_threshold
-        or node2.metric("kurtosis") / node1.metric("kurtosis") > kurtosis_threshold
-    )
-    if energy_cond or kurtosis_cond:
+    kurtosis_ratio = node1.metric("kurtosis") / node2.metric("kurtosis")
+    if kurtosis_ratio > kurtosis_threshold or kurtosis_ratio < 1 / kurtosis_threshold:
         return True
 
     return False
