@@ -40,9 +40,6 @@ class Node(NodeBase):
         Get length to trim off both ends of a downsammpled full convolution to convert it to a
         downsampled valid or same convolution.
         """
-        # Calculate addition length to trim due to level
-        scale_factor = 2 * (1 - 2 ** -level)
-
         # Calculate trim length based on mode
         if mode == "valid":
             trim_val = filter_len - 1
@@ -50,6 +47,10 @@ class Node(NodeBase):
             trim_val = (filter_len - 1) // 2
         else:
             raise ValueError("""mode must be in ["valid", "same"]""")
+        
+        # Calculate additional length to trim due to level
+        scale_factor = 2 * (1 - 2 ** -level)
+
         return int(trim_val * scale_factor / 2)  # Downsampled data is trimmed less
 
     @property
