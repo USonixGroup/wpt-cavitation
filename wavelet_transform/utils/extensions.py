@@ -67,32 +67,54 @@ def psd(array, sampling_rate=None, fundamental_freq=None):
     Calculate the power spectral density of a signal. If sampling rate is passed, the
     function will return a matching array of frequency. If the fundamental frequency is
     also passed, the frequency array will be normalised.
+
+    Parameters
+    ----------
+    array: array_like
+        an array containing the data to be transformed
+    sampling_rate: float or None
+        the sampling rate of the signal. If None, no frequency array will be returned.
+    fundamental_freq: float or None
+        the fundamental frequency of the signal. If None, no normalisation will be performed.
     """
+    if isinstance(fundamental_freq, (float, int)) and sampling_rate is None:
+        raise ValueError(
+            "fundamental_freq cannot be passed without sampling_rate"
+        )
+
     n = len(array)
 
     # Calculate FFT with numpy, take the first half of the FFT of the signal,
     # i.e., positive freqs, and normalise by setting norm=forward
     fft = np.fft.fft(array, norm=None)[0 : int(n / 2)]
-    psd = np.abs(fft) ** 2 / (n / 2)
+    psd = np.abs(fft) ** 2 / n
+    psd[1:-1] *= 2  # account for the fact that we are only taking the positive frequencies
 
     if sampling_rate is not None:
         freq = np.fft.fftfreq(n, d=1 / sampling_rate)[
             0 : int(n / 2)
         ]
-        if fundamental_freq is not None:
+        if isinstance(fundamental_freq, (float, int)):
             freq /= fundamental_freq
+        else:
+            raise ValueError(
+                "fundamental_freq must be a float or int if sampling_rate is passed"
+            )
         return psd, freq
 
     return psd
 
 
 def to_dB(array):
-    """converting amplitude to dB
+    """
+    converting amplitude to dB
 
-    Args:
+    Parameters
+    ----------
         array (numpy): absolute of a signal, e.g. np.abs(fft_output).
 
-    Returns:
+    Returns
+    -------
         list: amplitude in dB
     """
     return [10 * np.log10(i) if i > 0 else 0 for i in array]
