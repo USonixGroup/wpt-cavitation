@@ -4,7 +4,8 @@ from scipy.integrate import ode
 
 class BubbleDynamics(object):
     """
-    An object created for bubble dynamics calculations. The pulse for nonlinear waves is calculated using the foemulation derived by AYME, CARSTENSE, see here for the paper: https://pubmed.ncbi.nlm.nih.gov/2922882/
+    An object created for bubble dynamics calculations. The pulse for nonlinear waves is calculated using 
+    the formulation derived by AYME, CARSTENSE, see here for the paper: https://pubmed.ncbi.nlm.nih.gov/18284947/
     The Gilmore implementation can be checked against the results presented in the same paper, too.
 
     Parameters
@@ -84,8 +85,8 @@ class BubbleDynamics(object):
         self.medium_parameters = medium_parameters
         self.p_radiated = []
         self.Mach_number_acoustic = []
-        self.R = []
-        self.Rdot = []
+        self.R = np.ndarray([])
+        self.Rdot = np.ndarray([])
         self.R_ratio_max = []
         self.Mach_number_acoustic_max = []
         self.sound_speed_instant_ratio = []
@@ -160,9 +161,7 @@ class BubbleDynamics(object):
 
         npac_wave = np.zeros(tau.shape)
         for i in range(self.no_harmonics):
-            i = (
-                i + 1
-            )  # to get rid off the error of divided by 0 at i=0 which is the case when no_harmincs = 1
+            i = i + 1
             npac_tmp = (
                 np.sin(i * nomega * (tau - self.phase_initial) + self.phase_shift) / i
             )
@@ -208,11 +207,6 @@ class BubbleDynamics(object):
     ):
         """
         Add an additional sine wave pulse to the input pressure for the model.
-
-        Parameters
-        ----------
-
-
         """
         omega = 2 * np.pi * frequency
         tau = omega * self.time
@@ -231,7 +225,8 @@ class BubbleDynamics(object):
 
     def solver(self):
         """
-        Solving a spherical bubble dynamics and determines the radiated pressure in an unbounded medium using Gilmore Akulichev model.
+        Solving a spherical bubble dynamics and determines the radiated pressure in 
+        an unbounded medium using Gilmore Akulichev model.
 
         Parameters
         ----------
@@ -308,7 +303,8 @@ class BubbleDynamics(object):
             )
         )
 
-        # Calculate the speed of sound at the bubble wall location in the fluid, accounting for the compressibility of the fluid. See the Gilmore model for detail.
+        # Calculate the speed of sound at the bubble wall location in the fluid, accounting for 
+        # the compressibility of the fluid. See the Gilmore model for detail.
         nsound_speed_instantaneous = np.sqrt(
             self.ND_params["nsound_speed"] ** 2
             + (self.ND_params["nTaitEq"] - 1) * enthalpy_integral
@@ -446,7 +442,6 @@ class BubbleDynamics(object):
             -1 * (nsound_speed_at_R + X1) * enthalpy / (nsound_speed_at_R - X1) / R
         )
         X2 = coeff_eta * (eta_term1 + eta_term2 + eta_term3 + eta_term4)
-
         return [X1, X2]
 
     def calculate_p_radiated(self, r_measure):
