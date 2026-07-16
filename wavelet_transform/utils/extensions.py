@@ -96,9 +96,9 @@ def psd(array, sampling_rate=None, fundamental_freq=None):
         ]
         if isinstance(fundamental_freq, (float, int)):
             freq /= fundamental_freq
-        else:
+        elif fundamental_freq is not None:
             raise ValueError(
-                "fundamental_freq must be a float or int if sampling_rate is passed"
+                "fundamental_freq must be a float or int if passed"
             )
         return psd, freq
 
