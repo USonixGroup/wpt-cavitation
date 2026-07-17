@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 
-from wavelet_transform.utils.bubble_data_manager import BD
 from wavelet_transform.utils.statistical_features import kurtosis
+from wavelet_transform.utils.bubbledynamics import BubbleDynamics as BD
 
 
 def make_time(n=10, frequency=1e6):
