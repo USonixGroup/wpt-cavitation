@@ -118,7 +118,8 @@ def _dwpt(data, max_level, wavelet, mode, freq_threshold):
             node1 = create_node(node, "a")
             node2 = create_node(node, "d")
             for node_to_add in (node1, node2):
-                if node_to_add.is_in_threshold(freq_threshold):
+                # Check if node can have children in threshold
+                if node_to_add.can_be_in_threshold(freq_threshold):
                     transform.add_node(node_to_add)
     return transform
 
@@ -142,7 +143,7 @@ def _best_basis_dwpt(data, max_level, wavelet, mode, min_level, freq_threshold, 
             ):
                 # Add nodes if they have lower combined entropy than their parent
                 for node_to_add in (node1, node2):
-                    if node_to_add.norm_frequency_range[1] < freq_threshold:
+                    if node_to_add.can_be_in_threshold(freq_threshold):
                         transform.add_node(node_to_add)
 
     return transform
@@ -174,18 +175,14 @@ def _energy_condition(node, node1, node2, base_node):
     
     # Split on unbalanced energy
     energy_threshold = 1.5
-    energy_cond = (
-        node1.metric("average_energy") / node2.metric("average_energy") > energy_threshold
-        or node2.metric("average_energy") / node1.metric("average_energy") > energy_threshold
-    )
+    energy_ratio = node1.metric("average_energy") / node2.metric("average_energy")
+    if energy_ratio > energy_threshold or energy_ratio < 1 / energy_threshold:
+        return True
 
     # Split on unbalanced kurtosis
     kurtosis_threshold = 1.5
-    kurtosis_cond = (
-        node1.metric("kurtosis") / node2.metric("kurtosis") > kurtosis_threshold
-        or node2.metric("kurtosis") / node1.metric("kurtosis") > kurtosis_threshold
-    )
-    if energy_cond or kurtosis_cond:
+    kurtosis_ratio = node1.metric("kurtosis") / node2.metric("kurtosis")
+    if kurtosis_ratio > kurtosis_threshold or kurtosis_ratio < 1 / kurtosis_threshold:
         return True
 
     return False

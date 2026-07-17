@@ -71,7 +71,10 @@ def extract_wavelet_features(
 
     tr_obj.keep_ratio = keep_ratio
     wpt_df = tr_obj.info(
-        levels, order="natural", metrics=metrics, include_node_info=include_node_info
+        freq_threshold=freq_threshold, 
+        keep_ratio=keep_ratio,
+        metrics=metrics, 
+        include_node_info=include_node_info,
     )
 
     # Return the transform object if specified

@@ -161,7 +161,7 @@ class InverseTransform:
         for node in nodes:
             assert isinstance(node, Node)
             # Skip nodes above frequency threshold
-            if node.is_in_threshold(freq_threshold) is False:
+            if not node.is_in_threshold(freq_threshold):
                 continue
 
             # Calculate inverse transform

@@ -270,10 +270,11 @@ class Transform:
             self, 
             level:Optional[Union[int, str, None]]="leaf", 
             order="natural", 
-            keep_ratio=1.,
+            keep_ratio:Union[str, float, int]=1.,
             *,
             include_node_info=False,
-            metrics=None
+            metrics=None,
+            freq_threshold=1.,
         ):
         """
         Returns a dataframe with information about each node in a specified level
@@ -301,8 +302,9 @@ class Transform:
             at each node.
         """
         return self.results.info(
-            level, order, keep_ratio, 
-            metrics=metrics, include_node_info=include_node_info
+            level=level, order=order, keep_ratio=keep_ratio,
+            metrics=metrics, include_node_info=include_node_info,
+            freq_threshold=freq_threshold
         )
 
     @property
