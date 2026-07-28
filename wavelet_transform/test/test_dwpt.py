@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pywt
 from wavelet_transform.wpt.transform import dwpt
-from wavelet_transform.utils.synthetic_data import sound_wave
+from wavelet_transform.test.synthetic_data import sound_wave
 from wavelet_transform.utils.statistical_features import energy
 import wavelet_transform.wpt.inverse_transform as inv
 from wavelet_transform.utils.extensions import fft
