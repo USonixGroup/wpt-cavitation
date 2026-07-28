@@ -36,16 +36,98 @@ Tree plot of wavelet transform with node size corresponding to the energy in the
 Reconstructed data:
 ![reconstruction](reconstruction.jpg)
 
-## Installation
+## Installation & Setup
 
-This library can be used by cloning and pulling from main.
+This project requires a specific set of data science, signal processing, and graph visualization libraries. Follow the instructions below to configure your local workspace.
 
-WPT-Cavitation is dependent on NumPy, SciPy, and PyWavelets for the wavelet transform and scikit-learn for the k-means algorithm. Plotting requires matplotlib, plotly, and pygraphviz.
+### Prerequisites
+
+This repository utilizes **PyGraphviz** for graph rendering, which relies on system-level binaries. Before installing the Python packages, you **must** install the native Graphviz application on your machine:
+
+* **Linux (RHEL / Fedora):**
+  ```bash
+  sudo dnf install graphviz graphviz-devel
+  ```
+* **Linux (Ubuntu / Debian):**
+  ```bash
+  sudo apt update && sudo apt install graphviz libgraphviz-dev
+  ```
+* **macOS (via Homebrew):**
+  ```bash
+  brew install graphviz
+  ```
+* **Windows:** Download and run the official installer from the [Graphviz Downloads Page](https://graphviz.org). Ensure you check the option to *"Add Graphviz to the system PATH"*.
+
+---
+
+### Option 1: Setup via Micromamba / Mamba / Conda (Recommended)
+
+If you use (Micro) Mamba or Conda, you can instantly create an isolated workspace with all dependencies (including Python and system requirements) perfectly resolved.
+
+1. **Clone the repository and enter the directory.**
+
+2. **Create the environment from the configuration file:**
+   ```bash
+   mamba env create -f environment.yml
+   ```
+   *(If you use standard Conda, simply swap `mamba` for `conda`).*
+
+3. **Activate the environment:**
+   ```bash
+   mamba activate wpt-cavitation-env
+   ```
+
+---
+
+### Option 2: Setup via Standard Pip
+
+If you prefer standard Python virtual environments, use the `requirements.txt` workflow. Ensure you have completed the **Prerequisites** step above first.
+
+1. **Clone the repository and enter the directory.**
+
+2. **Create and activate a clean virtual environment:**
+   ```bash
+   python3 -m venv wpt-cavitation-env
+   source wpt-cavitation-env/bin/activate
+   ```
+   *For Windows Command Prompt, activate using:* `wpt-cavitation-env\Scripts\activate`
+
+3. **Install the dependencies:**
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+---
+
 
 ## Get help
 
-Contact on GitHub or at max.au-yeung20@ucl.ac.uk.
+Contact us on GitHub (creating an issue) or email us at max.au-yeung20@ucl.ac.uk.
 
 ## Citation
 
-This library can be cited as ...
+## Acknowledgement
+This work was partially supported by the Focused Ultrasound Foundation, and the UCL Mechanical Engineering department.
+
+## Licence
+WPT-Cavitation is licensed under an MIT licence. Full text of the licence can be found [here](LICENSE).
+
+## Citation
+If you use WPT-Cavitation in your work, please cite it as follows:
+
+**APA**
+```
+Au-Yeung, M., & Haqshenas, R. (2024). WPT-Cavitation Analysis. https://github.com/USonixGroup/wpt-cavitation/
+```
+
+**BibTeX**
+```
+@software{WPT-Cavitation_Analysis_2024,
+author = {Au-Yeung, Max and Haqshenas, Reza},
+title = {{WPT-Cavitation Analysis}},
+url = {https://github.com/USonixGroup/wpt-cavitation/},
+version = {0.1.0},
+year = {2024}
+}
+```
