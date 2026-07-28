@@ -1,0 +1,17 @@
+name: wpt-cavitation-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12  
+  - jupyter
+  - matplotlib
+  - networkx
+  - pandas
+  - pip
+  - plotly
+  - pygraphviz
+  - pywavelets
+  - scikit-fuzzy
+  - scikit-learn
+  - scipy
+
