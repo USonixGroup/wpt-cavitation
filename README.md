@@ -15,12 +15,7 @@ The main features are:
 
 The wavelet transform has been tested against results from the PyWavelets library and matlab although the implementation only relies on filter coefficients from PyWavelets.
 
-This library was developed as part of an ongoing project associated with an upcoming paper:
-
-Acoustic cavitation detection and classification using wavelet packet transform and
-K-Means clustering
-
-This library is partially funded by the Focused Ultrasound Foundation.
+This library was developed as part of an ongoing project associated with a published paper in Applied Acoustics (2027), see below for details. This project is partially funded by the Focused Ultrasound Foundation.
 
 ## Examples
 
@@ -118,16 +113,21 @@ If you use WPT-Cavitation in your work, please cite it as follows:
 
 **APA**
 ```
-Au-Yeung, M., & Haqshenas, R. (2024). WPT-Cavitation Analysis. https://github.com/USonixGroup/wpt-cavitation/
+Au-Yeung, M., & Haqshenas, R. (2027). Quantitative characterization of cavitation features in acoustic emission signals using wavelet packet transforms and k-means clustering. Applied Acoustics, 257, 111549, https://github.com/USonixGroup/wpt-cavitation/
 ```
 
 **BibTeX**
 ```
-@software{WPT-Cavitation_Analysis_2024,
-author = {Au-Yeung, Max and Haqshenas, Reza},
-title = {{WPT-Cavitation Analysis}},
-url = {https://github.com/USonixGroup/wpt-cavitation/},
-version = {0.1.0},
-year = {2024}
+@article{wpt-cavitation2027,
+title = {Quantitative characterization of cavitation features in acoustic emission signals using wavelet packet transforms and k-means clustering},
+journal = {Applied Acoustics},
+volume = {257},
+pages = {111549},
+year = {2027},
+issn = {0003-682X},
+doi = {https://doi.org/10.1016/j.apacoust.2026.111549},
+url = {https://www.sciencedirect.com/science/article/pii/S0003682X26003312},
+author = {Max Au-Yeung and Reza Haqshenas}
 }
+
 ```
